@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Filament\Resources\UserResource\Pages;
+
+use App\Filament\Resources\UserResource;
+use Filament\Actions;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+
+class ViewUser extends ViewRecord
+{
+    protected static string $resource = UserResource::class;
+
+    public function getTitle(): string
+    {
+        return $this->record->name . ' - Staff Details';
+    }
+
+   protected function getHeaderActions(): array
+{
+    return [
+        ActionGroup::make([
+            Action::make('add_shift')
+                ->label('Add Shift')
+                ->icon('heroicon-o-plus'),
+
+            Action::make('communications')
+                ->label('Communications')
+                ->icon('heroicon-o-chat-bubble-left-right'),
+
+            Action::make('timesheet')
+                ->label('Timesheet')
+                ->icon('heroicon-o-clock'),
+
+            Action::make('calendar')
+                ->label('Calendar')
+                ->icon('heroicon-o-calendar'),
+
+            Action::make('documents')
+                ->label('Documents')
+                ->icon('heroicon-o-document'),
+        ])
+            ->button()                     
+            ->label('Manage')        
+            ->icon('heroicon-m-chevron-down'),
+    ];
+}
+}
