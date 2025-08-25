@@ -451,7 +451,10 @@
         <div class="task-modal-content" id="taskModalContent">
             <button class="buto full-view-btn" style="float: right" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
                                   
-            {{ $this->form }}
+          <div x-data="{ repeatChecked: false, jobBoardActive: false, recurrance: '' }">
+              {{ $this->form }}
+          </div>
+
               
             <div class="but-div">
             <button class="buto" onclick="addTask()">Save</button>

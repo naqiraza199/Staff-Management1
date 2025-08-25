@@ -111,4 +111,5 @@ class Client extends Model
         ->withPivot('is_default')
         ->withTimestamps();
 }
+
 }
