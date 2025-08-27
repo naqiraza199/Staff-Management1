@@ -309,9 +309,9 @@
     background: #fff;
     padding: 20px;
     border-radius: 10px;
-    width: 600px;
-    max-width: 95%;
+    width: 55%;
     margin: auto;
+    padding: 65px;
   }
 
   .staff-heading {
@@ -447,119 +447,24 @@
         </div>
     </div>
 
-    <div class="modal" id="taskModal">
-        <div class="task-modal-content" id="taskModalContent">
-            <button class="buto full-view-btn" style="float: right" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
-                                  
-          <div x-data="{ repeatChecked: false, jobBoardActive: false, recurrance: '' }">
-              {{ $this->form }}
-          </div>
+<div class="modal" id="taskModal">
+    <div class="task-modal-content" id="taskModalContent">
+        <button class="buto full-view-btn" style="float: right" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
+                              
+      <div x-data="{ repeatChecked: false, jobBoardActive: false, recurrance: '' }">
+          {{ $this->form }}
+      </div>
 
-              
-            <div class="but-div">
-            <button class="buto" onclick="addTask()">Save</button>
-            <button class="buto" onclick="closeModal()">Cancel</button>
-            </div>
-        </div>
+      <div class="but-div">
+          <button class="buto" onclick="addTask()">Save</button>
+          <button class="buto" onclick="closeModal()">Cancel</button>
+      </div>
     </div>
+</div>
 
 <div class="modal" id="staffModal">
   <div class="staff-modal-content" id="staffModalContent">
-<button class="buto full-view-btn" onclick="toggleFullView('staffModalContent')">&#x26F6;</button>
-    <h3 class="staff-heading">Manage Staff</h3>
-
-    <div class="staff-section-title">Staff Detail</div>
-
- <form class="staff-form">
-
-      <!-- Salutation -->
-      <label class="staff-check">
-        <input type="checkbox" id="useSalutation" onchange="toggleSalutation()"> Use salutation
-      </label>
-
-      <div class="staff-group">
-        <label class="staff-label">Name:</label>
-        <div class="staff-flex-row">
-          <select id="salutation" class="staff-input staff-salutation" style="display: none;">
-            <option value="Mr">Mr</option>
-            <option value="Mrs">Mrs</option>
-            <option value="Ms">Ms</option>
-            <option value="Dr">Dr</option>
-          </select>
-          <input type="text" class="staff-input staff-name" placeholder="Enter Name">
-        </div>
-      </div>
-
-      <!-- Email -->
-      <div class="staff-group">
-        <label class="staff-label">Email:</label>
-        <input type="email" class="staff-input staff-email" placeholder="Enter Email">
-      </div>
-
-      <!-- Contact -->
-      <div class="staff-group">
-        <label class="staff-label">Contact:</label>
-        <div class="staff-flex-row">
-          <input type="text" class="staff-input staff-mobile" placeholder="Enter Mobile Number">
-          <input type="text" class="staff-input staff-phone" placeholder="Enter Phone Number">
-        </div>
-      </div>
-
-      <!-- User Type Tabs -->
-      <div class="staff-group">
-        <label class="staff-label">User Type:</label>
-        <div class="staff-toggle-btns">
-          <button type="button" class="staff-toggle staff-toggle-active" onclick="setUserType('carer')">Carer</button>
-          <button type="button" class="staff-toggle" onclick="setUserType('office')">Office User</button>
-        </div>
-      </div>
-
-      <!-- Roles (only for Office User) -->
-      <div class="staff-group" id="rolesGroup" style="display: none;">
-        <label class="staff-label">Roles:</label>
-        <input type="text" class="staff-input staff-roles" placeholder="Enter Roles">
-      </div>
-
-      <!-- Gender + DOB -->
-      <div class="staff-group staff-flex-row">
-        <div class="staff-flex-col">
-          <label class="staff-label">Gender:</label>
-          <select class="staff-input staff-gender">
-            <option>Select</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div class="staff-flex-col">
-          <label class="staff-label">Date Of Birth:</label>
-          <input type="date" class="staff-input staff-dob">
-        </div>
-      </div>
-
-      <!-- Employment Type -->
-      <div class="staff-group">
-        <label class="staff-label">Employment Type:</label>
-        <select class="staff-input staff-employment">
-          <option>Casual</option>
-          <option>Full Time</option>
-          <option>Part Time</option>
-        </select>
-      </div>
-
-      <!-- Address -->
-      <div class="staff-group">
-        <label class="staff-label">Address:</label>
-        <input type="text" class="staff-input staff-address" placeholder="Enter Address">
-      </div>
-
-      <!-- Buttons -->
-      <div class="staff-actions">
-        <button class="staff-btn staff-btn-primary" onclick="addStaff()">Create</button>
-        <button class="staff-btn staff-btn-secondary" onclick="closeStaffModal()">Cancel</button>
-      </div>
-
-    </form>
+    @livewire(App\Filament\Pages\StaffFormPage::class)
   </div>
 </div>
 
@@ -681,25 +586,77 @@ let currentDate = new Date();
             renderCalendar();
         }
 
+
         function openModal(key, dateKey) {
-            console.log(key , dateKey);
-            const modal = document.getElementById('taskModal');
+    console.log(key, dateKey); // For debugging
+
+    const formattedDate = dateKey.replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, (match, year, month, day) => {
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    });
+    console.log('Formatted Date:', formattedDate); // Confirm formatted date
+
+    // AJAX POST to set session
+    fetch('/set-selected-date', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content // CSRF token (add <meta name="csrf-token" content="{{ csrf_token() }}"> in your layout)
+        },
+        body: JSON.stringify({ dateKey: formattedDate })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Dispatch Livewire event to refresh form and open modal
+            Livewire.dispatch('refresh-and-open-modal');
+        }
+    })
+    .catch(error => console.error('Error setting session:', error));
+
+           const modal = document.getElementById('taskModal');
             modal.style.display = 'flex';
-            // Add logic here to populate shifts modal if needed
-        }
+}
 
-        function closeModal() {
-            document.getElementById('taskModal').style.display = 'none';
-        }
+function closeModal() {
+    const modal = document.getElementById('taskModal');
+    modal.style.display = 'none';
+}
 
-        function openStaffModal() {
-            const modal = document.getElementById('staffModal');
-            modal.style.display = 'flex';
-        }
+// Close modal when clicking outside the content
+const taskModal = document.getElementById('taskModal');
+taskModal.addEventListener('click', function(event) {
+    if (event.target === taskModal) {
+        closeModal();
+    }
+});
 
-        function closeStaffModal() {
-            document.getElementById('staffModal').style.display = 'none';
+// Listen for Livewire event to open the modal
+document.addEventListener('livewire:initialized', () => {
+    Livewire.on('open-task-modal', () => {
+        console.log('Received open-task-modal event'); // Debug
+        const modal = document.getElementById('taskModal');
+        modal.style.display = 'flex';
+    });
+});
+     ////
+       
+
+     function openStaffModal() {
+        const modal = document.getElementById('staffModal');
+        modal.style.display = 'flex';
+    }
+
+    function closeStaffModal() {
+        document.getElementById('staffModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside content
+    const modal = document.getElementById('staffModal');
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeStaffModal();
         }
+    });
 
         // Initialize calendar
         renderCalendar();

@@ -27,6 +27,8 @@ use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Forms\Form;
+
 
 class Schedular extends Page
 {
@@ -35,6 +37,7 @@ class Schedular extends Page
     protected static ?string $title = 'Schedular';
 
     public ?array $data = [];
+    public ?string $selectedDate = null;
     public bool $showTaskModal = false;
 
     public function mount()
@@ -70,12 +73,20 @@ class Schedular extends Page
         return $this->users ?? [];
     }
 
-    protected function getFormSchema(): array
-    {
-        $authUser = Auth::user();
-        $companyId = Company::where('user_id', $authUser->id)->value('id');
 
-        return [
+
+public function form(Form $form): Form
+{
+
+       $authUser = Auth::user();
+        $companyId = Company::where('user_id', $authUser->id)->value('id');
+    return $form
+        ->schema([
+     
+
+
+
+
             Section::make(
                 new HtmlString('
                     <span class="flex items-center gap-2">
@@ -252,10 +263,12 @@ class Schedular extends Page
                         Placeholder::make('date_lab')
                             ->label('Date')
                             ->columnSpan(1),
-
-                        DatePicker::make('date')
-                            ->label('')
-                            ->columnSpan(2),
+                    DatePicker::make('date')
+                    ->label('')
+                    ->columnSpan(2)
+                    ->native(false) // Use Filament's datepicker
+                    ->format('Y-m-d') // Enforce Y-m-d format
+                    ->default($this->selectedDate), 
                     ]),
 
                 Grid::make(5)
@@ -792,11 +805,19 @@ class Schedular extends Page
             ])
             ->extraAttributes(['style' => 'margin-top:10px;margin-bottom:30px'])
             ->collapsible(),
-        ];
+
+                ])->statePath('data');
+
     }
 
-    protected function getFormStatePath(): string
+    #[On('refresh-and-open-modal')]
+    public function refreshAndOpenModal(): void
     {
-        return 'data';
+        \Log::info('refreshAndOpenModal called'); // Debug log
+        $this->selectedDate = session('selected_date'); // Retrieve from session
+        \Log::info('Retrieved date from session', ['selected_date' => $this->selectedDate]);
+        $this->form->fill(['date' => $this->selectedDate]); // Fill DatePicker
+        \Log::info('Form state after fill', $this->data); // Debug form state
+        $this->dispatch('open-task-modal'); // Trigger modal display
     }
 }
