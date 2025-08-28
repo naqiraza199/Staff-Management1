@@ -455,10 +455,11 @@
           {{ $this->form }}
       </div>
 
-      <div class="but-div">
-          <button class="buto" onclick="addTask()">Save</button>
-          <button class="buto" onclick="closeModal()">Cancel</button>
-      </div>
+        <div class="but-div">
+            <button class="buto" wire:click="createShift">Save</button>
+            <button class="buto" onclick="closeModal()">Cancel</button>
+        </div>
+
     </div>
 </div>
 

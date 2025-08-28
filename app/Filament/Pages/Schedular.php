@@ -28,6 +28,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Forms\Form;
+use App\Models\Shift;
+use Filament\Notifications\Notification;
+
+
 
 
 class Schedular extends Page
@@ -37,7 +41,6 @@ class Schedular extends Page
     protected static ?string $title = 'Schedular';
 
     public ?array $data = [];
-    public ?string $selectedDate = null;
     public bool $showTaskModal = false;
 
     public function mount()
@@ -109,7 +112,7 @@ public function form(Form $form): Form
                             ->label('Choose Client')
                             ->columnSpan(1),
 
-                        Select::make('client')
+                        Select::make('client_id')
                             ->label('')
                             ->options(
                                 Client::where('user_id', $authUser->id)->where('is_archive', 'Unarchive')
@@ -124,7 +127,7 @@ public function form(Form $form): Form
                             ->label('Price Book')
                             ->columnSpan(1),
 
-                        Select::make('price_book')
+                        Select::make('price_book_id')
                             ->label('')
                             ->options(
                                 PriceBook::with('priceBookDetails')
@@ -153,6 +156,7 @@ public function form(Form $form): Form
                             ->disableLabel(),
                     ]),
             ])
+            ->statePath('client_section')
             ->extraAttributes(['style' => 'margin-top:100px'])
             ->collapsible(),
 
@@ -180,25 +184,35 @@ public function form(Form $form): Form
                             ->label('Shift Types')
                             ->columnSpan(1),
 
-                        Select::make('shift_types')
-                            ->label('')
-                            ->options(
-                                ShiftType::where('user_id', auth()->id())
-                                    ->get()
-                                    ->mapWithKeys(fn($shift) => [
-                                        $shift->id => '
-                                            <span class="flex items-center gap-2">
-                                                <span class="w-3 h-3 rounded-full" 
-                                                      style="background-color:' . $shift->color . '"></span>
-                                                ' . e($shift->name) . '
-                                            </span>'
-                                    ])
-                                    ->toArray()
-                            )
-                            ->allowHtml()
-                            ->searchable()
-                            ->preload()
-                            ->columnSpan(2),
+                    //    Select::make('shift_type_id')
+                    //         ->label('Shift Type')
+                    //         ->options(
+                    //             ShiftType::where('user_id', auth()->id())
+                    //                 ->get()
+                    //                 ->mapWithKeys(fn ($shift) => [
+                    //                     $shift->id => 
+                    //                         '<span class="flex items-center gap-2">
+                    //                             <span class="w-3 h-3 rounded-full" 
+                    //                                 style="background-color:' . $shift->color . '"></span>
+                    //                             ' . e($shift->name) . '
+                    //                         </span>'
+                    //                 ])
+                    //                 ->toArray()
+                    //         )
+                    //         ->allowHtml() // 👈 so colors render
+                    //         ->searchable()
+                    //         ->preload()
+                    //         ->columnSpan(2),
+
+                                Select::make('shift_type_id')
+                                    ->options(ShiftType::pluck('name', 'id'))
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->label('')
+                                    ->columnSpan(2),
+
+
                     ]),
 
                 Grid::make(3)
@@ -225,7 +239,7 @@ public function form(Form $form): Form
                             ->label('Allowance')
                             ->columnSpan(1),
 
-                        Select::make('allowance')
+                        Select::make('allowance_id')
                             ->label('')
                             ->options(
                                 \App\Models\Allowance::where('user_id', auth()->id())
@@ -234,6 +248,7 @@ public function form(Form $form): Form
                             ->columnSpan(2),
                     ]),
             ])
+            ->statePath('shift_section')
             ->extraAttributes(['style' => 'margin-top:10px'])
             ->collapsible(),
 
@@ -263,12 +278,9 @@ public function form(Form $form): Form
                         Placeholder::make('date_lab')
                             ->label('Date')
                             ->columnSpan(1),
-                    DatePicker::make('date')
+                    DatePicker::make('start_date')
                     ->label('')
-                    ->columnSpan(2)
-                    ->native(false) // Use Filament's datepicker
-                    ->format('Y-m-d') // Enforce Y-m-d format
-                    ->default($this->selectedDate), 
+                    ->columnSpan(2),
                     ]),
 
                 Grid::make(5)
@@ -277,7 +289,7 @@ public function form(Form $form): Form
                             ->label('')
                             ->columnSpan(3),
 
-                        Checkbox::make('check_shift_time')
+                        Checkbox::make('shift_finishes_next_day')
                             ->label('Shift finishes the next day')
                             ->columnSpan(2),
                     ]),
@@ -288,11 +300,11 @@ public function form(Form $form): Form
                             ->label('Time')
                             ->columnSpan(3),
 
-                        TimePicker::make('start_time_shift')
+                        TimePicker::make('start_time')
                             ->label('')
                             ->columnSpan(4),
 
-                        TimePicker::make('end_time_shift')
+                        TimePicker::make('end_time')
                             ->label('')
                             ->columnSpan(4),
                     ]),
@@ -399,35 +411,35 @@ public function form(Form $form): Form
                             ->label('Week')
                             ->columnSpan(2),
 
-                        Placeholder::make('occurs_on_lab')
+                        Placeholder::make('occurs_on_weekly')
                             ->label('Occurs on')
                             ->columnSpan(2),
 
-                        Checkbox::make('sun')
+                        Checkbox::make('sunday')
                             ->label('Sun')
                             ->columnSpan(2),
 
-                        Checkbox::make('mon')
+                        Checkbox::make('monday')
                             ->label('Mon')
                             ->columnSpan(2),
 
-                        Checkbox::make('tue')
+                        Checkbox::make('tuesday')
                             ->label('Tue')
                             ->columnSpan(2),
 
-                        Checkbox::make('wed')
+                        Checkbox::make('wednesday')
                             ->label('Wed')
                             ->columnSpan(2),
 
-                        Checkbox::make('thu')
+                        Checkbox::make('thursday')
                             ->label('Thu')
                             ->columnSpan(2),
 
-                        Checkbox::make('fri')
+                        Checkbox::make('friday')
                             ->label('Fri')
                             ->columnSpan(2),
 
-                        Checkbox::make('sat')
+                        Checkbox::make('saturday')
                             ->label('Sat')
                             ->columnSpan(2),
                     ])
@@ -465,7 +477,7 @@ public function form(Form $form): Form
                             ->label('Day')
                             ->columnSpan(1),
 
-                        Select::make('repeat_every')
+                        Select::make('occurs_on_monthly')
                             ->label('')
                             ->options([
                                 '1' => '1',
@@ -565,13 +577,14 @@ public function form(Form $form): Form
                             ->label('Unit/Apartment Number')
                             ->columnSpan(1),
 
-                        TextInput::make('unit')
+                        TextInput::make('unit_apartment_number')
                             ->label('')
                             ->prefixIcon('heroicon-s-building-office')
                             ->placeholder('Enter Unit/Apartment Number')
                             ->columnSpan(2),
                     ]),
             ])
+            ->statePath('time_and_location')
             ->extraAttributes(['style' => 'margin-top:10px'])
             ->collapsible(),
 
@@ -605,7 +618,7 @@ public function form(Form $form): Form
                             ->label('Choose Carer')
                             ->columnSpan(1),
 
-                        Select::make('carer')
+                        Select::make('user_id')
                             ->label('')
                             ->options(function () {
                                 $authUser = Auth::user();
@@ -685,7 +698,7 @@ public function form(Form $form): Form
                             ->label('Choose pay group')
                             ->columnSpan(1),
 
-                        Select::make('pay_group')
+                        Select::make('pay_group_id')
                             ->label('')
                             ->options(function () {
                                 $auth = auth()->id();
@@ -698,6 +711,7 @@ public function form(Form $form): Form
                             ->columnSpan(2),
                     ]),
             ])
+            ->statePath('carer_section')
             ->extraAttributes(['style' => 'margin-top:10px']),
 
             Section::make(
@@ -724,7 +738,7 @@ public function form(Form $form): Form
                             ->label('Open To')
                             ->columnSpan(1),
 
-                        Select::make('team')
+                        Select::make('team_id')
                             ->label('')
                             ->options(function () {
                                 $authUser = Auth::user();
@@ -772,6 +786,7 @@ public function form(Form $form): Form
                             ->columnSpan(2),
                     ]),
             ])
+            ->statePath('job_section')
             ->extraAttributes(['style' => 'margin-top:10px']),
 
             Section::make(
@@ -798,11 +813,12 @@ public function form(Form $form): Form
             ->schema([
                 Grid::make(1)
                     ->schema([
-                        RichEditor::make('instruction')
+                        RichEditor::make('description')
                             ->label('')
                             ->columnSpan(1),
                     ]),
             ])
+            ->statePath('instruction')
             ->extraAttributes(['style' => 'margin-top:10px;margin-bottom:30px'])
             ->collapsible(),
 
@@ -810,14 +826,61 @@ public function form(Form $form): Form
 
     }
 
-    #[On('refresh-and-open-modal')]
-    public function refreshAndOpenModal(): void
-    {
-        \Log::info('refreshAndOpenModal called'); // Debug log
-        $this->selectedDate = session('selected_date'); // Retrieve from session
-        \Log::info('Retrieved date from session', ['selected_date' => $this->selectedDate]);
-        $this->form->fill(['date' => $this->selectedDate]); // Fill DatePicker
-        \Log::info('Form state after fill', $this->data); // Debug form state
-        $this->dispatch('open-task-modal'); // Trigger modal display
-    }
+public function createShift()
+{
+     $data = $this->form->getState();
+
+    // ✅ Debug check
+    logger()->info('Shift create request:', $data);
+    dd($data);  // You should SEE this dump
+
+    Shift::create([
+        'client_section' => [
+            'client_id'     => data_get($data, 'client_section.client_id'),
+            'price_book_id' => data_get($data, 'client_section.price_book_id'),
+            'funds'         => data_get($data, 'client_section.funds'),
+        ],
+        'shift_section' => [
+            'shift_type_id'          => data_get($data, 'shift_section.shift_type_id'),
+            'additional_shift_types' => data_get($data, 'shift_section.additional_shift_types', []),
+            'allowance_id'           => data_get($data, 'shift_section.allowance_id'),
+        ],
+        'time_and_location' => [
+            'start_date'              => data_get($data, 'time_and_location.start_date'),
+            'shift_finishes_next_day' => data_get($data, 'time_and_location.shift_finishes_next_day', false),
+            'start_time'              => data_get($data, 'time_and_location.start_time'),
+            'end_time'                => data_get($data, 'time_and_location.end_time'),
+            'repeat'                  => data_get($data, 'time_and_location.repeat', false),
+            'recurrance'              => data_get($data, 'time_and_location.recurrance'),
+            'repeat_every'            => data_get($data, 'time_and_location.repeat_every'),
+            'occurs_on_monthly'       => data_get($data, 'time_and_location.occurs_on_monthly'),
+            'occurs_on_weekly'        => data_get($data, 'time_and_location.occurs_on_weekly', []),
+            'end_date'                => data_get($data, 'time_and_location.end_date'),
+            'address'                 => data_get($data, 'time_and_location.address'),
+            'unit_apartment_number'   => data_get($data, 'time_and_location.unit_apartment_number'),
+        ],
+        'add_to_job_board' => data_get($data, 'add_to_job_board', false),
+        'carer_section' => empty($data['add_to_job_board']) ? [
+            'user_id'      => data_get($data, 'carer_section.user_id'),
+            'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
+        ] : null,
+        'job_section' => !empty($data['add_to_job_board']) ? [
+            'team_id'         => data_get($data, 'job_section.team_id'),
+            'shift_assignment'=> data_get($data, 'job_section.shift_assignment'),
+        ] : null,
+        'instruction' => [
+            'description' => data_get($data, 'instruction.description'),
+        ],
+    ]);
+
+    Notification::make()
+        ->title('New shift created successfully')
+        ->success()
+        ->send();
+
+    $this->redirect('/admin/schedular');
+}
+
+
+
 }
