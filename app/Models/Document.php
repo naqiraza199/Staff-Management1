@@ -23,4 +23,8 @@ class Document extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+        protected $casts = [
+        'no_expiration' => 'boolean', // important!
+    ];
 }

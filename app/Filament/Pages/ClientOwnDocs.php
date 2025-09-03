@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Pages;
 
-use App\Filament\Resources\ClientDocumentResource\Pages;
-use App\Filament\Resources\ClientDocumentResource\RelationManagers;
+use Filament\Pages\Page;
+use Filament\Tables;
+use Filament\Tables\Table;
 use App\Models\Document;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Storage;
@@ -20,128 +18,96 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
-use App\Models\Client;
+use App\Models\DocumentCategory;
 
-
-
-class ClientDocumentResource extends Resource
+class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 {
-    protected static ?string $model = Document::class;
+    use Tables\Concerns\InteractsWithTable;
 
-    protected static ?string $navigationGroup = 'Client Management';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-check';
+    protected static string $view = 'filament.pages.client-own-docs';
 
-    protected static ?int $navigationSort = 4;
+        protected static ?string $title = null;
+        public ?int $clientId = null;
 
-                  public static function canCreate(): bool
-    {
-        return false;
-    }
 
-    public static function getEloquentQuery(): Builder
-{
-  return parent::getEloquentQuery()
-    ->where('user_id', auth()->id())
-    ->whereNotNull('client_id')
-    ->where(function ($query) {
-        $query->where('no_expiration', 1)
-              ->orWhereDate('expired_at', '>', \Carbon\Carbon::now());
-    });
+        public function getTitle(): string
+        {
+            $clientId = request()->query('client_id');
 
-}
+            if ($clientId) {
+                $client = \App\Models\Client::find($clientId);
 
-        
+                if ($client) {
+                    return "{$client->display_name} Documents";
+                }
+            }
 
-              public static function getModelLabel(): string
-    {
-        return 'Shared Documents';
-    }
+            return 'Client Documents';
+        }
 
-    public static function getPluralModelLabel(): string
-    {
-        return 'Shared Documents';
-    }
+    
+       public static function shouldRegisterNavigation(): bool
+        {
+            return false;
+        }
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                //
-            ]);
-    }
+         public static function getRoutePath(): string
+        {
+            return '/client-own-docs';
+        }
 
-    public static function table(Table $table): Table
+
+        public function mount(): void
+        {
+            $this->clientId = request()->query('client_id');
+        }
+
+          public function table(Table $table): Table
     {
         return $table
+            ->query(fn (): Builder =>
+                Document::query()->where('client_id', $this->clientId)
+            )
             ->columns([
+                // Tables\Columns\TextColumn::make('user.name')->label('Name')->searchable(),
 
-                  Tables\Columns\TextColumn::make('client.display_name')
-                  ->label('Client Name')
-                    ->searchable(),
                 Tables\Columns\BadgeColumn::make('type')
                     ->label('Type')
                     ->icon('heroicon-s-document-text')
                     ->colors([
-                        'primary' => 'PDF',       // Blue
-                         'brown' => 'DOC',         // #8f6232
-                        'lightgreen' => 'DOCX',   // #86de28
-                        'yee' => 'XLS',           // #f5dd02
-                        'stripe' => 'XLSX',         // #008000
-                        'darkk' => 'TXT',         // #BE3144
+                        'primary' => 'PDF',
+                        'brown' => 'DOC',
+                        'lightgreen' => 'DOCX',
+                        'yee' => 'XLS',
+                        'stripe' => 'XLSX',
+                        'darkk' => 'TXT',
                     ])
                     ->formatStateUsing(fn ($state) => strtoupper($state))
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-
-                Tables\Columns\TextColumn::make('documentCategory.name')
-                    ->label('Category')
-                    ->searchable(),
-
-                Tables\Columns\TextColumn::make('expired_at')
-                    ->label('Expired At')
-                    ->date('d/m/Y')
-                    ->searchable(),
-                         Tables\Columns\IconColumn::make('no_expiration')
-                    ->boolean()
-                    ->label('No Expiration')
-                    ->searchable(),
-
-            Tables\Columns\TextColumn::make('created_at')
-                            ->label('Last Update')
-                            ->since()
-                            ->sortable(),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                // Tables\Columns\TextColumn::make('client.display_name')->label('name')->searchable(),
+                Tables\Columns\TextColumn::make('name')->label('Document')->searchable(),
+                Tables\Columns\TextColumn::make('documentCategory.name')->label('Category')->searchable(),
+                Tables\Columns\TextColumn::make('expired_at')->label('Expired At')->date('d/m/Y')->searchable(),
+                Tables\Columns\IconColumn::make('no_expiration')->boolean()->label('No Expiration')->searchable(),
+                Tables\Columns\TextColumn::make('created_at')->label('Last Update')->since()->sortable(),
+                Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
-             ->headerActions([ // ✅ use this instead of ->actions()
+            ->headerActions([ // ✅ use this instead of ->actions()
             Tables\Actions\Action::make('Upload Document')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->form([
                     Grid::make(12)
                         ->schema([
-                             Select::make('client_id')
-                                    ->label('Select Client')
-                                            ->options(
-                                                Client::where('user_id', Auth::id())
-                                                    ->pluck('display_name', 'id') 
-                                            )
-                                    ->required()
-                                    ->columnSpan(6)
-                                    ->native(false),
+                             Forms\Components\Hidden::make('client_id')
+                                    ->default(fn ($livewire) => $livewire->clientId),
 
                                          Forms\Components\Checkbox::make('no_expiration')
                                             ->label('No Expiration')
                                             ->reactive() // 👈 important so Filament listens for changes
-                                            ->columnSpan(6),
+                                            ->columnSpan(12),
 
                             Select::make('document_category_id')
                                 ->relationship('documentCategory', 'name')
@@ -251,23 +217,14 @@ class ClientDocumentResource extends Resource
                     return [
                           Grid::make(12)
                         ->schema([
-                                                         Select::make('client_id')
-                                    ->label('Select Client')
-                                            ->options(
-                                                Client::where('user_id', Auth::id())
-                                                    ->pluck('display_name', 'id') 
-                                            )
-                                    ->required()
-                                    ->default($record->client_id)
-                                    ->columnSpan(6)
-                                    ->native(false),
+                                     
 
                                     
                             Forms\Components\Checkbox::make('no_expiration')
                             ->label('No Expiration')
                             ->reactive()
                             ->default(fn ($record) => $record?->no_expiration ?? false)
-                            ->columnSpan(6),
+                            ->columnSpan(12),
 
                         Select::make('document_category_id')
                                         ->label('Document Category')
@@ -308,7 +265,6 @@ class ClientDocumentResource extends Resource
 
                     $record->update([
                         'name' => $data['name'],
-                        'client_id' => $data['client_id'],
                         'document_category_id' => $data['document_category_id'],
                         'no_expiration' => $data['no_expiration'],
                         'expired_at' => $data['expired_at'],
@@ -341,28 +297,6 @@ class ClientDocumentResource extends Resource
 
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
-    }
-
-    
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListClientDocuments::route('/'),
-            // 'create' => Pages\CreateClientDocument::route('/create'),
-            // 'edit' => Pages\EditClientDocument::route('/{record}/edit'),
-        ];
+            ->defaultSort('id', 'desc');
     }
 }

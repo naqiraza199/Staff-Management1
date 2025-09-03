@@ -22,7 +22,7 @@ class CreateUser extends CreateRecord
         $user = parent::handleRecordCreation($data);
 
         $staffProfileFields = [
-            'salutation', 'first_name', 'middle_name', 'last_name', 'mobile_number', 'phone_number',
+            'salutation', 'mobile_number', 'phone_number',
             'role_type', 'role_id', 'gender', 'dob', 'employment_type', 'address', 'profile_pic'
         ];
 

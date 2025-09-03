@@ -40,36 +40,95 @@ class Schedular extends Page
     protected static string $view = 'filament.pages.schedular';
     protected static ?string $title = 'Schedular';
 
-    public ?array $data = [];
-    public bool $showTaskModal = false;
+    public ?array $data = [
+        'add_to_job_board' => null,
+        'shift_section' => [
+            'additional_shift_types' => null,
+            'shift_type_id' => null,
+            'allowance_id' => null,
+        ],
+        'instruction' => [
+            'description' => null,
+        ],
+        'job_section' => [
+            'team_id' => null,
+        ],
+    ];
 
-    public function mount()
+public $users; // List of users for the calendar
+public $shifts;
+public $clientNames;
+public $shiftTypeNames;
+
+public bool $showTaskModal = false;
+public ?int $shiftId = null;
+    public ?string $selectedDate = null;
+
+    public function loadShiftDetails()
     {
-        $authUser = Auth::user();
-        $companyId = Company::where('user_id', $authUser->id)->value('id');
-
-        if (!$companyId) {
-            $this->users = [];
-        } else {
-            $staffUserIds = StaffProfile::where('company_id', $companyId)->where('is_archive', 'Unarchive')->pluck('user_id');
-            $usersQuery = User::whereIn('id', $staffUserIds)->role('staff');
-
-            $allUsers = $usersQuery->get()->pluck('name')->toArray();
-            if (!in_array($authUser->name, $allUsers)) {
-                $allUsers[] = $authUser->name;
-            }
-
-            $this->users = $allUsers;
-        }
-        $this->clients = Client::where('user_id', $authUser->id)->where('is_archive', 'Unarchive')->get();
-
-        $this->priceBooks = PriceBook::with('priceBookDetails')
-            ->where('company_id', $companyId)
-            ->orderByDesc('id')
-            ->get();
-
-        $this->shiftTypes = ShiftType::where('user_id', $authUser->id)->get();
+        $this->dispatch('show-shift-details', [
+            'shiftId' => $this->shiftId,
+            'selectedDate' => $this->selectedDate,
+        ]);
     }
+
+public function mount()
+{
+    $authUser = Auth::user();
+    $companyId = Company::where('user_id', $authUser->id)->value('id');
+
+    if (!$companyId) {
+        $this->users = [];
+    } else {
+        $staffUserIds = StaffProfile::where('company_id', $companyId)->where('is_archive', 'Unarchive')->pluck('user_id');
+        $usersQuery = User::whereIn('id', $staffUserIds)->role('staff');
+
+        // Fetch users as a key-value array [user_id => name]
+        $allUsers = $usersQuery->get()->pluck('name', 'id')->toArray();
+        if (!array_key_exists($authUser->id, $allUsers)) {
+            $allUsers[$authUser->id] = $authUser->name;
+        }
+
+        $this->users = $allUsers;
+    }
+
+    // Fetch shifts filtered by company_id with add_to_job_board
+    $this->shifts = Shift::where('company_id', $companyId)->get()->map(function ($shift) {
+        return [
+            'user_id' => data_get($shift, 'carer_section.user_id'),
+            'start_date' => data_get($shift, 'time_and_location.start_date'),
+            'end_date' => data_get($shift, 'time_and_location.end_date'),
+            'repeat' => data_get($shift, 'time_and_location.repeat', false),
+            'recurrance' => data_get($shift, 'time_and_location.recurrance', 'None'),
+            'repeat_every_daily' => data_get($shift, 'time_and_location.repeat_every_daily'),
+            'repeat_every_weekly' => data_get($shift, 'time_and_location.repeat_every_weekly'),
+            'repeat_every_monthly' => data_get($shift, 'time_and_location.repeat_every_monthly'),
+            'occurs_on_monthly' => data_get($shift, 'time_and_location.occurs_on_monthly'),
+            'occurs_on_weekly' => data_get($shift, 'time_and_location.occurs_on_weekly', []),
+            'start_time' => data_get($shift, 'time_and_location.start_time'),
+            'end_time' => data_get($shift, 'time_and_location.end_time'),
+            'shift_type_id' => data_get($shift, 'shift_section.shift_type_id'),
+            'client_id' => data_get($shift, 'client_section.client_id'),
+            'id' => $shift->id,
+            'add_to_job_board' => data_get($shift, 'add_to_job_board', null),
+        ];
+    })->toArray();
+
+    $this->clients = Client::where('user_id', $authUser->id)->where('is_archive', 'Unarchive')->get();
+    
+    // Map client_id to display_name
+    $this->clientNames = $this->clients->pluck('display_name', 'id')->toArray();
+
+    $this->priceBooks = PriceBook::with('priceBookDetails')
+        ->where('company_id', $companyId)
+        ->orderByDesc('id')
+        ->get();
+
+    $this->shiftTypes = ShiftType::where('user_id', $authUser->id)->get();
+    
+    // Map shift_type_id to name
+    $this->shiftTypeNames = $this->shiftTypes->pluck('name', 'id')->toArray();
+}
 
     public function getUsersProperty()
     {
@@ -241,6 +300,9 @@ public function form(Form $form): Form
 
                         Select::make('allowance_id')
                             ->label('')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
                             ->options(
                                 \App\Models\Allowance::where('user_id', auth()->id())
                                     ->pluck('name', 'id')
@@ -352,7 +414,7 @@ public function form(Form $form): Form
                             ->label('Repeat every')
                             ->columnSpan(3),
 
-                        Select::make('repeat_every')
+                        Select::make('repeat_every_daily')
                             ->label('')
                             ->options([
                                 '1' => '1',
@@ -380,8 +442,7 @@ public function form(Form $form): Form
                     ->extraAttributes([
                         'x-show' => "recurrance === 'Daily'",
                         'x-cloak' => true,
-                    ])
-                    ->dehydrated(false),
+                    ]),
 
                 Grid::make(10)
                     ->schema([
@@ -389,7 +450,7 @@ public function form(Form $form): Form
                             ->label('Repeat every')
                             ->columnSpan(3),
 
-                        Select::make('repeat_every')
+                        Select::make('repeat_every_weekly')
                             ->label('')
                             ->options([
                                 '1' => '1',
@@ -411,44 +472,44 @@ public function form(Form $form): Form
                             ->label('Week')
                             ->columnSpan(2),
 
-                        Placeholder::make('occurs_on_weekly')
+                        Placeholder::make('w_lab_occurs')
                             ->label('Occurs on')
                             ->columnSpan(2),
 
-                        Checkbox::make('sunday')
+                        Checkbox::make('occurs_on_weekly.sunday')
                             ->label('Sun')
                             ->columnSpan(2),
 
-                        Checkbox::make('monday')
+                        Checkbox::make('occurs_on_weekly.monday')
                             ->label('Mon')
                             ->columnSpan(2),
 
-                        Checkbox::make('tuesday')
+                        Checkbox::make('occurs_on_weekly.tuesday')
                             ->label('Tue')
                             ->columnSpan(2),
 
-                        Checkbox::make('wednesday')
+                        Checkbox::make('occurs_on_weekly.wednesday')
                             ->label('Wed')
                             ->columnSpan(2),
 
-                        Checkbox::make('thursday')
+                        Checkbox::make('occurs_on_weekly.thursday')
                             ->label('Thu')
                             ->columnSpan(2),
 
-                        Checkbox::make('friday')
+                        Checkbox::make('occurs_on_weekly.friday')
                             ->label('Fri')
                             ->columnSpan(2),
 
-                        Checkbox::make('saturday')
+                        Checkbox::make('occurs_on_weekly.saturday')
                             ->label('Sat')
                             ->columnSpan(2),
+
                     ])
                     ->extraAttributes([
                         'x-show' => "recurrance === 'Weekly'",
                         'x-cloak' => true,
                         'style' => 'margin-top:-10px',
-                    ])
-                    ->dehydrated(false),
+                    ]),
 
                 Grid::make(10)
                     ->schema([
@@ -456,7 +517,7 @@ public function form(Form $form): Form
                             ->label('Repeat every')
                             ->columnSpan(3),
 
-                        Select::make('repeat_every')
+                        Select::make('repeat_every_monthly')
                             ->label('')
                             ->options([
                                 '1' => '1',
@@ -522,8 +583,7 @@ public function form(Form $form): Form
                         'x-show' => "recurrance === 'Monthly'",
                         'x-cloak' => true,
                         'style' => 'margin-top:-40px',
-                    ])
-                    ->dehydrated(false),
+                    ]),
 
                 Grid::make(3)
                     ->schema([
@@ -740,6 +800,9 @@ public function form(Form $form): Form
 
                         Select::make('team_id')
                             ->label('')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
                             ->options(function () {
                                 $authUser = Auth::user();
 
@@ -829,10 +892,9 @@ public function form(Form $form): Form
 public function createShift()
 {
      $data = $this->form->getState();
-
-    // ✅ Debug check
-    logger()->info('Shift create request:', $data);
-    dd($data);  // You should SEE this dump
+     $authUser = Auth::user();
+     $shiftCompanyID = Company::where('user_id', $authUser->id)->value('id');
+    // dd($data); 
 
     Shift::create([
         'client_section' => [
@@ -843,34 +905,48 @@ public function createShift()
         'shift_section' => [
             'shift_type_id'          => data_get($data, 'shift_section.shift_type_id'),
             'additional_shift_types' => data_get($data, 'shift_section.additional_shift_types', []),
-            'allowance_id'           => data_get($data, 'shift_section.allowance_id'),
+            'allowance_id'           => data_get($data, 'shift_section.allowance_id', []),
         ],
         'time_and_location' => [
-            'start_date'              => data_get($data, 'time_and_location.start_date'),
-            'shift_finishes_next_day' => data_get($data, 'time_and_location.shift_finishes_next_day', false),
-            'start_time'              => data_get($data, 'time_and_location.start_time'),
-            'end_time'                => data_get($data, 'time_and_location.end_time'),
-            'repeat'                  => data_get($data, 'time_and_location.repeat', false),
-            'recurrance'              => data_get($data, 'time_and_location.recurrance'),
-            'repeat_every'            => data_get($data, 'time_and_location.repeat_every'),
-            'occurs_on_monthly'       => data_get($data, 'time_and_location.occurs_on_monthly'),
-            'occurs_on_weekly'        => data_get($data, 'time_and_location.occurs_on_weekly', []),
-            'end_date'                => data_get($data, 'time_and_location.end_date'),
-            'address'                 => data_get($data, 'time_and_location.address'),
-            'unit_apartment_number'   => data_get($data, 'time_and_location.unit_apartment_number'),
-        ],
+                'start_date'              => data_get($data, 'time_and_location.start_date'),
+                'shift_finishes_next_day' => data_get($data, 'time_and_location.shift_finishes_next_day', false),
+                'start_time'              => data_get($data, 'time_and_location.start_time'),
+                'end_time'                => data_get($data, 'time_and_location.end_time'),
+                'repeat'                  => data_get($data, 'time_and_location.repeat', false),
+                'recurrance'              => data_get($data, 'time_and_location.recurrance'),
+                'repeat_every_daily'            => data_get($data, 'time_and_location.repeat_every_daily'),
+                'repeat_every_weekly'            => data_get($data, 'time_and_location.repeat_every_weekly'),
+                'repeat_every_monthly'            => data_get($data, 'time_and_location.repeat_every_monthly'),
+                'occurs_on_monthly'       => data_get($data, 'time_and_location.occurs_on_monthly'),
+
+                'occurs_on_weekly' => [
+                    'sunday'    => data_get($data, 'time_and_location.occurs_on_weekly.sunday', false),
+                    'monday'    => data_get($data, 'time_and_location.occurs_on_weekly.monday', false),
+                    'tuesday'   => data_get($data, 'time_and_location.occurs_on_weekly.tuesday', false),
+                    'wednesday' => data_get($data, 'time_and_location.occurs_on_weekly.wednesday', false),
+                    'thursday'  => data_get($data, 'time_and_location.occurs_on_weekly.thursday', false),
+                    'friday'    => data_get($data, 'time_and_location.occurs_on_weekly.friday', false),
+                    'saturday'  => data_get($data, 'time_and_location.occurs_on_weekly.saturday', false),
+                ],
+
+
+                'end_date'              => data_get($data, 'time_and_location.end_date'),
+                'address'               => data_get($data, 'time_and_location.address'),
+                'unit_apartment_number' => data_get($data, 'time_and_location.unit_apartment_number'),
+            ],
         'add_to_job_board' => data_get($data, 'add_to_job_board', false),
         'carer_section' => empty($data['add_to_job_board']) ? [
             'user_id'      => data_get($data, 'carer_section.user_id'),
             'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
         ] : null,
         'job_section' => !empty($data['add_to_job_board']) ? [
-            'team_id'         => data_get($data, 'job_section.team_id'),
+            'team_id'         => data_get($data, 'job_section.team_id' , []),
             'shift_assignment'=> data_get($data, 'job_section.shift_assignment'),
         ] : null,
         'instruction' => [
             'description' => data_get($data, 'instruction.description'),
         ],
+        'company_id' => $shiftCompanyID,
     ]);
 
     Notification::make()

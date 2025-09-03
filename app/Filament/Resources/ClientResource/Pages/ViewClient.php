@@ -47,6 +47,7 @@ protected function getHeaderActions(): array
 
             Action::make('documents')
                 ->label('Documents')
+                ->url(fn ($record) => route('filament.admin.pages.client-own-docs', ['client_id' => $record->id]))
                 ->icon('heroicon-o-document'),
 
             Action::make('print_roster')

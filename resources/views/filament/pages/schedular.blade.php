@@ -1,21 +1,12 @@
 <x-filament-panels::page>
+    <!-- Ensure CSRF token is available for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<style>
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-
-          body {
-            font-family: 'Poppins', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            /* background: linear-gradient(135deg, #1e3a8a, #6d28d9); */
-            color: #e5e7eb;
-            overflow-x: auto;
-        }
+ 
         .calendar-container {
-            background: rgb(255, 255, 255);
+            background: #fff;
             backdrop-filter: blur(10px);
             padding: 24px;
             border-radius: 20px;
@@ -42,15 +33,15 @@
             gap: 10px;
             border-radius: 12px;
         }
-        .calendar-day {
-            padding: 16px;
-            border: 1px solid rgba(58, 115, 224, 0.57);
-            min-height: 140px;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.05);
-            transition: transform 0.3s ease, background 0.3s ease;
-            border-radius: 8px;
-        }
+            .calendar-day {
+                padding: 0px;
+                border: 1px solid rgba(58, 115, 224, 0.57);
+                min-height: 140px;
+                cursor: pointer;
+                background: rgba(255, 255, 255, 0.05);
+                transition: transform 0.3s ease, background 0.3s ease;
+                border-radius: 8px;
+            }
         .calendar-day:hover {
             transform: scale(1.02);
             background: rgb(20, 139, 209);
@@ -83,10 +74,11 @@
             padding: 8px;
             margin: 8px 0;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 12px;
             color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             transition: transform 0.3s ease;
+            height: 90px;
         }
         .task:hover {
             transform: translateY(-3px);
@@ -103,7 +95,7 @@
             justify-content: flex-end;
         }
         .task-modal-content, .staff-modal-content {
-  background: rgba(255, 255, 255, 0.79);
+            background: rgba(255, 255, 255, 0.79);
             backdrop-filter: blur(15px);
             padding: 30px;
             width: 700px;
@@ -228,20 +220,19 @@
             padding: 12px;
             font-weight: 600;
         }
-        .but-div{
+        .but-div {
             float: right;
         }
         .card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        overflow: hidden;
-        margin: 20px auto;
-        border: 1px solid #e5e7eb;
-        margin-top: 100px;
-        width: 100%;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 20px auto;
+            border: 1px solid #e5e7eb;
+            margin-top: 100px;
+            width: 100%;
         }
-
         .card-header {
             background: #f9fafb;
             padding: 12px 16px;
@@ -253,21 +244,17 @@
             align-items: center;
             gap: 8px;
         }
-
         .card-header .icon {
             font-size: 1.2rem;
-            color: #10b981; /* green like Filament */
+            color: #10b981;
         }
-
         .card-body {
             padding: 16px;
         }
-
         .form-group {
             margin-bottom: 16px;
             display: flex;
         }
-
         .form-group label {
             font-weight: 500;
             margin-bottom: 6px;
@@ -275,27 +262,26 @@
             width: 20%;
             margin-top: 15px;
         }
-
         .form-group input,
         .form-group select {
-                width: 60%;
-                padding: 10px;
-                border: 1px solid #d1d5db;
-                border-radius: 8px;
-                font-size: 0.95rem;
-                color: #494747;
-                margin-left: 170px;
+            width: 60%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #494747;
+            margin-left: 170px;
         }
-                .form-groupp input,
+        .form-groupp input,
         .form-groupp select {
-                width: 60%;
-                padding: 10px;
-                border: 1px solid #d1d5db;
-                border-radius: 8px;
-                font-size: 0.95rem;
-                color: #494747;
+            width: 60%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #494747;
         }
-        .funds{
+        .funds {
             color: orange;
             background: #FDF6EC;
             font-size: 13px;
@@ -305,130 +291,114 @@
             width: 100%;
             margin-top: 10px;
         }
-         .staff-modal-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    width: 55%;
-    margin: auto;
-    padding: 65px;
-  }
-
-  .staff-heading {
-    margin-bottom: 10px;
-    color: #222;
-  }
-
-  .staff-section-title {
-    font-weight: bold;
-    margin: 15px 0;
-    color: #333;
-  }
-
-  .staff-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .staff-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .staff-label {
-    font-weight: 500;
-    color: #444;
-  }
-
-  .staff-input {
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    width: 100%;
-    color: #444;
-  }
-
-  .staff-flex-row {
-    display: flex;
-    gap: 10px;
-  }
-
-  .staff-flex-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .staff-toggle-btns {
-    display: flex;
-    gap: 10px;
-  }
-
-  .staff-toggle {
-    padding: 8px 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: #f9f9f9;
-    cursor: pointer;
-    color: #444;
-  }
-
-  .staff-toggle-active {
-    background: #007bff;
-    color: white;
-    border-color: #007bff;
-  }
-
-  .staff-check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    color: #444;
-
-  }
-
-  .staff-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .staff-btn {
-    border: none;
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  .staff-btn-primary {
-    background: #007bff;
-    color: white;
-  }
-
-  .staff-btn-primary:hover {
-    background: #0056b3;
-  }
-
-  .staff-btn-secondary {
-    background: #e0e0e0;
-    color: #333;
-  }
-
-  .staff-btn-fullview {
-    background: transparent;
-    border: none;
-    font-size: 16px;
-    float: right;
-    cursor: pointer;
-  }
+        .staff-modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            width: 55%;
+            margin: auto;
+            padding: 65px;
+        }
+        .staff-heading {
+            margin-bottom: 10px;
+            color: #222;
+        }
+        .staff-section-title {
+            font-weight: bold;
+            margin: 15px 0;
+            color: #333;
+        }
+        .staff-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .staff-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .staff-label {
+            font-weight: 500;
+            color: #444;
+        }
+        .staff-input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            width: 100%;
+            color: #444;
+        }
+        .staff-flex-row {
+            display: flex;
+            gap: 10px;
+        }
+        .staff-flex-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .staff-toggle-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .staff-toggle {
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            cursor: pointer;
+            color: #444;
+        }
+        .staff-toggle-active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .staff-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+        .staff-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .staff-btn {
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .staff-btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .staff-btn-primary:hover {
+            background: #0056b3;
+        }
+        .staff-btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .staff-btn-fullview {
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            float: right;
+            cursor: pointer;
+        }
+        .whiti{
+            /* background-color: white; */
+        }
     </style>
 
-</head>
+<div wire:ignore.self>
     <div class="calendar-container">
         <div class="calendar-header">
             <button class="buto" onclick="prevWeek()">Previous Week</button>
@@ -447,62 +417,103 @@
         </div>
     </div>
 
-<div class="modal" id="taskModal">
-    <div class="task-modal-content" id="taskModalContent">
-        <button class="buto full-view-btn" style="float: right" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
-                              
-      <div x-data="{ repeatChecked: false, jobBoardActive: false, recurrance: '' }">
-          {{ $this->form }}
-      </div>
-
-        <div class="but-div">
-            <button class="buto" wire:click="createShift">Save</button>
-            <button class="buto" onclick="closeModal()">Cancel</button>
+    <div class="modal" id="taskModal">
+        <div class="task-modal-content" id="taskModalContent">
+            <div class="whiti">
+            <button class="buto full-view-btn" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
+            <button class="buto" >Advanced Edit</button>
+            </div>
+            <div x-data="{ repeatChecked: false, jobBoardActive: false, recurrance: '' }">
+                {{ $this->form }}
+            </div>
+            <div class="but-div">
+                <x-filament::button color="primary" wire:click="createShift">SAVE</x-filament::button>
+                <x-filament::button color="danger" onclick="closeModal()">CANCEL</x-filament::button>
+            </div>
         </div>
-
     </div>
-</div>
 
-<div class="modal" id="staffModal">
-  <div class="staff-modal-content" id="staffModalContent">
-    @livewire(App\Filament\Pages\StaffFormPage::class)
-  </div>
-</div>
+    <div class="modal" id="staffModal">
+        <div class="staff-modal-content" id="staffModalContent">
+            @livewire('app.filament.pages.staff-form-page')
+        </div>
+    </div>
 
+    <!-- Right-side slider for shift details -->
+    <div class="slider" id="shiftSlider" wire:ignore>
+        <div class="slider-content">
+            <button class="buto close-btn" onclick="closeSlider()">&times;</button>
+            <h2>Shift Details</h2>
+               <livewire:shift-details :shift-id="$shiftId" :selected-date="$selectedDate" />
+        </div>
+    </div>
 
+    <style>
+        .slider {
+            position: fixed;
+            top: 0;
+            right: -400px; /* Hidden by default */
+            width: 400px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+            transition: right 0.3s ease-in-out;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .slider.open {
+            right: 0; /* Slide in */
+        }
+        .slider-content {
+            padding: 20px;
+        }
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .task {
+            cursor: pointer;
+            padding: 5px;
+            margin: 2px 0;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        .calendar-day {
+            min-height: 130px;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+        .staff-cell {
+            font-weight: bold;
+            padding: 10px;
+        }
+    </style>
 
-<script>
-  function toggleSalutation() {
-    let salutation = document.getElementById("salutation");
-    salutation.style.display = document.getElementById("useSalutation").checked ? "block" : "none";
-  }
+    <script>
+        let currentDate = new Date();
+        const users = @json($users ?? []);
+        const shifts = @json($shifts ?? []);
+        const clientNames = @json($clientNames ?? []);
+        const shiftTypeNames = @json($shiftTypeNames ?? []);
 
-  function setUserType(type) {
-    const carerBtn = document.querySelectorAll(".staff-toggle")[0];
-    const officeBtn = document.querySelectorAll(".staff-toggle")[1];
-    const rolesGroup = document.getElementById("rolesGroup");
+        console.log('Shift Data:', shifts);
 
-    if (type === "carer") {
-      carerBtn.classList.add("staff-toggle-active");
-      officeBtn.classList.remove("staff-toggle-active");
-      rolesGroup.style.display = "none";
-    } else {
-      officeBtn.classList.add("staff-toggle-active");
-      carerBtn.classList.remove("staff-toggle-active");
-      rolesGroup.style.display = "flex";
-      rolesGroup.style.flexDirection = "column";
-      rolesGroup.style.gap = "5px";
-    }
-  }
-</script>
-
-<script>
-let currentDate = new Date();
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || {};
-        let staffList = @json($this->users); // Use database users including auth user
+        function formatTime(time) {
+            if (!time) return '';
+            const [hours] = time.split(':').map(Number);
+            const period = hours >= 12 ? 'pm' : 'am';
+            const formattedHours = hours % 12 || 12;
+            return `${formattedHours}${period}`;
+        }
 
         function renderCalendar() {
+            // console.log('Debug Data:', { shifts, clientNames, shiftTypeNames });
             const calendar = document.getElementById('calendar');
+            if (!calendar) {
+                console.error('Calendar element not found');
+                return;
+            }
             const weekRange = document.getElementById('week-range');
             const startOfWeek = new Date(currentDate);
             startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
@@ -516,16 +527,19 @@ let currentDate = new Date();
             for (let i = 0; i < 7; i++) {
                 const day = new Date(startOfWeek);
                 day.setDate(startOfWeek.getDate() + i);
-                document.getElementById(`day${i}`).textContent = `${day.toLocaleDateString('en-US', { weekday: 'short' })} ${day.getDate()}`;
+                const dayHeader = document.getElementById(`day${i}`);
+                if (dayHeader) {
+                    dayHeader.textContent = `${day.toLocaleDateString('en-US', { weekday: 'short' })} ${day.getDate()}`;
+                }
             }
 
-            // Clear previous content
+            // Clear previous content (keep headers)
             while (calendar.children.length > 8) {
                 calendar.removeChild(calendar.lastChild);
             }
 
-            // Add static task rows
-            const staticTasks = ['Vacant Shft', 'Job Board'];
+            // Add static task rows (Vacant Shift, Job Board)
+            const staticTasks = ['Vacant Shift', 'Job Board'];
             staticTasks.forEach(task => {
                 const taskCell = document.createElement('div');
                 taskCell.className = 'staff-cell';
@@ -535,37 +549,175 @@ let currentDate = new Date();
                 for (let i = 0; i < 7; i++) {
                     const day = new Date(startOfWeek);
                     day.setDate(startOfWeek.getDate() + i);
-                    const dateKey = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+                    const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
                     const dayCell = document.createElement('div');
                     dayCell.className = 'calendar-day';
+
+                    // Handle shifts for Job Board
+                    if (task === 'Job Board') {
+                        const jobBoardShifts = shifts.filter(shift => {
+                            if (!shift.add_to_job_board || shift.add_to_job_board !== true) return false;
+
+                            const shiftStartDate = new Date(shift.start_date);
+                            const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
+                            const currentDay = new Date(dateKey);
+
+                            if (isNaN(shiftStartDate) || isNaN(shiftEndDate)) {
+                                console.error('Invalid shift dates:', { shift, start_date: shift.start_date, end_date: shift.end_date });
+                                return false;
+                            }
+
+                            if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
+
+                            const recurrance = shift.recurrance || 'None';
+                            const deltaDays = Math.floor((currentDay - shiftStartDate) / (24 * 60 * 60 * 1000));
+
+                            if (recurrance === 'Daily') {
+                                const repeatEveryDaily = parseInt(shift.repeat_every_daily) || 1;
+                                return deltaDays % repeatEveryDaily === 0;
+                            } else if (recurrance === 'Weekly') {
+                                const repeatEveryWeekly = parseInt(shift.repeat_every_weekly) || 1;
+                                const deltaWeeks = Math.floor(deltaDays / 7);
+                                if (deltaWeeks % repeatEveryWeekly === 0) {
+                                    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                    const currentDayName = dayNames[currentDay.getUTCDay()];
+                                    return shift.occurs_on_weekly && shift.occurs_on_weekly[currentDayName] === true;
+                                }
+                                return false;
+                            } else if (recurrance === 'Monthly') {
+                                const repeatEveryMonthly = parseInt(shift.repeat_every_monthly) || 1;
+                                const occursOnMonthly = parseInt(shift.occurs_on_monthly);
+                                if (isNaN(occursOnMonthly)) return false;
+                                const startYear = shiftStartDate.getUTCFullYear();
+                                const startMonth = shiftStartDate.getUTCMonth();
+                                const currentYear = currentDay.getUTCFullYear();
+                                const currentMonth = currentDay.getUTCMonth();
+                                const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
+                                if (monthsDelta % repeatEveryMonthly === 0) {
+                                    return currentDay.getUTCDate() === occursOnMonthly;
+                                }
+                                return false;
+                            }
+                            return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
+                        });
+
+                        if (jobBoardShifts.length > 0) {
+                            jobBoardShifts.forEach(shift => {
+                                const taskDiv = document.createElement('div');
+                                taskDiv.className = 'task';
+                                const timeRange = shift.start_time && shift.end_time 
+                                    ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}` 
+                                    : 'No Time';
+                                const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+                                const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
+                                taskDiv.innerHTML = `${timeRange}<br>${shiftType}<br>${clientName}`;
+                                taskDiv.onclick = (e) => {
+                                    e.stopPropagation();
+                                    openShiftSlider(shift.id, dateKey);
+                                };
+                                dayCell.appendChild(taskDiv);
+                            });
+                        }
+                    }
+
                     dayCell.onclick = () => openModal(`${task}_${dateKey}`, dateKey);
                     calendar.appendChild(dayCell);
                 }
             });
 
-            // Add staff rows from database users including auth user
-            staffList.forEach(staff => {
+            // Add staff rows and shifts
+            Object.entries(users).forEach(([userId, userName]) => {
                 const staffCell = document.createElement('div');
                 staffCell.className = 'staff-cell';
-                staffCell.textContent = staff;
+                staffCell.textContent = userName;
                 calendar.appendChild(staffCell);
 
                 for (let i = 0; i < 7; i++) {
                     const day = new Date(startOfWeek);
                     day.setDate(startOfWeek.getDate() + i);
-                    const dateKey = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+                    const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
                     const dayCell = document.createElement('div');
                     dayCell.className = 'calendar-day';
-                    const key = `${staff}_${dateKey}`;
-                    if (tasks[key]) {
-                        tasks[key].forEach(task => {
+
+                    // Find shifts for this user and date
+                    const userShifts = shifts.filter(shift => {
+                        if (!shift || shift.user_id != userId) return false;
+
+                        const shiftStartDate = new Date(shift.start_date);
+                        const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
+                        const currentDay = new Date(dateKey);
+
+                        // Validate dates
+                        if (isNaN(shiftStartDate) || isNaN(shiftEndDate)) {
+                            console.error('Invalid shift dates:', { shift, start_date: shift.start_date, end_date: shift.end_date });
+                            return false;
+                        }
+
+                        // Check if the current day is within the shift's date range
+                        if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
+
+                        // Handle recurrence
+                        const recurrance = shift.recurrance || 'None';
+                        const deltaDays = Math.floor((currentDay - shiftStartDate) / (24 * 60 * 60 * 1000));
+
+                        if (recurrance === 'Daily') {
+                            const repeatEveryDaily = parseInt(shift.repeat_every_daily) || 1;
+                            return deltaDays % repeatEveryDaily === 0;
+                        } else if (recurrance === 'Weekly') {
+                            const repeatEveryWeekly = parseInt(shift.repeat_every_weekly) || 1;
+                            const deltaWeeks = Math.floor(deltaDays / 7);
+                            if (deltaWeeks % repeatEveryWeekly === 0) {
+                                const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                const currentDayName = dayNames[currentDay.getUTCDay()];
+                                return shift.occurs_on_weekly && shift.occurs_on_weekly[currentDayName] === true;
+                            }
+                            return false;
+                        } else if (recurrance === 'Monthly') {
+                            const repeatEveryMonthly = parseInt(shift.repeat_every_monthly) || 1;
+                            const occursOnMonthly = parseInt(shift.occurs_on_monthly);
+                            if (isNaN(occursOnMonthly)) {
+                                console.error('Invalid occurs_on_monthly:', shift.occurs_on_monthly);
+                                return false;
+                            }
+                            const startYear = shiftStartDate.getUTCFullYear();
+                            const startMonth = shiftStartDate.getUTCMonth();
+                            const currentYear = currentDay.getUTCFullYear();
+                            const currentMonth = currentDay.getUTCMonth();
+                            const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
+                            if (monthsDelta % repeatEveryMonthly === 0) {
+                                return currentDay.getUTCDate() === occursOnMonthly;
+                            }
+                            return false;
+                        }
+
+                        // Non-recurring shift (repeat: false or no recurrance)
+                        return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
+                    });
+
+                    if (userShifts.length > 0) {
+                        userShifts.forEach(shift => {
+                            // console.log('Shift Debug:', { 
+                            //     shift, 
+                            //     shiftType: shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift', 
+                            //     client: clientNames[String(shift.client_id)] || 'Unknown Client' 
+                            // });
                             const taskDiv = document.createElement('div');
                             taskDiv.className = 'task';
-                            taskDiv.textContent = task;
+                            const timeRange = shift.start_time && shift.end_time 
+                                ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}` 
+                                : 'No Time';
+                            const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+                            const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
+                            taskDiv.innerHTML = `${timeRange}<br>${shiftType}<br>${clientName}`;
+                            taskDiv.onclick = (e) => {
+                                e.stopPropagation(); // Prevent dayCell click
+                                openShiftSlider(shift.id, dateKey);
+                            };
                             dayCell.appendChild(taskDiv);
                         });
                     }
-                    dayCell.onclick = () => openModal(key, dateKey);
+
+                    dayCell.onclick = () => openModal(`${userName}_${dateKey}`, dateKey);
                     calendar.appendChild(dayCell);
                 }
             });
@@ -575,6 +727,19 @@ let currentDate = new Date();
             addStaffCell.className = 'add-staff-cell';
             addStaffCell.innerHTML = `<button class="add-staff-btn" onclick="openStaffModal()">Add Staff</button>`;
             calendar.appendChild(addStaffCell);
+        }
+
+        function openShiftSlider(shiftId, dateKey) {
+            console.log('Opening slider for shift:', shiftId, 'on date:', dateKey);
+            Livewire.dispatch('set-shift-details', { shiftId: shiftId, selectedDate: dateKey });
+            const slider = document.getElementById('shiftSlider');
+            if (slider) slider.classList.add('open');
+        }
+
+        function closeSlider() {
+            const slider = document.getElementById('shiftSlider');
+            if (slider) slider.classList.remove('open');
+            Livewire.dispatch('set-shift-details', { shiftId: null, selectedDate: null });
         }
 
         function prevWeek() {
@@ -587,113 +752,90 @@ let currentDate = new Date();
             renderCalendar();
         }
 
-
         function openModal(key, dateKey) {
-    console.log(key, dateKey); // For debugging
+            console.log('Key:', key, 'DateKey:', dateKey);
+            const formattedDate = dateKey;
+            fetch('/set-selected-date', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ dateKey: formattedDate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Livewire.dispatch('refresh-and-open-modal');
+                }
+            })
+            .catch(error => console.error('Error setting session:', error));
 
-    const formattedDate = dateKey.replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, (match, year, month, day) => {
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    });
-    console.log('Formatted Date:', formattedDate); // Confirm formatted date
-
-    // AJAX POST to set session
-    fetch('/set-selected-date', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content // CSRF token (add <meta name="csrf-token" content="{{ csrf_token() }}"> in your layout)
-        },
-        body: JSON.stringify({ dateKey: formattedDate })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Dispatch Livewire event to refresh form and open modal
-            Livewire.dispatch('refresh-and-open-modal');
+            const modal = document.getElementById('taskModal');
+            if (modal) modal.style.display = 'flex';
         }
-    })
-    .catch(error => console.error('Error setting session:', error));
 
-           const modal = document.getElementById('taskModal');
-            modal.style.display = 'flex';
-}
+        function closeModal() {
+            const modal = document.getElementById('taskModal');
+            if (modal) modal.style.display = 'none';
+        }
 
-function closeModal() {
-    const modal = document.getElementById('taskModal');
-    modal.style.display = 'none';
-}
+        function openStaffModal() {
+            const modal = document.getElementById('staffModal');
+            if (modal) modal.style.display = 'flex';
+        }
 
-// Close modal when clicking outside the content
-const taskModal = document.getElementById('taskModal');
-taskModal.addEventListener('click', function(event) {
-    if (event.target === taskModal) {
-        closeModal();
-    }
-});
+        function closeStaffModal() {
+            const modal = document.getElementById('staffModal');
+            if (modal) modal.style.display = 'none';
+        }
 
-// Listen for Livewire event to open the modal
-document.addEventListener('livewire:initialized', () => {
+        function toggleFullView(modalId) {
+            const modalContent = document.getElementById(modalId);
+            if (modalContent) modalContent.classList.toggle('full-view');
+        }
+
+        // Close modals and slider when clicking outside
+        const taskModalEl = document.getElementById('taskModal');
+        if (taskModalEl) {
+            taskModalEl.addEventListener('click', function(event) {
+                if (event.target === this) closeModal();
+            });
+        }
+
+        const staffModalEl = document.getElementById('staffModal');
+        if (staffModalEl) {
+            staffModalEl.addEventListener('click', function(event) {
+                if (event.target === this) closeStaffModal();
+            });
+        }
+
+        const shiftSliderEl = document.getElementById('shiftSlider');
+        if (shiftSliderEl) {
+            shiftSliderEl.addEventListener('click', function(event) {
+                if (event.target === this) closeSlider();
+            });
+        }
+
+    document.addEventListener('livewire:initialized', () => {
     Livewire.on('open-task-modal', () => {
-        console.log('Received open-task-modal event'); // Debug
+        console.log('Received open-task-modal event');
         const modal = document.getElementById('taskModal');
-        modal.style.display = 'flex';
+        if (modal) modal.style.display = 'flex';
+    });
+
+    Livewire.on('set-shift-details', ({ shiftId, selectedDate }) => {
+        console.log('Set shift details:', { shiftId, selectedDate });
+
+        Livewire.dispatch('updateShift', { shiftId, selectedDate });
+
     });
 });
-     ////
-       
 
-     function openStaffModal() {
-        const modal = document.getElementById('staffModal');
-        modal.style.display = 'flex';
-    }
 
-    function closeStaffModal() {
-        document.getElementById('staffModal').style.display = 'none';
-    }
-
-    // Close modal when clicking outside content
-    const modal = document.getElementById('staffModal');
-    modal.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            closeStaffModal();
-        }
-    });
 
         // Initialize calendar
         renderCalendar();
-</script>
-
-<!-- TinyMCE CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
-
-<script>
-  tinymce.init({
-    selector: '#instructionEditor',
-    height: 300,
-    menubar: false,
-    plugins: 'advlist autolink lists link image charmap preview anchor ' +
-             'searchreplace visualblocks code fullscreen ' +
-             'insertdatetime media table code help wordcount',
-    toolbar: 'undo redo | formatselect | ' +
-             'bold italic underline | alignleft aligncenter ' +
-             'alignright alignjustify | bullist numlist outdent indent | ' +
-             'removeformat | help',
-    branding: false
-  });
-</script>
-<script>
-  const checkbox = document.getElementById('jobBoardCheckbox');
-  const defaultForm = document.getElementById('defaultForm');
-  const jobBoardForm = document.getElementById('jobBoardForm');
-
-  checkbox.addEventListener('change', function () {
-    if (this.checked) {
-      defaultForm.classList.add('hidden');
-      jobBoardForm.classList.remove('hidden');
-    } else {
-      jobBoardForm.classList.add('hidden');
-      defaultForm.classList.remove('hidden');
-    }
-  });
-</script>
+    </script>
+</div>
 </x-filament-panels::page>

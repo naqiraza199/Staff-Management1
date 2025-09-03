@@ -14,6 +14,7 @@ class Shift extends Model
         'carer_section',
         'job_section',
         'instruction',
+        'company_id',
     ];
 
     protected $casts = [
@@ -25,4 +26,19 @@ class Shift extends Model
         'job_section'        => 'array',
         'instruction'        => 'array',
     ];
+
+        public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function shiftType()
+    {
+        return $this->belongsTo(ShiftType::class);
+    }
 }

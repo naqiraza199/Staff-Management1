@@ -20,7 +20,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
-
+use App\Models\DocumentCategory;
 
 
 
@@ -66,9 +66,22 @@ class DocumentResource extends Resource
 
             return parent::getEloquentQuery()
                 ->with(['user:id,name', 'documentCategory:id,name'])
-                ->select(['id','user_id','document_category_id','type','name','expired_at','created_at','updated_at'])
+                ->select([
+                    'id',
+                    'user_id',
+                    'document_category_id',
+                    'type',
+                    'name',
+                    'expired_at',
+                    'no_expiration',
+                    'created_at',
+                    'updated_at'
+                ])
                 ->whereIn('user_id', $staffUserIds) // restrict to staff users
-                ->whereDate('expired_at', '>', \Carbon\Carbon::now())
+                ->where(function ($query) {
+                    $query->where('no_expiration', 1) // always include if no_expiration
+                        ->orWhereDate('expired_at', '>', \Carbon\Carbon::now()); // or valid date
+                })
                 ->whereNull('client_id');
         }
 
@@ -129,6 +142,11 @@ class DocumentResource extends Resource
                     ->date('d/m/Y')
                     ->searchable(),
 
+                Tables\Columns\IconColumn::make('no_expiration')
+                    ->boolean()
+                    ->label('No Expiration')
+                    ->searchable(),
+
             Tables\Columns\TextColumn::make('created_at')
                             ->label('Last Update')
                             ->since()
@@ -171,16 +189,63 @@ class DocumentResource extends Resource
                         ->toArray();
                 })
                 ->required()
-                                ->columnSpan(12),
-                            Select::make('document_category_id')
-                                ->relationship('documentCategory', 'name')
-                                ->label('Document Category')
-                                ->required()
+                ->columnSpan(6),
+                     Forms\Components\Checkbox::make('no_expiration')
+                                ->label('No Expiration')
+                                ->reactive()
                                 ->columnSpan(6),
+
+                
+                           Select::make('document_category_id')
+                                    ->label('Document Category')
+                                    ->required()
+                                    ->columnSpan(6)
+                                    ->searchable()
+                                    ->options(function () {
+                                        $grouped = [];
+
+                                        // Competencies
+                                        $grouped['Competencies'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_competencies', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // Qualifications
+                                        $grouped['Qualifications'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_qualifications', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // Compliance
+                                        $grouped['Compliance'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_compliance', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // KPI
+                                        $grouped['KPI'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_kpi', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // Other
+                                        $grouped['Other'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_other', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        return $grouped;
+                                    }),
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
-                                ->required()
+                                ->required(fn (callable $get) => ! $get('no_expiration')) 
+                                ->hidden(fn (callable $get) => $get('no_expiration'))
                                 ->columnSpan(6),
                         ]),
                     Forms\Components\FileUpload::make('file')
@@ -204,6 +269,7 @@ class DocumentResource extends Resource
                         'name' => $file,
                         'type' => $extension,
                         'document_category_id' => $doCategory,
+                        'no_expiration' => $data['no_expiration'],
                         'expired_at' => $expires,
                     ]);
 
@@ -300,18 +366,68 @@ class DocumentResource extends Resource
                         ->toArray();
                 })
                 ->required()
-                                ->columnSpan(12),
-                            Select::make('document_category_id')
-                                ->relationship('documentCategory', 'name')
-                                ->label('Document Category')
-                                ->required()
-                                ->default($record->document_category_id)
                                 ->columnSpan(6),
+
+                            Forms\Components\Checkbox::make('no_expiration')
+                            ->label('No Expiration')
+                            ->reactive()
+                            ->default(fn ($record) => $record?->no_expiration ?? false)
+                            ->columnSpan(6),
+
+
+
+                                Select::make('document_category_id')
+                                    ->label('Document Category')
+                                    ->required()
+                                    ->columnSpan(6)
+                                    ->searchable()
+                                    ->default($record->document_category_id)
+                                    ->options(function () {
+                                        $grouped = [];
+
+                                        // Competencies
+                                        $grouped['Competencies'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_competencies', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // Qualifications
+                                        $grouped['Qualifications'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_qualifications', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // Compliance
+                                        $grouped['Compliance'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_compliance', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // KPI
+                                        $grouped['KPI'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_kpi', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        // Other
+                                        $grouped['Other'] = DocumentCategory::query()
+                                            ->where('is_staff_doc', 1)
+                                            ->where('is_other', 1)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+
+                                        return $grouped;
+                                    }),
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
-                                ->required()
                                 ->default($record->expired_at)
+                                ->required(fn (callable $get) => ! $get('no_expiration')) 
+                                ->hidden(fn (callable $get) => $get('no_expiration'))
                                 ->columnSpan(6),
                         ]),
                         Forms\Components\FileUpload::make('name')
@@ -334,6 +450,7 @@ class DocumentResource extends Resource
                         'name' => $data['name'],
                         'document_category_id' => $data['document_category_id'],
                         'expired_at' => $data['expired_at'],
+                        'no_expiration' => $data['no_expiration'],
                         'type' => $extension,
                     ]);
 

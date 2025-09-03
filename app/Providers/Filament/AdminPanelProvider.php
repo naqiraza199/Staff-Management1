@@ -20,6 +20,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Http\Middleware\EnsureProfileAndCompanyCompleted;
 use App\Filament\Pages\Auth\Register;
 use Filament\Enums\ThemeMode;
+use App\Filament\Pages\StaffOwnDocs;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -42,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
                 'darkk' => Color::hex('#BE3144'),
                 'ngree' => Color::hex('#643843'),
                 'stripe' => Color::hex('#6860FF'),
+                'blackk' => Color::hex('#101016ff'),
             ])
             ->defaultThemeMode(ThemeMode::Light)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

@@ -39,6 +39,7 @@ class ViewUser extends ViewRecord
 
             Action::make('documents')
                 ->label('Documents')
+                ->url(fn ($record) => route('filament.admin.pages.staff-own-docs', ['user_id' => $record->id]))
                 ->icon('heroicon-o-document'),
         ])
             ->button()                     
