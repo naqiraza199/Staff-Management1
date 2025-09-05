@@ -421,7 +421,9 @@
         <div class="task-modal-content" id="taskModalContent">
             <div class="whiti">
             <button class="buto full-view-btn" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
+           <a href="{{ route('filament.admin.pages.advanced-shift-form') }}">
             <button class="buto" >Advanced Edit</button>
+            </a>
             </div>
             <div x-data="{ repeatChecked: false, jobBoardActive: false, recurrance: '' }">
                 {{ $this->form }}

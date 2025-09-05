@@ -15,6 +15,8 @@ class Shift extends Model
         'job_section',
         'instruction',
         'company_id',
+        'task_section',
+        'is_advanced_shift',
     ];
 
     protected $casts = [
@@ -22,9 +24,11 @@ class Shift extends Model
         'shift_section'      => 'array',
         'time_and_location'  => 'array',
         'add_to_job_board'   => 'boolean',
+        'is_advanced_shift'   => 'boolean',
         'carer_section'      => 'array',
         'job_section'        => 'array',
         'instruction'        => 'array',
+        'task_section'        => 'array',
     ];
 
         public function user()

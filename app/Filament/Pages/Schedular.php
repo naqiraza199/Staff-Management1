@@ -80,7 +80,10 @@ public function mount()
     if (!$companyId) {
         $this->users = [];
     } else {
-        $staffUserIds = StaffProfile::where('company_id', $companyId)->where('is_archive', 'Unarchive')->pluck('user_id');
+        $staffUserIds = StaffProfile::where('company_id', $companyId)
+            ->where('is_archive', 'Unarchive')
+            ->pluck('user_id');
+
         $usersQuery = User::whereIn('id', $staffUserIds)->role('staff');
 
         // Fetch users as a key-value array [user_id => name]
@@ -92,30 +95,80 @@ public function mount()
         $this->users = $allUsers;
     }
 
-    // Fetch shifts filtered by company_id with add_to_job_board
-    $this->shifts = Shift::where('company_id', $companyId)->get()->map(function ($shift) {
-        return [
-            'user_id' => data_get($shift, 'carer_section.user_id'),
-            'start_date' => data_get($shift, 'time_and_location.start_date'),
-            'end_date' => data_get($shift, 'time_and_location.end_date'),
-            'repeat' => data_get($shift, 'time_and_location.repeat', false),
-            'recurrance' => data_get($shift, 'time_and_location.recurrance', 'None'),
-            'repeat_every_daily' => data_get($shift, 'time_and_location.repeat_every_daily'),
-            'repeat_every_weekly' => data_get($shift, 'time_and_location.repeat_every_weekly'),
-            'repeat_every_monthly' => data_get($shift, 'time_and_location.repeat_every_monthly'),
-            'occurs_on_monthly' => data_get($shift, 'time_and_location.occurs_on_monthly'),
-            'occurs_on_weekly' => data_get($shift, 'time_and_location.occurs_on_weekly', []),
-            'start_time' => data_get($shift, 'time_and_location.start_time'),
-            'end_time' => data_get($shift, 'time_and_location.end_time'),
-            'shift_type_id' => data_get($shift, 'shift_section.shift_type_id'),
-            'client_id' => data_get($shift, 'client_section.client_id'),
-            'id' => $shift->id,
-            'add_to_job_board' => data_get($shift, 'add_to_job_board', null),
-        ];
-    })->toArray();
+    // Fetch shifts filtered by company_id
+    $this->shifts = Shift::where('company_id', $companyId)
+        ->get()
+        ->map(function ($shift) {
+                $timeAndLocation = is_string($shift->time_and_location)
+                    ? json_decode($shift->time_and_location, true)
+                    : ($shift->time_and_location ?? []);
 
-    $this->clients = Client::where('user_id', $authUser->id)->where('is_archive', 'Unarchive')->get();
-    
+                $clientSection = is_string($shift->client_section)
+                    ? json_decode($shift->client_section, true)
+                    : ($shift->client_section ?? []);
+
+                $shiftSection = is_string($shift->shift_section)
+                    ? json_decode($shift->shift_section, true)
+                    : ($shift->shift_section ?? []);
+
+                $carerSection = is_string($shift->carer_section)
+                    ? json_decode($shift->carer_section, true)
+                    : ($shift->carer_section ?? []);
+
+
+            // Common fields
+            $base = [
+                'id' => $shift->id,
+                'start_date' => $timeAndLocation['start_date'] ?? null,
+                'end_date' => $timeAndLocation['end_date'] ?? null,
+                'start_time' => $timeAndLocation['start_time'] ?? null,
+                'end_time' => $timeAndLocation['end_time'] ?? null,
+                'repeat' => $timeAndLocation['repeat'] ?? false,
+                'recurrance' => $timeAndLocation['recurrance'] ?? 'None',
+                'repeat_every_daily' => $timeAndLocation['repeat_every_daily'] ?? null,
+                'repeat_every_weekly' => $timeAndLocation['repeat_every_weekly'] ?? null,
+                'repeat_every_monthly' => $timeAndLocation['repeat_every_monthly'] ?? null,
+                'occurs_on_monthly' => $timeAndLocation['occurs_on_monthly'] ?? null,
+                'occurs_on_weekly' => $timeAndLocation['occurs_on_weekly'] ?? [],
+                'shift_type_id' => $shiftSection['shift_type_id'] ?? null,
+                'add_to_job_board' => (bool) $shift->add_to_job_board,
+            ];
+
+            // ✅ Simple shift (is_advanced_shift = 0)
+            if (!$shift->is_advanced_shift) {
+                $base['client_id'] = $clientSection['client_id'] ?? null;
+                $base['user_id']   = $carerSection['user_id'] ?? null;
+                return [$base];
+            }
+
+            // ✅ Advanced shift (is_advanced_shift = 1)
+            $records = [];
+            $clientIds = $clientSection['client_id'] ?? [];
+            $userIds   = $carerSection['user_id'] ?? [];
+
+            // Ensure both are arrays
+            $clientIds = is_array($clientIds) ? $clientIds : [$clientIds];
+            $userIds   = is_array($userIds) ? $userIds : [$userIds];
+
+            foreach ($clientIds as $clientId) {
+                foreach ($userIds as $userId) {
+                    $copy = $base;
+                    $copy['client_id'] = $clientId;
+                    $copy['user_id']   = $userId;
+                    $records[] = $copy;
+                }
+            }
+
+            return $records;
+        })
+        ->flatten(1) // merge arrays of arrays
+        ->values()
+        ->toArray();
+
+    $this->clients = Client::where('user_id', $authUser->id)
+        ->where('is_archive', 'Unarchive')
+        ->get();
+
     // Map client_id to display_name
     $this->clientNames = $this->clients->pluck('display_name', 'id')->toArray();
 
@@ -125,10 +178,11 @@ public function mount()
         ->get();
 
     $this->shiftTypes = ShiftType::where('user_id', $authUser->id)->get();
-    
+
     // Map shift_type_id to name
     $this->shiftTypeNames = $this->shiftTypes->pluck('name', 'id')->toArray();
 }
+
 
     public function getUsersProperty()
     {
