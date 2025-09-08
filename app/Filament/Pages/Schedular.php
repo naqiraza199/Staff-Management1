@@ -59,6 +59,7 @@ public $users; // List of users for the calendar
 public $shifts;
 public $clientNames;
 public $shiftTypeNames;
+public $display_name;
 
 public bool $showTaskModal = false;
 public ?int $shiftId = null;
@@ -132,6 +133,7 @@ public function mount()
                 'occurs_on_weekly' => $timeAndLocation['occurs_on_weekly'] ?? [],
                 'shift_type_id' => $shiftSection['shift_type_id'] ?? null,
                 'add_to_job_board' => (bool) $shift->add_to_job_board,
+                'is_advanced_shift' => (bool) $shift->is_advanced_shift,
             ];
 
             // ✅ Simple shift (is_advanced_shift = 0)
@@ -198,7 +200,7 @@ public function form(Form $form): Form
         $companyId = Company::where('user_id', $authUser->id)->value('id');
     return $form
         ->schema([
-     
+
 
 
 
@@ -206,12 +208,12 @@ public function form(Form $form): Form
             Section::make(
                 new HtmlString('
                     <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" 
-                             viewBox="0 0 24 24" 
-                             fill="currentColor" 
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24"
+                             fill="currentColor"
                              class="w-5 h-5 text-primary-600">
-                            <path d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 
-                                    20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 
+                            <path d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501
+                                    20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1
                                     12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
                         </svg>
                         <span>Client</span>
@@ -276,14 +278,14 @@ public function form(Form $form): Form
             Section::make(
                 new HtmlString('
                     <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" 
-                             viewBox="0 0 24 24" 
-                             fill="currentColor" 
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24"
+                             fill="currentColor"
                              class="w-5 h-5 text-primary-600">
-                            <path fill-rule="evenodd" 
-                                  d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 
-                                        9.75-9.75S17.385 2.25 12 2.25Zm.75 4.5a.75.75 0 0 0-1.5 0v5.25c0 
-                                        .414.336.75.75.75h3.75a.75.75 0 0 0 0-1.5H12.75V6.75Z" 
+                            <path fill-rule="evenodd"
+                                  d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365
+                                        9.75-9.75S17.385 2.25 12 2.25Zm.75 4.5a.75.75 0 0 0-1.5 0v5.25c0
+                                        .414.336.75.75.75h3.75a.75.75 0 0 0 0-1.5H12.75V6.75Z"
                                   clip-rule="evenodd" />
                         </svg>
                         <span>Shift</span>
@@ -303,9 +305,9 @@ public function form(Form $form): Form
                     //             ShiftType::where('user_id', auth()->id())
                     //                 ->get()
                     //                 ->mapWithKeys(fn ($shift) => [
-                    //                     $shift->id => 
+                    //                     $shift->id =>
                     //                         '<span class="flex items-center gap-2">
-                    //                             <span class="w-3 h-3 rounded-full" 
+                    //                             <span class="w-3 h-3 rounded-full"
                     //                                 style="background-color:' . $shift->color . '"></span>
                     //                             ' . e($shift->name) . '
                     //                         </span>'
@@ -371,17 +373,17 @@ public function form(Form $form): Form
             Section::make(
                 new HtmlString('
                     <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" 
-                             viewBox="0 0 24 24" 
-                             fill="currentColor" 
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24"
+                             fill="currentColor"
                              class="w-5 h-5 text-primary-600">
-                            <path fill-rule="evenodd" 
-                                  d="M6.75 2.25a.75.75 0 0 1 .75.75V4.5h9V3a.75.75 0 0 1 1.5 0v1.5h.75A2.25 
-                                  2.25 0 0 1 21.75 6.75v12A2.25 2.25 0 0 1 19.5 21H4.5A2.25 
-                                  2.25 0 0 1 2.25 18.75v-12A2.25 2.25 0 0 1 4.5 4.5h.75V3a.75.75 
-                                  0 0 1 .75-.75ZM3.75 9v9.75c0 
-                                  .414.336.75.75.75h15a.75.75 0 0 0 
-                                  .75-.75V9H3.75Z" 
+                            <path fill-rule="evenodd"
+                                  d="M6.75 2.25a.75.75 0 0 1 .75.75V4.5h9V3a.75.75 0 0 1 1.5 0v1.5h.75A2.25
+                                  2.25 0 0 1 21.75 6.75v12A2.25 2.25 0 0 1 19.5 21H4.5A2.25
+                                  2.25 0 0 1 2.25 18.75v-12A2.25 2.25 0 0 1 4.5 4.5h.75V3a.75.75
+                                  0 0 1 .75-.75ZM3.75 9v9.75c0
+                                  .414.336.75.75.75h15a.75.75 0 0 0
+                                  .75-.75V9H3.75Z"
                                   clip-rule="evenodd" />
                         </svg>
                         <span>Time & Location</span>
@@ -712,12 +714,12 @@ public function form(Form $form): Form
                 new HtmlString('
                     <div class="flex items-center justify-between">
                         <span class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" 
-                                 viewBox="0 0 24 24" 
-                                 fill="currentColor" 
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24"
+                                 fill="currentColor"
                                  class="w-5 h-5 text-primary-600">
-                                <path d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 
-                                        20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 
+                                <path d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501
+                                        20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1
                                         12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
                             </svg>
                             <span>Carer</span>
@@ -771,8 +773,8 @@ public function form(Form $form): Form
                             ->content(function () {
                                 $authUser = Auth::user();
                                 return new HtmlString('
-                                    <span 
-                                        id="suggested-carer" 
+                                    <span
+                                        id="suggested-carer"
                                         style="text-decoration: none;color:#0D76CA"
                                     >
                                         ' . $authUser->name . '... (28/35hrs)
@@ -832,12 +834,12 @@ public function form(Form $form): Form
                 new HtmlString('
                     <div class="flex items-center justify-between">
                         <span class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" 
-                                 viewBox="0 0 24 24" 
-                                 fill="currentColor" 
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24"
+                                 fill="currentColor"
                                  class="w-5 h-5 text-primary-600">
-                                <path d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 
-                                        20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 
+                                <path d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501
+                                        20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1
                                         12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
                             </svg>
                             <span>Carer</span>
@@ -909,18 +911,18 @@ public function form(Form $form): Form
             Section::make(
                 new HtmlString('
                     <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" 
-                             fill="none" 
-                             viewBox="0 0 24 24" 
-                             stroke-width="1.5" 
-                             stroke="currentColor" 
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.5"
+                             stroke="currentColor"
                              class="w-5 h-5 text-primary-600">
-                            <path stroke-linecap="round" 
-                                  stroke-linejoin="round" 
-                                  d="M19.5 14.25v3.75a2.25 2.25 0 01-2.25 2.25h-11.25a2.25 
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M19.5 14.25v3.75a2.25 2.25 0 01-2.25 2.25h-11.25a2.25
                                      2.25 0 01-2.25-2.25V6.75A2.25 2.25 0 014.5 4.5h7.5l6 6z" />
-                            <path stroke-linecap="round" 
-                                  stroke-linejoin="round" 
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
                                   d="M14.25 4.5v6h6" />
                         </svg>
                         <span>Instruction</span>
@@ -948,7 +950,7 @@ public function createShift()
      $data = $this->form->getState();
      $authUser = Auth::user();
      $shiftCompanyID = Company::where('user_id', $authUser->id)->value('id');
-    // dd($data); 
+    // dd($data);
 
     Shift::create([
         'client_section' => [

@@ -21,6 +21,7 @@ class ShiftDetails extends Component
     public $enddate = '';
     public $startDateFormatted = '';
     public $endDateFormatted   = '';
+    public $display_name   = '';
 
     protected $listeners = ['updateShift'];
 
@@ -31,36 +32,30 @@ class ShiftDetails extends Component
         $this->loadShiftDetails();
     }
 
-
 public function loadShiftDetails()
 {
     if ($this->shiftId) {
         $this->shift = Shift::find($this->shiftId);
 
         if ($this->shift) {
-            // Safely extract IDs from JSON fields
             $clientId    = data_get($this->shift->client_section, 'client_id');
             $shiftTypeId = data_get($this->shift->shift_section, 'shift_type_id');
             $userId      = data_get($this->shift->carer_section, 'user_id');
-            $startTime = data_get($this->shift->time_and_location, 'start_time');
-            $endTime   = data_get($this->shift->time_and_location, 'end_time');
-            $endDate   = data_get($this->shift->time_and_location, 'end_date');
-            $startDate = data_get($this->shift->time_and_location, 'start_date');
-            $endDate   = data_get($this->shift->time_and_location, 'end_date');
+            $startTime   = data_get($this->shift->time_and_location, 'start_time');
+            $endTime     = data_get($this->shift->time_and_location, 'end_time');
+            $startDate   = data_get($this->shift->time_and_location, 'start_date');
+            $endDate     = data_get($this->shift->time_and_location, 'end_date');
 
-            if ($startDate) {
-                $this->startDateFormatted = \Carbon\Carbon::parse($startDate)->format('M d, Y');
-            } else {
-                $this->startDateFormatted = 'Not defined';
-            }
+            // Dates
+            $this->startDateFormatted = $startDate
+                ? \Carbon\Carbon::parse($startDate)->format('M d, Y')
+                : 'Not defined';
 
-            if ($endDate) {
-                $this->endDateFormatted = \Carbon\Carbon::parse($endDate)->format('M d, Y');
-            } else {
-                $this->endDateFormatted = 'Ongoing';
-            }
+            $this->endDateFormatted = $endDate
+                ? \Carbon\Carbon::parse($endDate)->format('M d, Y')
+                : 'Ongoing';
 
-
+            // Times
             if ($startTime && $endTime) {
                 $this->timeset = \Carbon\Carbon::parse($startTime)->format('h:i a')
                     . ' - ' .
@@ -73,16 +68,31 @@ public function loadShiftDetails()
                 $this->timeset = 'Time not defined';
             }
 
+                // ✅ Clients (single or multiple)
+                if (is_array($clientId)) {
+                    $this->clientName = Client::whereIn('id', $clientId)->pluck('display_name')->implode(', ');
+                } elseif ($clientId) {
+                    $this->clientName = Client::find($clientId)?->display_name ?? 'Unknown Client';
+                } else {
+                    $this->clientName = 'Unknown Client';
+                }
 
-            // Lookup related models
-            $this->clientName    = $clientId ? Client::find($clientId)?->display_name : 'Unknown Client';
+                // ✅ Staff Users (single or multiple)
+                if (is_array($userId)) {
+                    $this->userName = User::whereIn('id', $userId)->pluck('name')->implode(', ');
+                } elseif ($userId) {
+                    $this->userName = User::find($userId)?->name ?? 'Unknown Staff';
+                } else {
+                    $this->userName = 'Unknown Staff';
+                }
+
+
+            // Shift type
             $this->shiftTypeName = $shiftTypeId ? ShiftType::find($shiftTypeId)?->name : 'Unknown Shift';
-            $this->userName      = $userId ? User::find($userId)?->name : 'Unknown Staff';
-            $this->userName      = $userId ? User::find($userId)?->name : 'Unknown Staff';
-            $this->enddate      = $userId ? User::find($userId)?->name : 'Ongoing';
         }
     }
 }
+
 
 
 

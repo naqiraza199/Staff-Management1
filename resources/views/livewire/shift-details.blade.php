@@ -1,6 +1,18 @@
 <div>
-    @if($shift)
-        <p><strong>Staff:</strong> {{ $userName }}</p>
+  @if($shift)
+    <!-- Existing details ... -->
+
+    <p><strong>Shift ID:</strong> {{ $shift->id }}</p>
+
+    <div class="mt-4">
+        <a href="{{ route('filament.admin.pages.advanced-shift-form', ['shiftId' => $shift->id]) }}"
+           class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Edit Shift
+        </a>
+    </div>
+
+                <p><strong>Staff:</strong> {{ is_array($userName) ? implode(', ', $userName) : $userName }}</p>
+
 
         @if($selectedDate)
             <p><strong>Date:</strong> {{ \Carbon\Carbon::parse($selectedDate)->format('M d, Y') }}</p>
@@ -10,8 +22,10 @@
            {{ $timeset }}
         </p>
 
-        <p><strong>Shift Type:</strong> {{ $shiftTypeName }}</p>
-        <p><strong>Client:</strong> {{ $clientName }}</p>
+
+        <p><strong>Clients:</strong> {{ is_array($clientName) ? implode(', ', $clientName) : $clientName }}</p>
+
+
 
         @php
             $recurrence = $shift->time_and_location['recurrance'] ?? null;
