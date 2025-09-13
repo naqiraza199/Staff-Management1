@@ -46,6 +46,8 @@ class AdvancedShiftForm extends Page implements HasForms
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static string $view = 'filament.pages.advanced-shift-form';
     protected static ?string $title = 'Advanced Shift Form';
+    protected static bool $shouldRegisterNavigation = false;
+
 
     public ?Shift $shift = null;
 
@@ -78,30 +80,7 @@ class AdvancedShiftForm extends Page implements HasForms
 
 public function mount(): void
 {
-    $shiftId = request()->query('shiftId');
-    // dd($shiftId);
-
-    if ($shiftId) {
-        $this->shift = \App\Models\Shift::findOrFail($shiftId);
-
-        // Normalize client_ids into an array
-        $clientIds = data_get($this->shift->client_section, 'client_id', []);
-        if (!is_array($clientIds)) {
-            $clientIds = [$clientIds];
-        }
-        // dd($clientIds);
-        $this->form->fill([
-            'client_id' => $clientIds, // ✅ array for multiple select
-            'shift_type_id' => data_get($this->shift->shift_section, 'shift_type_id'),
-            'user_id' => data_get($this->shift->carer_section, 'user_id'),
-            'start_time' => data_get($this->shift->time_and_location, 'start_time'),
-            'end_time' => data_get($this->shift->time_and_location, 'end_time'),
-            'start_date' => data_get($this->shift->time_and_location, 'start_date'),
-            'end_date' => data_get($this->shift->time_and_location, 'end_date'),
-        ]);
-    } else {
         $this->form->fill();
-    }
 }
 
 
@@ -148,20 +127,7 @@ public function mount(): void
                                                     )
                                                     ->multiple()
                                                     ->preload()
-                                                    ->default(function () {
-                                                            $shiftId = request()->query('shiftId');
-                                                            if ($shiftId) {
-                                                                $shift = \App\Models\Shift::find($shiftId);
-                                                                if ($shift) {
-                                                                    $clientIds = data_get($shift->client_section, 'client_id', []);
-                                                                    if (!is_array($clientIds)) {
-                                                                        $clientIds = [$clientIds];
-                                                                    }
-                                                                    return $clientIds; // ✅ default expects array
-                                                                }
-                                                            }
-                                                            return [];
-                                                        })
+                                              
                                                     ->live()
                                                 ->afterStateUpdated(function ($state, $set) {
                                                     if (!empty($state)) {
@@ -180,72 +146,64 @@ public function mount(): void
                                                         $set('client_details', []);
                                                     }
                                                 }),
-
-                                            Repeater::make('client_details')
-                                                ->label(fn ($get, $state) => $get('client_name'))
-                                                ->schema([
-                                                    Grid::make(10)
+                                                    Repeater::make('client_details')
+                                                        ->label(fn ($get, $state) => $get('client_name'))
                                                         ->schema([
-                                                            TimePicker::make('client_details.client_start_time')
-                                                                ->label('')
-                                                                ->default('02:00 AM')
-                                                                ->columnSpan(2),
-                                                            TimePicker::make('client_details.client_end_time')
-                                                                ->label('')
-                                                                ->default('03:00 AM')
-                                                                ->columnSpan(2),
-                                                            Placeholder::make('pla')
-                                                                ->label('')
-                                                                ->columnSpan(1),
-                                                            Select::make('client_details.price_book_id')
-                                                                ->label('')
-                                                                ->options(
-                                                                    PriceBook::with('priceBookDetails')
-                                                                        ->where('company_id', $companyId)
-                                                                        ->orderByDesc('id')
-                                                                        ->pluck('name', 'id')
-                                                                )
-                                                                ->columnSpan(5),
-                                                            Select::make('client_details.hours')
-                                                                ->label('')
-                                                                ->placeholder('1:1')
-                                                                ->default('Please Select')
-                                                                ->options([
-                                                                    '1:1' => '1:1',
-                                                                    '1:2' => '1:2',
-                                                                    '1:3' => '1:3',
-                                                                    '1:4' => '1:4',
-                                                                    '1:5' => '1:5',
-                                                                    '1:6' => '1:6',
-                                                                    '1:7' => '1:7',
-                                                                    '1:8' => '1:8',
-                                                                    '1:9' => '1:9',
-                                                                    '1:10' => '1:10',
-                                                                    '1:11' => '1:11',
-                                                                    '1:12' => '1:12',
-                                                                    '1:13' => '1:13',
-                                                                    '1:14' => '1:14',
-                                                                    '1:15' => '1:15',
-                                                                    '1:16' => '1:16',
-                                                                    '1:17' => '1:17',
-                                                                    '1:18' => '1:18',
-                                                                    '1:19' => '1:19',
-                                                                    '1:20' => '1:20',
+                                                            Grid::make(10)
+                                                                ->schema([
+                                                                    TimePicker::make('client_start_time')
+                                                                        ->label('')
+                                                                        ->default('02:00 AM')
+                                                                        ->columnSpan(2),
+
+                                                                    TimePicker::make('client_end_time')
+                                                                        ->label('')
+                                                                        ->default('03:00 AM')
+                                                                        ->columnSpan(2),
+
+                                                                    Placeholder::make('pla')
+                                                                        ->label('')
+                                                                        ->columnSpan(1),
+
+                                                                    Select::make('price_book_id')
+                                                                        ->label('')
+                                                                        ->options(
+                                                                            PriceBook::where('company_id', $companyId)
+                                                                                ->orderByDesc('id')
+                                                                                ->pluck('name', 'id')
+                                                                        )
+                                                                        ->columnSpan(5),
+
+                                                                    Select::make('hours')
+                                                                        ->label('')
+                                                                        ->placeholder('1:1')
+                                                                        ->options([
+                                                                            '1:1' => '1:1',
+                                                                            '1:2' => '1:2',
+                                                                            '1:3' => '1:3',
+                                                                            '1:4' => '1:4',
+                                                                            '1:5' => '1:5',
+                                                                            '1:6' => '1:6',
+                                                                            '1:7' => '1:7',
+                                                                            '1:8' => '1:8',
+                                                                            '1:9' => '1:9',
+                                                                            '1:10' => '1:10',
+                                                                            '1:11' => '1:11',
+                                                                            '1:12' => '1:12',
+                                                                            '1:13' => '1:13',
+                                                                            '1:14' => '1:14',
+                                                                            '1:15' => '1:15',
+                                                                            '1:16' => '1:16',
+                                                                            '1:17' => '1:17',
+                                                                            '1:18' => '1:18',
+                                                                            '1:19' => '1:19',
+                                                                            '1:20' => '1:20',
+                                                                        ])
+                                                                        ->columnSpan(2),
                                                                 ])
-                                                                ->columnSpan(2),
-                                                            Placeholder::make('funds')
-                                                                ->label('')
-                                                                ->content(function ($record) {
-                                                                    return new HtmlString('
-                                                                        <span style="background-color:#FDF6EC;color:#FFA500;padding: 10px 15px 12px;border-radius: 10px;" class="px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                                                                            No Funds Available
-                                                                        </span>
-                                                                    ');
-                                                                })
-                                                                ->disableLabel()
-                                                                ->columnSpan(2),
                                                         ])
-                                                ]) ->cloneable()
+
+                                           ->cloneable()
                                                     ->cloneAction(
                                                         fn (\Filament\Forms\Components\Actions\Action $action) =>
                                                             $action->icon('heroicon-m-scissors')
@@ -630,7 +588,6 @@ public function mount(): void
                                         ->columnSpan(1),
                                     Select::make('shift_type_id')
                                         ->options(ShiftType::pluck('name', 'id'))
-                                        ->required()
                                         ->searchable()
                                         ->preload()
                                         ->label('')
@@ -814,33 +771,39 @@ public function mount(): void
                                         })
                                         ->multiple()
                                         ->columnSpan(3),
-                                    Repeater::make('user_details')
-                                        ->label('')
-                                        ->schema([
-                                            Grid::make(10)->schema([
-                                                TimePicker::make('user_details.user_start_time')
-                                                    ->label('')
-                                                    ->default('02:00 AM')
-                                                    ->columnSpan(2),
-                                                TimePicker::make('user_details.user_end_time')
-                                                    ->label('')
-                                                    ->default('03:00 AM')
-                                                    ->columnSpan(2),
-                                                Placeholder::make('lkadfad')
-                                                    ->label('')
-                                                    ->columnSpan(1),
-                                                Select::make('user_details.pay_group_id')
-                                                    ->label('')
-                                                    ->options(function () {
-                                                        $auth = auth()->id();
-                                                        return PayGroup::where('user_id', $auth)
-                                                            ->where('is_archive', 0)
-                                                            ->pluck('name', 'id')
-                                                            ->toArray();
-                                                    })
-                                                    ->columnSpan(5),
-                                            ])
-                                        ])
+                                   Repeater::make('user_details')
+                                                ->label('')
+                                                ->schema([
+                                                    Grid::make(10)->schema([
+
+                                                        TimePicker::make('user_start_time')
+                                                            ->label('')
+                                                            ->default('02:00 AM')
+                                                            ->columnSpan(2),
+
+                                                        TimePicker::make('user_end_time')
+                                                            ->label('')
+                                                            ->default('03:00 AM')
+                                                            ->columnSpan(2),
+
+                                                        Placeholder::make('lkadfad')
+                                                            ->label('')
+                                                            ->columnSpan(1),
+
+                                                        Select::make('pay_group_id')
+                                                            ->label('')
+                                                            ->options(function () {
+                                                                $auth = auth()->id();
+                                                                return PayGroup::where('user_id', $auth)
+                                                                    ->where('is_archive', 0)
+                                                                    ->pluck('name', 'id')
+                                                                    ->toArray();
+                                                            })
+                                                            ->columnSpan(5),
+
+                                                    ])
+                                                ])
+
                                         ->addable(false)
                                         ->itemLabel(fn (array $state): ?string => $state['user_name'] ?? 'Carer')
                                         ->visible(fn ($get) => !empty($get('user_id')))
@@ -1078,23 +1041,38 @@ public function mount(): void
     }
 public function createShift()
 {
-    $shiftRecord = Shift::find(10);
-    dd($shiftRecord);
+     $shifti = Shift::find(32);
+    dd($shifti);
      $data = $this->form->getState();
      $authUser = Auth::user();
      $shiftCompanyID = Company::where('user_id', $authUser->id)->value('id');
     // dd($data);
+        $carerSection = empty($data['add_to_job_board']) ? [
+            'user_id'      => data_get($data, 'carer_section.user_id'),
+            'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
+            'user_details' => data_get($data, 'carer_section.user_details', []),
+            'notify'       => data_get($data, 'carer_section.notify', false),
+                ] : null;
+
+                // Default
+                $isVacant = 0;
+
+                // Check conditions for vacant
+                if (
+                    empty($data['add_to_job_board']) && (
+                        ($carerSection['user_id'] === null && $carerSection['pay_group_id'] === null) ||
+                        ($carerSection['user_id'] === [] && $carerSection['user_details'] === [] && $carerSection['notify'] === false)
+                    )
+                ) {
+                    $isVacant = 1;
+                }
+
 
     Shift::create([
-        'client_section' => [
-            'client_id'     => data_get($data, 'client_section.client_id', []),
-               'client_details' => [
-                        'client_start_time'     => data_get($data, 'client_section.client_details.client_start_time'),
-                        'client_end_time'     => data_get($data, 'client_section.client_details.client_end_time'),
-                        'price_book_id'     => data_get($data, 'client_section.client_details.price_book_id'),
-                        'hours'     => data_get($data, 'client_section.client_details.hours'),
-                ],
-        ],
+       'client_section' => [
+                'client_id'      => $data['client_section']['client_id'] ?? [],
+                'client_details' => $data['client_section']['client_details'] ?? [],
+            ],
 
         'time_and_location' => [
                 'start_date'              => data_get($data, 'time_and_location.start_date'),
@@ -1141,13 +1119,9 @@ public function createShift()
 
         'add_to_job_board' => data_get($data, 'add_to_job_board', false),
         'carer_section' => empty($data['add_to_job_board']) ? [
-            'user_id'      => data_get($data, 'carer_section.user_id', []),
-            'notify'      => data_get($data, 'carer_section.notify', false),
-                'user_details' => [
-                        'user_start_time'     => data_get($data, 'carer_section.user_details.user_start_time'),
-                        'user_end_time'     => data_get($data, 'carer_section.user_details.user_end_time'),
-                        'pay_group_id'     => data_get($data, 'carer_section.user_details.pay_group_id'),
-        ],
+                'user_id'      => $data['carer_section']['user_id'] ?? [],
+                'user_details' => $data['carer_section']['user_details'] ?? [],
+                'notify'      => data_get($data, 'carer_section.notify', false),
         ] : null,
         'job_section' => !empty($data['add_to_job_board']) ? [
             'shift_assignment'=> data_get($data, 'job_section.shift_assignment'),
@@ -1158,15 +1132,14 @@ public function createShift()
             'kpi_id'         => data_get($data, 'job_section.kpi_id' , []),
             'distance_shift'=> data_get($data, 'job_section.distance_shift'),
         ] : null,
-          'task_section' => [
-                        'task_description'=> data_get($data, 'task_section.task_description'),
-                        'mandatory'=> data_get($data, 'task_section.mandatory'),
-        ],
+          'task_section' => $data['task_section']['tasks'] ?? [],
         'instruction' => [
             'description' => data_get($data, 'instruction.description'),
         ],
         'company_id' => $shiftCompanyID,
         'is_advanced_shift' => true,
+        'is_vacant'  => $isVacant, // ✅ set here
+
     ]);
 
     Notification::make()

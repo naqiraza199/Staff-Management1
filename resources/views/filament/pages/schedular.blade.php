@@ -469,18 +469,45 @@
     <!-- Right-side slider for shift details -->
     <div class="slider" id="shiftSlider" wire:ignore>
         <div class="slider-content">
-            <button class="buto close-btn" onclick="closeSlider()">&times;</button>
+            <button class="buto close-btn" style="padding: 5px 15px;" onclick="closeSlider()">&times;</button>
             <h2>Shift Details</h2>
                <livewire:shift-details :shift-id="$shiftId" :selected-date="$selectedDate" />
         </div>
     </div>
 
     <style>
+        .task-vacant {
+                    background: linear-gradient(135deg, #f97316, #facc15);
+                    color: white;
+                    padding: 8px;
+                    margin: 4px 0;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                .task-advanced {
+                    background: linear-gradient(135deg, #22c55e, #86efac);
+                    color: white;
+                }
+
+                .client-avatar {
+                           width: 24px;
+                            height: 24px;
+                            background-color: #e5e7eb;
+                            color: #f96a04;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 10px;
+                            margin-right: 4px;
+                            font-weight: 600;
+                }
         .slider {
             position: fixed;
             top: 0;
-            right: -400px; /* Hidden by default */
-            width: 400px;
+            right: -700px; /* Hidden by default */
+            width: 700px;
             height: 100%;
             background-color: #fff;
             box-shadow: -2px 0 5px rgba(0,0,0,0.3);
@@ -493,6 +520,7 @@
         }
         .slider-content {
             padding: 20px;
+            
         }
         .close-btn {
             float: right;
@@ -519,161 +547,76 @@
 
    <script>
     let currentDate = new Date();
-    const users = @json($users ?? []);
-    const shifts = @json($shifts ?? []);
-    const clientNames = @json($clientNames ?? []);
-    const shiftTypeNames = @json($shiftTypeNames ?? []);
+const users = @json($users ?? []);
+const shifts = @json($shifts ?? []);
+const clientNames = @json($clientNames ?? []);
+const shiftTypeNames = @json($shiftTypeNames ?? []);
 
-    console.log('Shift Data:', shifts);
+console.log('Shift Data:', shifts);
 
-    function formatTime(time) {
-        if (!time) return '';
-        const [hours] = time.split(':').map(Number);
-        const period = hours >= 12 ? 'pm' : 'am';
-        const formattedHours = hours % 12 || 12;
-        return `${formattedHours}${period}`;
+function formatTime(time) {
+    if (!time) return '';
+    const [hours] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'pm' : 'am';
+    const formattedHours = hours % 12 || 12;
+    return `${formattedHours}${period}`;
+}
+
+function getInitials(name) {
+    if (!name) return '';
+    return name
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase())
+        .join('');
+}
+
+function renderCalendar() {
+    const calendar = document.getElementById('calendar');
+    if (!calendar) {
+        console.error('Calendar element not found');
+        return;
     }
+    const weekRange = document.getElementById('week-range');
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
 
-    function getInitials(name) {
-        if (!name) return '';
-        return name
-            .split(' ')
-            .map(word => word.charAt(0).toUpperCase())
-            .join('');
-    }
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    weekRange.textContent = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
-    function renderCalendar() {
-        const calendar = document.getElementById('calendar');
-        if (!calendar) {
-            console.error('Calendar element not found');
-            return;
+    // Set day headers
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        const dayHeader = document.getElementById(`day${i}`);
+        if (dayHeader) {
+            dayHeader.textContent = `${day.toLocaleDateString('en-US', { weekday: 'short' })} ${day.getDate()}`;
         }
-        const weekRange = document.getElementById('week-range');
-        const startOfWeek = new Date(currentDate);
-        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    }
 
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        weekRange.textContent = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    // Clear previous content
+    while (calendar.children.length > 8) {
+        calendar.removeChild(calendar.lastChild);
+    }
 
-        // Set day headers
+    // Add static task rows (Vacant Shift, Job Board)
+    const staticTasks = ['Vacant Shift', 'Job Board'];
+    staticTasks.forEach(task => {
+        const taskCell = document.createElement('div');
+        taskCell.className = 'staff-cell';
+        taskCell.textContent = task;
+        calendar.appendChild(taskCell);
+
         for (let i = 0; i < 7; i++) {
             const day = new Date(startOfWeek);
             day.setDate(startOfWeek.getDate() + i);
-            const dayHeader = document.getElementById(`day${i}`);
-            if (dayHeader) {
-                dayHeader.textContent = `${day.toLocaleDateString('en-US', { weekday: 'short' })} ${day.getDate()}`;
-            }
-        }
+            const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
 
-        // Clear previous content
-        while (calendar.children.length > 8) {
-            calendar.removeChild(calendar.lastChild);
-        }
-
-        // Add static task rows (Vacant Shift, Job Board)
-        const staticTasks = ['Vacant Shift', 'Job Board'];
-        staticTasks.forEach(task => {
-            const taskCell = document.createElement('div');
-            taskCell.className = 'staff-cell';
-            taskCell.textContent = task;
-            calendar.appendChild(taskCell);
-
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(startOfWeek);
-                day.setDate(startOfWeek.getDate() + i);
-                const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
-                const dayCell = document.createElement('div');
-                dayCell.className = 'calendar-day';
-
-                // Handle shifts for Job Board
-                if (task === 'Job Board') {
-                    const jobBoardShifts = shifts.filter(shift => {
-                        if (!shift.add_to_job_board || shift.add_to_job_board !== true) return false;
-
-                        const shiftStartDate = new Date(shift.start_date);
-                        const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
-                        const currentDay = new Date(dateKey);
-
-                        if (isNaN(shiftStartDate) || isNaN(shiftEndDate)) return false;
-                        if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
-
-                        const recurrance = shift.recurrance || 'None';
-                        const deltaDays = Math.floor((currentDay - shiftStartDate) / (24 * 60 * 60 * 1000));
-
-                        if (recurrance === 'Daily') {
-                            const repeatEveryDaily = parseInt(shift.repeat_every_daily) || 1;
-                            return deltaDays % repeatEveryDaily === 0;
-                        } else if (recurrance === 'Weekly') {
-                            const repeatEveryWeekly = parseInt(shift.repeat_every_weekly) || 1;
-                            const deltaWeeks = Math.floor(deltaDays / 7);
-                            if (deltaWeeks % repeatEveryWeekly === 0) {
-                                const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                                const currentDayName = dayNames[currentDay.getUTCDay()];
-                                return shift.occurs_on_weekly && shift.occurs_on_weekly[currentDayName] === true;
-                            }
-                            return false;
-                        } else if (recurrance === 'Monthly') {
-                            const repeatEveryMonthly = parseInt(shift.repeat_every_monthly) || 1;
-                            const occursOnMonthly = parseInt(shift.occurs_on_monthly);
-                            if (isNaN(occursOnMonthly)) return false;
-                            const startYear = shiftStartDate.getUTCFullYear();
-                            const startMonth = shiftStartDate.getUTCMonth();
-                            const currentYear = currentDay.getUTCFullYear();
-                            const currentMonth = currentDay.getUTCMonth();
-                            const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
-                            if (monthsDelta % repeatEveryMonthly === 0) {
-                                return currentDay.getUTCDate() === occursOnMonthly;
-                            }
-                            return false;
-                        }
-                        return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
-                    });
-
-                    if (jobBoardShifts.length > 0) {
-                        jobBoardShifts.forEach(shift => {
-                            const taskDiv = document.createElement('div');
-                            taskDiv.className = 'task';
-                            if (shift.is_advanced_shift) {
-                                taskDiv.style.backgroundColor = 'green';
-                                taskDiv.style.color = 'white';
-                            }
-                            const timeRange = shift.start_time && shift.end_time
-                                ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
-                                : 'No Time';
-                            const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
-                            const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
-                            taskDiv.innerHTML = `${timeRange}<br>${shiftType}<br>${clientName}`;
-                            taskDiv.onclick = (e) => {
-                                e.stopPropagation();
-                                openShiftSlider(shift.id, dateKey);
-                            };
-                            dayCell.appendChild(taskDiv);
-                        });
-                    }
-                }
-
-                dayCell.onclick = () => openModal(`${task}_${dateKey}`, dateKey);
-                calendar.appendChild(dayCell);
-            }
-        });
-
-        // Add staff rows and shifts
-        Object.entries(users).forEach(([userId, userName]) => {
-            const staffCell = document.createElement('div');
-            staffCell.className = 'staff-cell';
-            staffCell.textContent = userName;
-            calendar.appendChild(staffCell);
-
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(startOfWeek);
-                day.setDate(startOfWeek.getDate() + i);
-                const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
-                const dayCell = document.createElement('div');
-                dayCell.className = 'calendar-day';
-
-                const userShifts = shifts.filter(shift => {
-                    if (!shift || shift.user_id != userId) return false;
+            if (task === 'Vacant Shift') {
+                const vacantShifts = shifts.filter(shift => {
+                    if (!shift.is_vacant || shift.is_vacant !== 1) return false;
 
                     const shiftStartDate = new Date(shift.start_date);
                     const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
@@ -714,10 +657,10 @@
                     return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
                 });
 
-                if (userShifts.length > 0) {
-                    // ✅ Group by shift.id
+                if (vacantShifts.length > 0) {
+                    // Group by shift.id
                     const groupedShifts = {};
-                    userShifts.forEach(shift => {
+                    vacantShifts.forEach(shift => {
                         if (!groupedShifts[shift.id]) {
                             groupedShifts[shift.id] = {
                                 ...shift,
@@ -728,195 +671,361 @@
                         }
                     });
 
-                Object.values(groupedShifts).forEach(shift => {
+                    Object.values(groupedShifts).forEach(shift => {
                         const taskDiv = document.createElement('div');
-                        taskDiv.className = 'task';
-
+                        taskDiv.className = 'task task-vacant';
                         if (shift.is_advanced_shift) {
-                            taskDiv.classList.add('task-advanced'); // ✅ green gradient
+                            taskDiv.classList.add('task-advanced-vacant');
                         }
-
                         const timeRange = shift.start_time && shift.end_time
                             ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                             : 'No Time';
                         const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
 
                         if (shift.is_advanced_shift) {
-                            // ✅ Advanced shift UI
                             let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
                             let clientCount = 0;
-
-                            // Header (time + shift type)
                             const header = document.createElement("div");
                             header.innerHTML = `<strong>${timeRange}</strong> ${shiftType}`;
                             taskDiv.appendChild(header);
-
-                            // Clients wrapper
                             const clientsWrapper = document.createElement("div");
                             clientsWrapper.style.display = "flex";
                             clientsWrapper.style.alignItems = "center";
                             clientsWrapper.style.marginTop = "4px";
-
                             clientIds.forEach(id => {
                                 const clientName = clientNames[String(id)] || "Unknown";
                                 const initials = getInitials(clientName);
-
                                 const avatar = document.createElement("div");
                                 avatar.classList.add("client-avatar");
                                 avatar.textContent = initials;
                                 clientsWrapper.appendChild(avatar);
-
                                 clientCount++;
                             });
-
-                            // Count text
                             const countSpan = document.createElement("span");
                             countSpan.textContent = `${clientCount} Clients`;
                             countSpan.style.marginLeft = "6px";
                             countSpan.style.fontSize = "10px";
                             clientsWrapper.appendChild(countSpan);
-
                             taskDiv.appendChild(clientsWrapper);
-
                         } else {
-                            // ✅ Simple shift → full client name(s)
-                            const clientDisplay = (shift.clientIds || [])
-                                .map(id => clientNames[String(id)] || 'Unknown Client')
-                                .join(', ');
-
-                            taskDiv.innerHTML = `
-                                <strong>${timeRange}</strong><br>
-                                ${shiftType}<br>
-                                ${clientDisplay}
-                            `;
+                            const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
+                            taskDiv.innerHTML = `${timeRange}<br>${shiftType}<br>${clientName}`;
                         }
 
                         taskDiv.onclick = (e) => {
                             e.stopPropagation();
                             openShiftSlider(shift.id, dateKey);
                         };
-
                         dayCell.appendChild(taskDiv);
                     });
-
-
-
                 }
-
-                dayCell.onclick = () => openModal(`${userName}_${dateKey}`, dateKey);
-                calendar.appendChild(dayCell);
             }
-        });
 
-        // Add "Add Staff" button
-        const addStaffCell = document.createElement('div');
-        addStaffCell.className = 'add-staff-cell';
-        addStaffCell.innerHTML = `<button class="add-staff-btn" onclick="openStaffModal()">Add Staff</button>`;
-        calendar.appendChild(addStaffCell);
-    }
+            if (task === 'Job Board') {
+                const jobBoardShifts = shifts.filter(shift => {
+                    if (!shift.add_to_job_board || shift.add_to_job_board !== true) return false;
 
-    function openShiftSlider(shiftId, dateKey) {
-        console.log('Opening slider for shift:', shiftId, 'on date:', dateKey);
-        Livewire.dispatch('set-shift-details', { shiftId: shiftId, selectedDate: dateKey });
-        const slider = document.getElementById('shiftSlider');
-        if (slider) slider.classList.add('open');
-    }
+                    const shiftStartDate = new Date(shift.start_date);
+                    const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
+                    const currentDay = new Date(dateKey);
 
-    function closeSlider() {
-        const slider = document.getElementById('shiftSlider');
-        if (slider) slider.classList.remove('open');
-        Livewire.dispatch('set-shift-details', { shiftId: null, selectedDate: null });
-    }
+                    if (isNaN(shiftStartDate) || isNaN(shiftEndDate)) return false;
+                    if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
 
-    function prevWeek() {
-        currentDate.setDate(currentDate.getDate() - 7);
-        renderCalendar();
-    }
+                    const recurrance = shift.recurrance || 'None';
+                    const deltaDays = Math.floor((currentDay - shiftStartDate) / (24 * 60 * 60 * 1000));
 
-    function nextWeek() {
-        currentDate.setDate(currentDate.getDate() + 7);
-        renderCalendar();
-    }
+                    if (recurrance === 'Daily') {
+                        const repeatEveryDaily = parseInt(shift.repeat_every_daily) || 1;
+                        return deltaDays % repeatEveryDaily === 0;
+                    } else if (recurrance === 'Weekly') {
+                        const repeatEveryWeekly = parseInt(shift.repeat_every_weekly) || 1;
+                        const deltaWeeks = Math.floor(deltaDays / 7);
+                        if (deltaWeeks % repeatEveryWeekly === 0) {
+                            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                            const currentDayName = dayNames[currentDay.getUTCDay()];
+                            return shift.occurs_on_weekly && shift.occurs_on_weekly[currentDayName] === true;
+                        }
+                        return false;
+                    } else if (recurrance === 'Monthly') {
+                        const repeatEveryMonthly = parseInt(shift.repeat_every_monthly) || 1;
+                        const occursOnMonthly = parseInt(shift.occurs_on_monthly);
+                        if (isNaN(occursOnMonthly)) return false;
+                        const startYear = shiftStartDate.getUTCFullYear();
+                        const startMonth = shiftStartDate.getUTCMonth();
+                        const currentYear = currentDay.getUTCFullYear();
+                        const currentMonth = currentDay.getUTCMonth();
+                        const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
+                        if (monthsDelta % repeatEveryMonthly === 0) {
+                            return currentDay.getUTCDate() === occursOnMonthly;
+                        }
+                        return false;
+                    }
+                    return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
+                });
 
-    function openModal(key, dateKey) {
-        console.log('Key:', key, 'DateKey:', dateKey);
-        const formattedDate = dateKey;
-        fetch('/set-selected-date', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ dateKey: formattedDate })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Livewire.dispatch('refresh-and-open-modal');
+                if (jobBoardShifts.length > 0) {
+                    jobBoardShifts.forEach(shift => {
+                        const taskDiv = document.createElement('div');
+                        taskDiv.className = 'task';
+                        if (shift.is_advanced_shift) {
+                            taskDiv.classList.add('task-advanced');
+                        }
+                        const timeRange = shift.start_time && shift.end_time
+                            ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                            : 'No Time';
+                        const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+                        const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
+                        taskDiv.innerHTML = `${timeRange}<br>${shiftType}<br>${clientName}`;
+                        taskDiv.onclick = (e) => {
+                            e.stopPropagation();
+                            openShiftSlider(shift.id, dateKey);
+                        };
+                        dayCell.appendChild(taskDiv);
+                    });
+                }
             }
-        })
-        .catch(error => console.error('Error setting session:', error));
 
-        const modal = document.getElementById('taskModal');
-        if (modal) modal.style.display = 'flex';
-    }
-
-    function closeModal() {
-        const modal = document.getElementById('taskModal');
-        if (modal) modal.style.display = 'none';
-    }
-
-    function openStaffModal() {
-        const modal = document.getElementById('staffModal');
-        if (modal) modal.style.display = 'flex';
-    }
-
-    function closeStaffModal() {
-        const modal = document.getElementById('staffModal');
-        if (modal) modal.style.display = 'none';
-    }
-
-    function toggleFullView(modalId) {
-        const modalContent = document.getElementById(modalId);
-        if (modalContent) modalContent.classList.toggle('full-view');
-    }
-
-    // Close modals and slider when clicking outside
-    const taskModalEl = document.getElementById('taskModal');
-    if (taskModalEl) {
-        taskModalEl.addEventListener('click', function(event) {
-            if (event.target === this) closeModal();
-        });
-    }
-
-    const staffModalEl = document.getElementById('staffModal');
-    if (staffModalEl) {
-        staffModalEl.addEventListener('click', function(event) {
-            if (event.target === this) closeStaffModal();
-        });
-    }
-
-    const shiftSliderEl = document.getElementById('shiftSlider');
-    if (shiftSliderEl) {
-        shiftSliderEl.addEventListener('click', function(event) {
-            if (event.target === this) closeSlider();
-        });
-    }
-
-    document.addEventListener('livewire:initialized', () => {
-        Livewire.on('open-task-modal', () => {
-            console.log('Received open-task-modal event');
-            const modal = document.getElementById('taskModal');
-            if (modal) modal.style.display = 'flex';
-        });
-
-        Livewire.on('set-shift-details', ({ shiftId, selectedDate }) => {
-            console.log('Set shift details:', { shiftId, selectedDate });
-            Livewire.dispatch('updateShift', { shiftId, selectedDate });
-        });
+            dayCell.onclick = () => openModal(`${task}_${dateKey}`, dateKey);
+            calendar.appendChild(dayCell);
+        }
     });
 
-    // Initialize calendar
+    // Add staff rows and shifts
+    Object.entries(users).forEach(([userId, userName]) => {
+        const staffCell = document.createElement('div');
+        staffCell.className = 'staff-cell';
+        staffCell.textContent = userName;
+        calendar.appendChild(staffCell);
+
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(startOfWeek);
+            day.setDate(startOfWeek.getDate() + i);
+            const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
+
+            const userShifts = shifts.filter(shift => {
+                if (!shift || shift.user_id != userId) return false;
+
+                const shiftStartDate = new Date(shift.start_date);
+                const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
+                const currentDay = new Date(dateKey);
+
+                if (isNaN(shiftStartDate) || isNaN(shiftEndDate)) return false;
+                if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
+
+                const recurrance = shift.recurrance || 'None';
+                const deltaDays = Math.floor((currentDay - shiftStartDate) / (24 * 60 * 60 * 1000));
+
+                if (recurrance === 'Daily') {
+                    const repeatEveryDaily = parseInt(shift.repeat_every_daily) || 1;
+                    return deltaDays % repeatEveryDaily === 0;
+                } else if (recurrance === 'Weekly') {
+                    const repeatEveryWeekly = parseInt(shift.repeat_every_weekly) || 1;
+                    const deltaWeeks = Math.floor(deltaDays / 7);
+                    if (deltaWeeks % repeatEveryWeekly === 0) {
+                        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        const currentDayName = dayNames[currentDay.getUTCDay()];
+                        return shift.occurs_on_weekly && shift.occurs_on_weekly[currentDayName] === true;
+                    }
+                    return false;
+                } else if (recurrance === 'Monthly') {
+                    const repeatEveryMonthly = parseInt(shift.repeat_every_monthly) || 1;
+                    const occursOnMonthly = parseInt(shift.occurs_on_monthly);
+                    if (isNaN(occursOnMonthly)) return false;
+                    const startYear = shiftStartDate.getUTCFullYear();
+                    const startMonth = shiftStartDate.getUTCMonth();
+                    const currentYear = currentDay.getUTCFullYear();
+                    const currentMonth = currentDay.getUTCMonth();
+                    const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
+                    if (monthsDelta % repeatEveryMonthly === 0) {
+                        return currentDay.getUTCDate() === occursOnMonthly;
+                    }
+                    return false;
+                }
+                return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
+            });
+
+            if (userShifts.length > 0) {
+                const groupedShifts = {};
+                userShifts.forEach(shift => {
+                    if (!groupedShifts[shift.id]) {
+                        groupedShifts[shift.id] = {
+                            ...shift,
+                            clientIds: [shift.client_id]
+                        };
+                    } else {
+                        groupedShifts[shift.id].clientIds.push(shift.client_id);
+                    }
+                });
+
+                Object.values(groupedShifts).forEach(shift => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task';
+                    if (shift.is_advanced_shift) {
+                        taskDiv.classList.add('task-advanced');
+                    }
+                    const timeRange = shift.start_time && shift.end_time
+                        ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                        : 'No Time';
+                    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+
+                    if (shift.is_advanced_shift) {
+                        let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
+                        let clientCount = 0;
+                        const header = document.createElement("div");
+                        header.innerHTML = `<strong>${timeRange}</strong> ${shiftType}`;
+                        taskDiv.appendChild(header);
+                        const clientsWrapper = document.createElement("div");
+                        clientsWrapper.style.display = "flex";
+                        clientsWrapper.style.alignItems = "center";
+                        clientsWrapper.style.marginTop = "4px";
+                        clientIds.forEach(id => {
+                            const clientName = clientNames[String(id)] || "Unknown";
+                            const initials = getInitials(clientName);
+                            const avatar = document.createElement("div");
+                            avatar.classList.add("client-avatar");
+                            avatar.textContent = initials;
+                            clientsWrapper.appendChild(avatar);
+                            clientCount++;
+                        });
+                        const countSpan = document.createElement("span");
+                        countSpan.textContent = `${clientCount} Clients`;
+                        countSpan.style.marginLeft = "6px";
+                        countSpan.style.fontSize = "10px";
+                        clientsWrapper.appendChild(countSpan);
+                        taskDiv.appendChild(clientsWrapper);
+                    } else {
+                        const clientDisplay = (shift.clientIds || [])
+                            .map(id => clientNames[String(id)] || 'Unknown Client')
+                            .join(', ');
+                        taskDiv.innerHTML = `
+                            <strong>${timeRange}</strong><br>
+                            ${shiftType}<br>
+                            ${clientDisplay}
+                        `;
+                    }
+
+                    taskDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        openShiftSlider(shift.id, dateKey);
+                    };
+                    dayCell.appendChild(taskDiv);
+                });
+            }
+
+            dayCell.onclick = () => openModal(`${userName}_${dateKey}`, dateKey);
+            calendar.appendChild(dayCell);
+        }
+    });
+
+    const addStaffCell = document.createElement('div');
+    addStaffCell.className = 'add-staff-cell';
+    addStaffCell.innerHTML = `<button class="add-staff-btn" onclick="openStaffModal()">Add Staff</button>`;
+    calendar.appendChild(addStaffCell);
+}
+
+function openShiftSlider(shiftId, dateKey) {
+    console.log('Opening slider for shift:', shiftId, 'on date:', dateKey);
+    Livewire.dispatch('set-shift-details', { shiftId: shiftId, selectedDate: dateKey });
+    const slider = document.getElementById('shiftSlider');
+    if (slider) slider.classList.add('open');
+}
+
+function closeSlider() {
+    const slider = document.getElementById('shiftSlider');
+    if (slider) slider.classList.remove('open');
+    Livewire.dispatch('set-shift-details', { shiftId: null, selectedDate: null });
+}
+
+function prevWeek() {
+    currentDate.setDate(currentDate.getDate() - 7);
     renderCalendar();
+}
+
+function nextWeek() {
+    currentDate.setDate(currentDate.getDate() + 7);
+    renderCalendar();
+}
+
+function openModal(key, dateKey) {
+    console.log('Key:', key, 'DateKey:', dateKey);
+    const formattedDate = dateKey;
+    fetch('/set-selected-date', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ dateKey: formattedDate })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Livewire.dispatch('refresh-and-open-modal');
+        }
+    })
+    .catch(error => console.error('Error setting session:', error));
+
+    const modal = document.getElementById('taskModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeModal() {
+    const modal = document.getElementById('taskModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function openStaffModal() {
+    const modal = document.getElementById('staffModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeStaffModal() {
+    const modal = document.getElementById('staffModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function toggleFullView(modalId) {
+    const modalContent = document.getElementById(modalId);
+    if (modalContent) modalContent.classList.toggle('full-view');
+}
+
+const taskModalEl = document.getElementById('taskModal');
+if (taskModalEl) {
+    taskModalEl.addEventListener('click', function(event) {
+        if (event.target === this) closeModal();
+    });
+}
+
+const staffModalEl = document.getElementById('staffModal');
+if (staffModalEl) {
+    staffModalEl.addEventListener('click', function(event) {
+        if (event.target === this) closeStaffModal();
+    });
+}
+
+const shiftSliderEl = document.getElementById('shiftSlider');
+if (shiftSliderEl) {
+    shiftSliderEl.addEventListener('click', function(event) {
+        if (event.target === this) closeSlider();
+    });
+}
+
+document.addEventListener('livewire:initialized', () => {
+    Livewire.on('open-task-modal', () => {
+        console.log('Received open-task-modal event');
+        const modal = document.getElementById('taskModal');
+        if (modal) modal.style.display = 'flex';
+    });
+
+    Livewire.on('set-shift-details', ({ shiftId, selectedDate }) => {
+        console.log('Set shift details:', { shiftId, selectedDate });
+        Livewire.dispatch('updateShift', { shiftId, selectedDate });
+    });
+});
+
+renderCalendar();
 </script>
 </x-filament-panels::page>

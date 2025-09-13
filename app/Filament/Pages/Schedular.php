@@ -30,6 +30,8 @@ use Spatie\Permission\Traits\HasRoles;
 use Filament\Forms\Form;
 use App\Models\Shift;
 use Filament\Notifications\Notification;
+use Filament\Forms\Get;
+
 
 
 
@@ -97,75 +99,85 @@ public function mount()
     }
 
     // Fetch shifts filtered by company_id
-    $this->shifts = Shift::where('company_id', $companyId)
-        ->get()
-        ->map(function ($shift) {
-                $timeAndLocation = is_string($shift->time_and_location)
-                    ? json_decode($shift->time_and_location, true)
-                    : ($shift->time_and_location ?? []);
+   $this->shifts = Shift::where('company_id', $companyId)
+    ->get()
+    ->map(function ($shift) {
+        $timeAndLocation = is_string($shift->time_and_location)
+            ? json_decode($shift->time_and_location, true)
+            : ($shift->time_and_location ?? []);
 
-                $clientSection = is_string($shift->client_section)
-                    ? json_decode($shift->client_section, true)
-                    : ($shift->client_section ?? []);
+        $clientSection = is_string($shift->client_section)
+            ? json_decode($shift->client_section, true)
+            : ($shift->client_section ?? []);
 
-                $shiftSection = is_string($shift->shift_section)
-                    ? json_decode($shift->shift_section, true)
-                    : ($shift->shift_section ?? []);
+        $shiftSection = is_string($shift->shift_section)
+            ? json_decode($shift->shift_section, true)
+            : ($shift->shift_section ?? []);
 
-                $carerSection = is_string($shift->carer_section)
-                    ? json_decode($shift->carer_section, true)
-                    : ($shift->carer_section ?? []);
+        $carerSection = is_string($shift->carer_section)
+            ? json_decode($shift->carer_section, true)
+            : ($shift->carer_section ?? []);
 
+        // Common fields
+        $base = [
+            'id' => $shift->id,
+            'start_date' => $timeAndLocation['start_date'] ?? null,
+            'end_date' => $timeAndLocation['end_date'] ?? null,
+            'start_time' => $timeAndLocation['start_time'] ?? null,
+            'end_time' => $timeAndLocation['end_time'] ?? null,
+            'repeat' => $timeAndLocation['repeat'] ?? false,
+            'recurrance' => $timeAndLocation['recurrance'] ?? 'None',
+            'repeat_every_daily' => $timeAndLocation['repeat_every_daily'] ?? null,
+            'repeat_every_weekly' => $timeAndLocation['repeat_every_weekly'] ?? null,
+            'repeat_every_monthly' => $timeAndLocation['repeat_every_monthly'] ?? null,
+            'occurs_on_monthly' => $timeAndLocation['occurs_on_monthly'] ?? null,
+            'occurs_on_weekly' => $timeAndLocation['occurs_on_weekly'] ?? [],
+            'shift_type_id' => $shiftSection['shift_type_id'] ?? null,
+            'add_to_job_board' => (bool) $shift->add_to_job_board,
+            'is_advanced_shift' => (bool) $shift->is_advanced_shift,
+            'is_vacant' => (int) $shift->is_vacant,
+        ];
 
-            // Common fields
-            $base = [
-                'id' => $shift->id,
-                'start_date' => $timeAndLocation['start_date'] ?? null,
-                'end_date' => $timeAndLocation['end_date'] ?? null,
-                'start_time' => $timeAndLocation['start_time'] ?? null,
-                'end_time' => $timeAndLocation['end_time'] ?? null,
-                'repeat' => $timeAndLocation['repeat'] ?? false,
-                'recurrance' => $timeAndLocation['recurrance'] ?? 'None',
-                'repeat_every_daily' => $timeAndLocation['repeat_every_daily'] ?? null,
-                'repeat_every_weekly' => $timeAndLocation['repeat_every_weekly'] ?? null,
-                'repeat_every_monthly' => $timeAndLocation['repeat_every_monthly'] ?? null,
-                'occurs_on_monthly' => $timeAndLocation['occurs_on_monthly'] ?? null,
-                'occurs_on_weekly' => $timeAndLocation['occurs_on_weekly'] ?? [],
-                'shift_type_id' => $shiftSection['shift_type_id'] ?? null,
-                'add_to_job_board' => (bool) $shift->add_to_job_board,
-                'is_advanced_shift' => (bool) $shift->is_advanced_shift,
-            ];
+        // Simple shift (is_advanced_shift = 0)
+        if (!$shift->is_advanced_shift) {
+            $base['client_id'] = $clientSection['client_id'] ?? null;
+            $base['user_id'] = $carerSection['user_id'] ?? null;
+            return [$base];
+        }
 
-            // ✅ Simple shift (is_advanced_shift = 0)
-            if (!$shift->is_advanced_shift) {
-                $base['client_id'] = $clientSection['client_id'] ?? null;
-                $base['user_id']   = $carerSection['user_id'] ?? null;
-                return [$base];
+        // Advanced shift (is_advanced_shift = 1)
+        $records = [];
+        $clientIds = $clientSection['client_id'] ?? [];
+        $userIds = $carerSection['user_id'] ?? [];
+
+        // Ensure both are arrays
+        $clientIds = is_array($clientIds) ? $clientIds : [$clientIds];
+        $userIds = is_array($userIds) ? $userIds : [$userIds];
+
+        // For vacant shifts with no user_id, create one record per client
+        if (empty($userIds) && $shift->is_vacant) {
+            foreach ($clientIds as $clientId) {
+                $copy = $base;
+                $copy['client_id'] = $clientId;
+                $copy['user_id'] = null;
+                $records[] = $copy;
             }
-
-            // ✅ Advanced shift (is_advanced_shift = 1)
-            $records = [];
-            $clientIds = $clientSection['client_id'] ?? [];
-            $userIds   = $carerSection['user_id'] ?? [];
-
-            // Ensure both are arrays
-            $clientIds = is_array($clientIds) ? $clientIds : [$clientIds];
-            $userIds   = is_array($userIds) ? $userIds : [$userIds];
-
+        } else {
             foreach ($clientIds as $clientId) {
                 foreach ($userIds as $userId) {
                     $copy = $base;
                     $copy['client_id'] = $clientId;
-                    $copy['user_id']   = $userId;
+                    $copy['user_id'] = $userId;
                     $records[] = $copy;
                 }
             }
+        }
 
-            return $records;
-        })
-        ->flatten(1) // merge arrays of arrays
-        ->values()
-        ->toArray();
+        return $records;
+    })
+    ->flatten(1)
+    ->values()
+    ->toArray();
 
     $this->clients = Client::where('user_id', $authUser->id)
         ->where('is_archive', 'Unarchive')
@@ -705,10 +717,7 @@ public function form(Form $form): Form
             ->collapsible(),
 
             Toggle::make('add_to_job_board')
-                ->label('Add To Job Board')
-                ->extraAttributes([
-                    'x-model' => 'jobBoardActive',
-                ]),
+                ->label('Add To Job Board'),
 
             Section::make(
                 new HtmlString('
@@ -828,7 +837,8 @@ public function form(Form $form): Form
                     ]),
             ])
             ->statePath('carer_section')
-            ->extraAttributes(['style' => 'margin-top:10px']),
+            ->extraAttributes(['style' => 'margin-top:10px'])
+            ->visible(fn (Get $get) => !$get('add_to_job_board')),
 
             Section::make(
                 new HtmlString('
@@ -906,7 +916,8 @@ public function form(Form $form): Form
                     ]),
             ])
             ->statePath('job_section')
-            ->extraAttributes(['style' => 'margin-top:10px']),
+            ->extraAttributes(['style' => 'margin-top:10px'])
+            ->visible(fn (Get $get) => $get('add_to_job_board')),
 
             Section::make(
                 new HtmlString('
@@ -950,60 +961,77 @@ public function createShift()
      $data = $this->form->getState();
      $authUser = Auth::user();
      $shiftCompanyID = Company::where('user_id', $authUser->id)->value('id');
-    // dd($data);
+  
 
-    Shift::create([
-        'client_section' => [
-            'client_id'     => data_get($data, 'client_section.client_id'),
-            'price_book_id' => data_get($data, 'client_section.price_book_id'),
-            'funds'         => data_get($data, 'client_section.funds'),
+
+$carerSection = empty($data['add_to_job_board']) ? [
+    'user_id'      => data_get($data, 'carer_section.user_id'),
+    'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
+    'user_details' => data_get($data, 'carer_section.user_details', []),
+    'notify'       => data_get($data, 'carer_section.notify', false),
+] : null;
+
+// Default
+$isVacant = 0;
+
+// Check conditions for vacant
+if (
+    empty($data['add_to_job_board']) && (
+        ($carerSection['user_id'] === null && $carerSection['pay_group_id'] === null) ||
+        ($carerSection['user_id'] === [] && $carerSection['user_details'] === [] && $carerSection['notify'] === false)
+    )
+) {
+    $isVacant = 1;
+}
+
+Shift::create([
+    'client_section' => [
+        'client_id'     => data_get($data, 'client_section.client_id'),
+        'price_book_id' => data_get($data, 'client_section.price_book_id'),
+        'funds'         => data_get($data, 'client_section.funds'),
+    ],
+    'shift_section' => [
+        'shift_type_id'          => data_get($data, 'shift_section.shift_type_id'),
+        'additional_shift_types' => data_get($data, 'shift_section.additional_shift_types', []),
+        'allowance_id'           => data_get($data, 'shift_section.allowance_id', []),
+    ],
+    'time_and_location' => [
+        'start_date'              => data_get($data, 'time_and_location.start_date'),
+        'shift_finishes_next_day' => data_get($data, 'time_and_location.shift_finishes_next_day', false),
+        'start_time'              => data_get($data, 'time_and_location.start_time'),
+        'end_time'                => data_get($data, 'time_and_location.end_time'),
+        'repeat'                  => data_get($data, 'time_and_location.repeat', false),
+        'recurrance'              => data_get($data, 'time_and_location.recurrance'),
+        'repeat_every_daily'      => data_get($data, 'time_and_location.repeat_every_daily'),
+        'repeat_every_weekly'     => data_get($data, 'time_and_location.repeat_every_weekly'),
+        'repeat_every_monthly'    => data_get($data, 'time_and_location.repeat_every_monthly'),
+        'occurs_on_monthly'       => data_get($data, 'time_and_location.occurs_on_monthly'),
+        'occurs_on_weekly' => [
+            'sunday'    => data_get($data, 'time_and_location.occurs_on_weekly.sunday', false),
+            'monday'    => data_get($data, 'time_and_location.occurs_on_weekly.monday', false),
+            'tuesday'   => data_get($data, 'time_and_location.occurs_on_weekly.tuesday', false),
+            'wednesday' => data_get($data, 'time_and_location.occurs_on_weekly.wednesday', false),
+            'thursday'  => data_get($data, 'time_and_location.occurs_on_weekly.thursday', false),
+            'friday'    => data_get($data, 'time_and_location.occurs_on_weekly.friday', false),
+            'saturday'  => data_get($data, 'time_and_location.occurs_on_weekly.saturday', false),
         ],
-        'shift_section' => [
-            'shift_type_id'          => data_get($data, 'shift_section.shift_type_id'),
-            'additional_shift_types' => data_get($data, 'shift_section.additional_shift_types', []),
-            'allowance_id'           => data_get($data, 'shift_section.allowance_id', []),
-        ],
-        'time_and_location' => [
-                'start_date'              => data_get($data, 'time_and_location.start_date'),
-                'shift_finishes_next_day' => data_get($data, 'time_and_location.shift_finishes_next_day', false),
-                'start_time'              => data_get($data, 'time_and_location.start_time'),
-                'end_time'                => data_get($data, 'time_and_location.end_time'),
-                'repeat'                  => data_get($data, 'time_and_location.repeat', false),
-                'recurrance'              => data_get($data, 'time_and_location.recurrance'),
-                'repeat_every_daily'            => data_get($data, 'time_and_location.repeat_every_daily'),
-                'repeat_every_weekly'            => data_get($data, 'time_and_location.repeat_every_weekly'),
-                'repeat_every_monthly'            => data_get($data, 'time_and_location.repeat_every_monthly'),
-                'occurs_on_monthly'       => data_get($data, 'time_and_location.occurs_on_monthly'),
+        'end_date'              => data_get($data, 'time_and_location.end_date'),
+        'address'               => data_get($data, 'time_and_location.address'),
+        'unit_apartment_number' => data_get($data, 'time_and_location.unit_apartment_number'),
+    ],
+    'add_to_job_board' => data_get($data, 'add_to_job_board', false),
+    'carer_section'    => $carerSection,
+    'job_section'      => !empty($data['add_to_job_board']) ? [
+        'team_id'          => data_get($data, 'job_section.team_id' , []),
+        'shift_assignment' => data_get($data, 'job_section.shift_assignment'),
+    ] : null,
+    'instruction' => [
+        'description' => data_get($data, 'instruction.description'),
+    ],
+    'company_id' => $shiftCompanyID,
+    'is_vacant'  => $isVacant, // ✅ set here
+]);
 
-                'occurs_on_weekly' => [
-                    'sunday'    => data_get($data, 'time_and_location.occurs_on_weekly.sunday', false),
-                    'monday'    => data_get($data, 'time_and_location.occurs_on_weekly.monday', false),
-                    'tuesday'   => data_get($data, 'time_and_location.occurs_on_weekly.tuesday', false),
-                    'wednesday' => data_get($data, 'time_and_location.occurs_on_weekly.wednesday', false),
-                    'thursday'  => data_get($data, 'time_and_location.occurs_on_weekly.thursday', false),
-                    'friday'    => data_get($data, 'time_and_location.occurs_on_weekly.friday', false),
-                    'saturday'  => data_get($data, 'time_and_location.occurs_on_weekly.saturday', false),
-                ],
-
-
-                'end_date'              => data_get($data, 'time_and_location.end_date'),
-                'address'               => data_get($data, 'time_and_location.address'),
-                'unit_apartment_number' => data_get($data, 'time_and_location.unit_apartment_number'),
-            ],
-        'add_to_job_board' => data_get($data, 'add_to_job_board', false),
-        'carer_section' => empty($data['add_to_job_board']) ? [
-            'user_id'      => data_get($data, 'carer_section.user_id'),
-            'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
-        ] : null,
-        'job_section' => !empty($data['add_to_job_board']) ? [
-            'team_id'         => data_get($data, 'job_section.team_id' , []),
-            'shift_assignment'=> data_get($data, 'job_section.shift_assignment'),
-        ] : null,
-        'instruction' => [
-            'description' => data_get($data, 'instruction.description'),
-        ],
-        'company_id' => $shiftCompanyID,
-    ]);
 
     Notification::make()
         ->title('New shift created successfully')
