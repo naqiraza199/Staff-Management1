@@ -19,6 +19,7 @@ class Shift extends Model
         'is_advanced_shift',
         'is_vacant',
         'is_approved',
+        'is_cancelled',
     ];
 
     protected $casts = [
@@ -29,6 +30,7 @@ class Shift extends Model
         'is_advanced_shift'   => 'boolean',
         'is_vacant'   => 'boolean',
         'is_approved'   => 'boolean',
+        'is_cancelled'   => 'boolean',
         'carer_section'      => 'array',
         'job_section'        => 'array',
         'instruction'        => 'array',

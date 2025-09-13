@@ -34,12 +34,14 @@ use Filament\Forms\Get;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions;
+use App\Models\ShiftCancel;
+use Filament\Actions\Concerns\InteractsWithActions;
 
 
 class ShiftDetails extends Component implements Forms\Contracts\HasForms
 {
-    
     use Forms\Concerns\InteractsWithForms;
+    use InteractsWithActions;
     public $shiftId = null;
     public $selectedDate = null;
     public $shift = null;
@@ -59,7 +61,9 @@ class ShiftDetails extends Component implements Forms\Contracts\HasForms
 
     public $formData = [];
 
-    protected $listeners = ['updateShift'];
+    protected $listeners = ['updateShift',
+                            'cancelShift'
+                        ];
 
 
     public function updateShift($shiftId, $selectedDate)
@@ -200,9 +204,50 @@ public function approveTimesheet()
 }
 
 public function copy() { /* ... */ }
-public function cancel() { /* ... */ }
+public function cancelShift($reason, $type = null, $notes = null, $notifyCarer = false)
+{
+    ShiftCancel::create([
+        'shift_id'     => $this->shift->id,
+        'type'         => $reason === 'client' ? 'Cancelled by clients' : 'Cancelled by us',
+        'ndis'         => $type ?? null,
+        'reason'       => $notes ?? null,
+        'notify_carer' => $notifyCarer ?? false,
+    ]);
+
+    $this->shift->update([
+        'is_cancelled' => 1,  // Ensure this matches your blade condition ($shift->cancelled)
+    ]);
+
+    Notification::make()
+        ->title('Shift cancelled successfully!')
+        ->success()
+        ->send();
+
+    $this->dispatch('shift-cancelled', message: 'Shift cancelled successfully!');
+
+    $this->redirect('/admin/schedular');
+}
 public function addNotes() { /* ... */ }
 public function delete() { /* ... */ }
+public function rebook()
+    {
+        $shiftCancel = ShiftCancel::where('shift_id', $this->shift->id)->first();
+        if ($shiftCancel) {
+            $shiftCancel->delete();
+        }
+
+        $this->shift->update([
+            'is_cancelled' => 0,
+        ]);
+
+        Notification::make()
+            ->title('Shift rebooked successfully!')
+            ->success()
+            ->send();
+
+
+        $this->redirect('/admin/schedular');
+}
 
 
 
