@@ -38,6 +38,7 @@ use Filament\Forms\Components\TextArea;
 use Filament\Actions\Action;
 use App\Models\Language;
 use App\Models\DocumentCategory;
+use App\Models\Event;
 
 class AdvancedShiftForm extends Page implements HasForms
 {
@@ -1041,7 +1042,7 @@ public function mount(): void
     }
 public function createShift()
 {
-     $shifti = Shift::find(32);
+     $shifti = Shift::find(45);
     dd($shifti);
      $data = $this->form->getState();
      $authUser = Auth::user();
@@ -1068,7 +1069,7 @@ public function createShift()
                 }
 
 
-    Shift::create([
+    $newShift = Shift::create([
        'client_section' => [
                 'client_id'      => $data['client_section']['client_id'] ?? [],
                 'client_details' => $data['client_section']['client_details'] ?? [],
@@ -1118,11 +1119,7 @@ public function createShift()
         ],
 
         'add_to_job_board' => data_get($data, 'add_to_job_board', false),
-        'carer_section' => empty($data['add_to_job_board']) ? [
-                'user_id'      => $data['carer_section']['user_id'] ?? [],
-                'user_details' => $data['carer_section']['user_details'] ?? [],
-                'notify'      => data_get($data, 'carer_section.notify', false),
-        ] : null,
+           'carer_section'     => $carerSection,
         'job_section' => !empty($data['add_to_job_board']) ? [
             'shift_assignment'=> data_get($data, 'job_section.shift_assignment'),
             'team_id'         => data_get($data, 'job_section.team_id' , []),
@@ -1132,6 +1129,9 @@ public function createShift()
             'kpi_id'         => data_get($data, 'job_section.kpi_id' , []),
             'distance_shift'=> data_get($data, 'job_section.distance_shift'),
         ] : null,
+         'status' => !empty($data['add_to_job_board'])
+            ? 'Job Board'
+            : 'Pending',
           'task_section' => $data['task_section']['tasks'] ?? [],
         'instruction' => [
             'description' => data_get($data, 'instruction.description'),
@@ -1141,6 +1141,22 @@ public function createShift()
         'is_vacant'  => $isVacant, // ✅ set here
 
     ]);
+
+       Event::create([
+        'shift_id' => $newShift->id,
+        'title'    => $authUser->name . ' Created Shift',
+        'from'     => 'Create',
+        'body'     => 'Shift created',
+    ]);
+
+    if (!empty($data['add_to_job_board'])) {
+        Event::create([
+            'shift_id' => $newShift->id,
+            'title'    => 'Job Listed',
+            'from'     => 'Job',
+            'body'     => 'Job listed by ' . $authUser->name,
+        ]);
+    }
 
     Notification::make()
         ->title('New shift created successfully')

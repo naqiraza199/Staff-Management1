@@ -421,62 +421,10 @@
         .whiti{
             /* background-color: white; */
         }
-    </style>
-
-<div wire:ignore.self>
-    <div class="calendar-container">
-        <div class="calendar-header">
-            <button class="buto" onclick="prevWeek()">Previous Week</button>
-            <h2 id="week-range"></h2>
-            <button class="buto" onclick="nextWeek()">Next Week</button>
-        </div>
-        <div class="calendar-grid" id="calendar">
-            <div class="day-header">Staff</div>
-            <div class="day-header" id="day0"></div>
-            <div class="day-header" id="day1"></div>
-            <div class="day-header" id="day2"></div>
-            <div class="day-header" id="day3"></div>
-            <div class="day-header" id="day4"></div>
-            <div class="day-header" id="day5"></div>
-            <div class="day-header" id="day6"></div>
-        </div>
-    </div>
-
-    <div class="modal" id="taskModal">
-        <div class="task-modal-content" id="taskModalContent">
-            <div class="whiti">
-            <button class="buto full-view-btn" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
-           <a href="{{ route('filament.admin.pages.advanced-shift-form') }}">
-            <button class="buto" >Advanced Edit</button>
-            </a>
-            </div>
-            <div x-data="{ repeatChecked: false, jobBoardActive: false, recurrance: '' }">
-                {{ $this->form }}
-            </div>
-            <div class="but-div">
-                <x-filament::button color="primary" wire:click="createShift">SAVE</x-filament::button>
-                <x-filament::button color="danger" onclick="closeModal()">CANCEL</x-filament::button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="staffModal">
-        <div class="staff-modal-content" id="staffModalContent">
-            @livewire('app.filament.pages.staff-form-page')
-        </div>
-    </div>
-
-    <!-- Right-side slider for shift details -->
-    <div class="slider" id="shiftSlider" wire:ignore>
-        <div class="slider-content">
-            <button class="buto close-btn" style="padding: 5px 15px;" onclick="closeSlider()">&times;</button>
-            <h2>Shift Details</h2>
-               <livewire:shift-details :shift-id="$shiftId" :selected-date="$selectedDate" />
-        </div>
-    </div>
-
-    <style>
-        .task-vacant {
+        del {
+    color: #000000ff; /* Red strikethrough for cancelled shifts */
+}
+.task-vacant {
                     background: linear-gradient(135deg, #f97316, #facc15);
                     color: white;
                     padding: 8px;
@@ -543,10 +491,410 @@
             font-weight: bold;
             padding: 10px;
         }
+        /* Base style for all selects */
+.custom-select {
+    appearance: none;               /* remove browser default arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    border: 1px solid #d1d5db;      /* gray-300 */
+    border-radius: 8px;
+    padding: 8px 36px 8px 12px;     /* space for arrow */
+    font-size: 14px;
+    line-height: 1.4;
+    color: #374151;                 /* gray-700 */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Different sizes */
+.custom-select.small {
+    width: 120px;
+}
+
+.custom-select.large {
+    width: 190px;
+}
+
+/* Hover & focus */
+.custom-select:hover {
+    border-color: #9ca3af;          /* gray-400 */
+}
+
+.custom-select:focus {
+    outline: none;
+    border-color: #3b82f6;          /* blue-500 */
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+
+/* Custom dropdown arrow */
+.custom-select {
+    background-image: url("data:image/svg+xml,%3Csvg fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px 16px;
+}
+ .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-btn {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 100px;
+    }
+
+    /* Small arrow */
+    .dropdown-btn::after {
+      content: "";
+      border: solid #555;
+      border-width: 0 2px 2px 0;
+      display: inline-block;
+      padding: 3px;
+      transform: rotate(45deg);
+      margin-left: auto;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 110%;
+      left: 0;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 220px;
+      z-index: 1000;
+    }
+
+    .dropdown-content select {
+      width: 100%;
+      padding: 6px 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .dropdown.show .dropdown-content {
+      display: block;
+    }
+    .today{
+            background: #FFFFFF;
+            border: 1px #cfcccc groove;
+            padding: 7px 25px 6px 21px;
+            border-radius: 4px;
+            font-size: 14px;
+    }
+    .calnedr-check{
+        background: #FFFFFF;
+            border: 1px #cfcccc groove;
+            padding: 7px 10px 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+    }
+    .today:hover{
+            background: #d9d9d9;
+    }
+    ..custom-calendar-btn:hover{
+            background: #d9d9d9;
+    }
+     .task-vacant {
+                    background: linear-gradient(135deg, #f97316, #facc15);
+                    color: white;
+                    padding: 8px;
+                    margin: 4px 0;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                .task-advanced {
+                    background: linear-gradient(135deg, #22c55e, #86efac);
+                    color: white;
+                }
+
+                .client-avatar {
+                           width: 24px;
+                            height: 24px;
+                            background-color: #e5e7eb;
+                            color: #f96a04;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 10px;
+                            margin-right: 4px;
+                            font-weight: 600;
+                }
+        .slider {
+            position: fixed;
+            top: 0;
+            right: -700px; /* Hidden by default */
+            width: 700px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+            transition: right 0.3s ease-in-out;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .slider.open {
+            right: 0; /* Slide in */
+        }
+        .slider-content {
+            padding: 20px;
+            
+        }
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .task {
+            cursor: pointer;
+            padding: 5px;
+            margin: 2px 0;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        .calendar-day {
+            min-height: 130px;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+        .staff-cell {
+            font-weight: bold;
+            padding: 10px;
+        }
+      .custom-calendar-btn {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .custom-calendar-popup {
+      display: none;
+      position: absolute;
+      margin-top: 8px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      z-index: 1000;
+    }
+
+    .custom-calendar-popup input[type="date"] {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+      width: 100%;
+    }
     </style>
 
-   <script>
-    let currentDate = new Date();
+<div wire:ignore.self x-data="{ calendarType: 'staff' }">
+    <!-- Calendar Switcher -->
+    <div class="mb-4 flex items-center gap-3" >
+        <select id="calendarType" x-model="calendarType" class="custom-select small" style="margin-left: 45px;">
+            <option value="staff">👤 Staff</option>
+            <option value="client">👤 Client</option>
+        </select>
+
+        <select id="status" class="custom-select large">
+            <option value="all">⚪ All status</option>
+            <option value="Job Board">🟣 Job Board</option>
+            <option value="Pending">🔴 Pending</option>
+            <option value="Cancelled">🟠 Cancelled</option>
+            <option value="Booked">🟢 Booked</option>
+            <option value="Approved">🟩 Approved</option>
+            <option value="Rejected">❌ Rejected</option>
+            <option value="Invoiced">🔵 Invoiced</option>
+        </select>
+
+          <div class="dropdown" id="dropdown">
+                <button class="dropdown-btn">Filters</button>
+                <div class="dropdown-content">
+              <select>
+                <option value="">All types</option>
+                @foreach($this->shiftTypes as $shiftType)
+                    <option value="{{ $shiftType->id }}">
+                        {{ $shiftType->name }}
+                    </option>
+                @endforeach
+            </select>
+
+                <select>
+                    <option>A-Z</option>
+                    <option>Shift Counts</option>
+                </select>
+                </div>
+            </div>
+
+    <button class="today">Today</button>
+
+      <button class="custom-calendar-btn" id="customCalendarToggle">📅</button>
+
+  <!-- Calendar Popup -->
+  <div class="custom-calendar-popup" id="customCalendarPopup">
+    <input type="date" id="customDatePicker">
+  </div>
+
+   <select  style="margin-left: 222px;" class="custom-select large">
+            <option value="Daily-f">Daily</option>
+            <option value="Weekly-f">Weekly</option>
+            <option value="Fortnightly-f">Fortnightly</option>
+            <option value="Tabular-f">Tabular</option>
+            <option value="Basic-f">Basic</option>
+            <option value="Compact view-f">Compact view</option>
+            <option value="Expand-f">Expand</option>
+        </select>
+        
+            <x-filament::button 
+            color="primary" 
+            icon="heroicon-m-plus"
+            onclick="openModal('shift-modal')"
+        >
+            Shift
+        </x-filament::button>
+
+      <x-filament::dropdown>
+            <x-slot name="trigger">
+                <x-filament::icon-button
+                    style="        margin-left: -2px;
+                                margin-top: -10px;
+                                border: 1px #cfc7c7 groove;
+                                height: 40px;
+                                width: 42px;
+                                background: white;"
+                    icon="heroicon-m-ellipsis-vertical"
+                    color="gray"
+                />
+            </x-slot>
+
+            <x-filament::dropdown.list>
+
+            <x-filament::dropdown.list.item 
+                    icon="heroicon-m-document-duplicate" 
+                    wire:click="approveTimesheet"
+                    color="gray">
+                    Copy Schedule
+                </x-filament::dropdown.list.item>
+
+                <x-filament::dropdown.list.item
+                    icon="heroicon-m-x-mark"
+                    color="gray">
+                    Cancel Schedule
+                </x-filament::dropdown.list.item>
+
+                <x-filament::dropdown.list.item
+                    icon="heroicon-m-arrow-down-tray"
+                    color="gray">
+                    Export
+                </x-filament::dropdown.list.item>
+
+                <x-filament::dropdown.list.item 
+                    icon="heroicon-m-calendar-days" 
+                    color="gray">
+                    Manage Availability
+                </x-filament::dropdown.list.item>
+
+             
+            </x-filament::dropdown.list>
+        </x-filament::dropdown>
+
+
+    </div>
+
+    <!-- Staff Calendar -->
+    <div x-show="calendarType === 'staff'" class="calendar-container" id="staff-calendar">
+        <div class="calendar-header">
+            <button class="buto" onclick="prevWeek()">Previous Week</button>
+            <h2 id="week-range"></h2>
+            <button class="buto" onclick="nextWeek()">Next Week</button>
+        </div>
+        <div class="calendar-grid" id="staffCalendar">
+            <div class="day-header">Staff</div>
+            <div class="day-header" id="day0"></div>
+            <div class="day-header" id="day1"></div>
+            <div class="day-header" id="day2"></div>
+            <div class="day-header" id="day3"></div>
+            <div class="day-header" id="day4"></div>
+            <div class="day-header" id="day5"></div>
+            <div class="day-header" id="day6"></div>
+        </div>
+    </div>
+
+    <!-- Client Calendar -->
+    <div x-show="calendarType === 'client'" class="calendar-container" id="client-calendar">
+        <div class="calendar-header">
+            <button class="buto" onclick="prevWeek()">Previous Week</button>
+            <h2 id="client-week-range"></h2>
+            <button class="buto" onclick="nextWeek()">Next Week</button>
+        </div>
+        <div class="calendar-grid" id="clientCalendar">
+            <div class="day-header">Client</div>
+            <div class="day-header" id="cday0"></div>
+            <div class="day-header" id="cday1"></div>
+            <div class="day-header" id="cday2"></div>
+            <div class="day-header" id="cday3"></div>
+            <div class="day-header" id="cday4"></div>
+            <div class="day-header" id="cday5"></div>
+            <div class="day-header" id="cday6"></div>
+        </div>
+    </div>
+
+
+    <div class="modal" id="taskModal">
+        <div class="task-modal-content" id="taskModalContent">
+            <div class="whiti">
+            <button class="buto full-view-btn" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
+           <a href="{{ route('filament.admin.pages.advanced-shift-form') }}">
+            <button class="buto" >Advanced Edit</button>
+            </a>
+            </div>
+            <div x-data="{ repeatChecked: false, jobBoardActive: @entangle('data.add_to_job_board'), recurrance: '' }">
+                {{ $this->form }}
+            </div>
+            <div class="but-div">
+                <x-filament::button color="primary" wire:click="createShift">SAVE</x-filament::button>
+                <x-filament::button color="danger" onclick="closeModal()">CANCEL</x-filament::button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="staffModal">
+        <div class="staff-modal-content" id="staffModalContent">
+            @livewire('app.filament.pages.staff-form-page')
+        </div>
+    </div>
+
+    <!-- Right-side slider for shift details -->
+    <div style="
+      background-color:#EFEFEF;
+" class="slider" id="shiftSlider" wire:ignore>
+        <div class="slider-content">
+            <button class="buto close-btn" style="padding: 5px 15px;" onclick="closeSlider()">&times;</button>
+            <h2>Shift Details</h2>
+               <livewire:shift-details :shift-id="$shiftId" :selected-date="$selectedDate" />
+        </div>
+    </div>
+<script>
+let currentDate = new Date();
 const users = @json($users ?? []);
 const shifts = @json($shifts ?? []);
 const clientNames = @json($clientNames ?? []);
@@ -570,21 +918,23 @@ function getInitials(name) {
         .join('');
 }
 
-function renderCalendar() {
-    const calendar = document.getElementById('calendar');
-    if (!calendar) {
-        console.error('Calendar element not found');
-        return;
-    }
+/* ---------------- GLOBAL VARIABLES ---------------- */
+let filteredShifts = shifts;
+let currentSort = 'A-Z'; // Default sort option
+
+/* ---------------- STAFF CALENDAR ---------------- */
+function renderStaffCalendar(filteredShifts = shifts) {
+    const calendar = document.getElementById('staffCalendar');
+    if (!calendar) return;
     const weekRange = document.getElementById('week-range');
+
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
+
     weekRange.textContent = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
-    // Set day headers
     for (let i = 0; i < 7; i++) {
         const day = new Date(startOfWeek);
         day.setDate(startOfWeek.getDate() + i);
@@ -594,12 +944,10 @@ function renderCalendar() {
         }
     }
 
-    // Clear previous content
     while (calendar.children.length > 8) {
         calendar.removeChild(calendar.lastChild);
     }
 
-    // Add static task rows (Vacant Shift, Job Board)
     const staticTasks = ['Vacant Shift', 'Job Board'];
     staticTasks.forEach(task => {
         const taskCell = document.createElement('div');
@@ -615,7 +963,7 @@ function renderCalendar() {
             dayCell.className = 'calendar-day';
 
             if (task === 'Vacant Shift') {
-                const vacantShifts = shifts.filter(shift => {
+                const vacantShifts = filteredShifts.filter(shift => {
                     if (!shift.is_vacant || shift.is_vacant !== 1) return false;
 
                     const shiftStartDate = new Date(shift.start_date);
@@ -658,16 +1006,15 @@ function renderCalendar() {
                 });
 
                 if (vacantShifts.length > 0) {
-                    // Group by shift.id
                     const groupedShifts = {};
                     vacantShifts.forEach(shift => {
                         if (!groupedShifts[shift.id]) {
                             groupedShifts[shift.id] = {
                                 ...shift,
-                                clientIds: [shift.client_id]
+                                clientIds: shift.is_advanced_shift ? (shift.clientIds || []) : [shift.client_id]
                             };
                         } else {
-                            groupedShifts[shift.id].clientIds.push(shift.client_id);
+                            groupedShifts[shift.id].clientIds.push(...(shift.is_advanced_shift ? (shift.clientIds || []) : [shift.client_id]));
                         }
                     });
 
@@ -681,12 +1028,13 @@ function renderCalendar() {
                             ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                             : 'No Time';
                         const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+                        const formattedShiftType = shift.is_cancelled === true ? `<del>${shiftType}</del>` : shiftType;
 
                         if (shift.is_advanced_shift) {
                             let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
                             let clientCount = 0;
                             const header = document.createElement("div");
-                            header.innerHTML = `<strong>${timeRange}</strong> ${shiftType}`;
+                            header.innerHTML = `<strong>${timeRange}</strong> ${formattedShiftType}`;
                             taskDiv.appendChild(header);
                             const clientsWrapper = document.createElement("div");
                             clientsWrapper.style.display = "flex";
@@ -709,7 +1057,15 @@ function renderCalendar() {
                             taskDiv.appendChild(clientsWrapper);
                         } else {
                             const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
-                            taskDiv.innerHTML = `${timeRange}<br>${shiftType}<br>${clientName}`;
+                            taskDiv.innerHTML = `${timeRange}<br>${formattedShiftType}<br>${clientName}`;
+                        }
+
+                        if (shift.is_approved === 1) {
+                            const checkIcon = document.createElement('span');
+                            checkIcon.innerHTML = '✔'; // Unicode for checkmark
+                            checkIcon.style.color = 'green';
+                            checkIcon.style.marginLeft = '5px';
+                            taskDiv.appendChild(checkIcon);
                         }
 
                         taskDiv.onclick = (e) => {
@@ -722,7 +1078,7 @@ function renderCalendar() {
             }
 
             if (task === 'Job Board') {
-                const jobBoardShifts = shifts.filter(shift => {
+                const jobBoardShifts = filteredShifts.filter(shift => {
                     if (!shift.add_to_job_board || shift.add_to_job_board !== true) return false;
 
                     const shiftStartDate = new Date(shift.start_date);
@@ -765,7 +1121,19 @@ function renderCalendar() {
                 });
 
                 if (jobBoardShifts.length > 0) {
+                    const groupedShifts = {};
                     jobBoardShifts.forEach(shift => {
+                        if (!groupedShifts[shift.id]) {
+                            groupedShifts[shift.id] = {
+                                ...shift,
+                                clientIds: shift.is_advanced_shift ? (shift.clientIds || []) : [shift.client_id]
+                            };
+                        } else {
+                            groupedShifts[shift.id].clientIds.push(...(shift.is_advanced_shift ? (shift.clientIds || []) : [shift.client_id]));
+                        }
+                    });
+
+                    Object.values(groupedShifts).forEach(shift => {
                         const taskDiv = document.createElement('div');
                         taskDiv.className = 'task';
                         if (shift.is_advanced_shift) {
@@ -775,8 +1143,46 @@ function renderCalendar() {
                             ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                             : 'No Time';
                         const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
-                        const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
-                        taskDiv.innerHTML = `${timeRange}<br>${shiftType}<br>${clientName}`;
+                        const formattedShiftType = shift.is_cancelled === true ? `<del>${shiftType}</del>` : shiftType;
+
+                        if (shift.is_advanced_shift) {
+                            let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
+                            let clientCount = 0;
+                            const header = document.createElement("div");
+                            header.innerHTML = `<strong>${timeRange}</strong> ${formattedShiftType}`;
+                            taskDiv.appendChild(header);
+                            const clientsWrapper = document.createElement("div");
+                            clientsWrapper.style.display = "flex";
+                            clientsWrapper.style.alignItems = "center";
+                            clientsWrapper.style.marginTop = "4px";
+                            clientIds.forEach(id => {
+                                const clientName = clientNames[String(id)] || "Unknown";
+                                const initials = getInitials(clientName);
+                                const avatar = document.createElement("div");
+                                avatar.classList.add("client-avatar");
+                                avatar.textContent = initials;
+                                clientsWrapper.appendChild(avatar);
+                                clientCount++;
+                            });
+                            const countSpan = document.createElement("span");
+                            countSpan.textContent = `${clientCount} Clients`;
+                            countSpan.style.marginLeft = "6px";
+                            countSpan.style.fontSize = "10px";
+                            clientsWrapper.appendChild(countSpan);
+                            taskDiv.appendChild(clientsWrapper);
+                        } else {
+                            const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
+                            taskDiv.innerHTML = `${timeRange}<br>${formattedShiftType}<br>${clientName}`;
+                        }
+
+                        if (shift.is_approved === 1) {
+                            const checkIcon = document.createElement('span');
+                            checkIcon.innerHTML = '✔'; // Unicode for checkmark
+                            checkIcon.style.color = 'green';
+                            checkIcon.style.marginLeft = '5px';
+                            taskDiv.appendChild(checkIcon);
+                        }
+
                         taskDiv.onclick = (e) => {
                             e.stopPropagation();
                             openShiftSlider(shift.id, dateKey);
@@ -791,8 +1197,19 @@ function renderCalendar() {
         }
     });
 
-    // Add staff rows and shifts
-    Object.entries(users).forEach(([userId, userName]) => {
+    // Sort users based on currentSort
+    let sortedUsers = Object.entries(users);
+    if (currentSort === 'Shift Counts') {
+        sortedUsers.sort((a, b) => {
+            const countA = filteredShifts.filter(shift => shift.user_id === a[0]).length;
+            const countB = filteredShifts.filter(shift => shift.user_id === b[0]).length;
+            return countB - countA; // Descending order by shift count
+        });
+    } else {
+        sortedUsers.sort((a, b) => a[1].localeCompare(b[1])); // Alphabetical A-Z
+    }
+
+    sortedUsers.forEach(([userId, userName]) => {
         const staffCell = document.createElement('div');
         staffCell.className = 'staff-cell';
         staffCell.textContent = userName;
@@ -805,14 +1222,13 @@ function renderCalendar() {
             const dayCell = document.createElement('div');
             dayCell.className = 'calendar-day';
 
-            const userShifts = shifts.filter(shift => {
+            // filter shifts for this user + day
+            const userShifts = filteredShifts.filter(shift => {
                 if (!shift || shift.user_id != userId) return false;
 
                 const shiftStartDate = new Date(shift.start_date);
                 const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
                 const currentDay = new Date(dateKey);
-
-                if (isNaN(shiftStartDate) || isNaN(shiftEndDate)) return false;
                 if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
 
                 const recurrance = shift.recurrance || 'None';
@@ -839,43 +1255,39 @@ function renderCalendar() {
                     const currentYear = currentDay.getUTCFullYear();
                     const currentMonth = currentDay.getUTCMonth();
                     const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
-                    if (monthsDelta % repeatEveryMonthly === 0) {
-                        return currentDay.getUTCDate() === occursOnMonthly;
-                    }
-                    return false;
+                    return monthsDelta % repeatEveryMonthly === 0 && currentDay.getUTCDate() === occursOnMonthly;
                 }
-                return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
+                return shift.start_date === dateKey;
             });
 
             if (userShifts.length > 0) {
-                const groupedShifts = {};
+                const groupedUserShifts = {};
                 userShifts.forEach(shift => {
-                    if (!groupedShifts[shift.id]) {
-                        groupedShifts[shift.id] = {
+                    if (!groupedUserShifts[shift.id]) {
+                        groupedUserShifts[shift.id] = {
                             ...shift,
-                            clientIds: [shift.client_id]
+                            clientIds: shift.is_advanced_shift ? (shift.clientIds || []) : [shift.client_id]
                         };
                     } else {
-                        groupedShifts[shift.id].clientIds.push(shift.client_id);
+                        groupedUserShifts[shift.id].clientIds.push(...(shift.is_advanced_shift ? (shift.clientIds || []) : [shift.client_id]));
                     }
                 });
 
-                Object.values(groupedShifts).forEach(shift => {
+                Object.values(groupedUserShifts).forEach(shift => {
                     const taskDiv = document.createElement('div');
                     taskDiv.className = 'task';
                     if (shift.is_advanced_shift) {
                         taskDiv.classList.add('task-advanced');
                     }
-                    const timeRange = shift.start_time && shift.end_time
-                        ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
-                        : 'No Time';
+                    const timeRange = shift.start_time && shift.end_time ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}` : 'No Time';
                     const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+                    const formattedShiftType = shift.is_cancelled === true ? `<del>${shiftType}</del>` : shiftType;
 
                     if (shift.is_advanced_shift) {
                         let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
                         let clientCount = 0;
                         const header = document.createElement("div");
-                        header.innerHTML = `<strong>${timeRange}</strong> ${shiftType}`;
+                        header.innerHTML = `<strong>${timeRange}</strong> ${formattedShiftType}`;
                         taskDiv.appendChild(header);
                         const clientsWrapper = document.createElement("div");
                         clientsWrapper.style.display = "flex";
@@ -897,14 +1309,16 @@ function renderCalendar() {
                         clientsWrapper.appendChild(countSpan);
                         taskDiv.appendChild(clientsWrapper);
                     } else {
-                        const clientDisplay = (shift.clientIds || [])
-                            .map(id => clientNames[String(id)] || 'Unknown Client')
-                            .join(', ');
-                        taskDiv.innerHTML = `
-                            <strong>${timeRange}</strong><br>
-                            ${shiftType}<br>
-                            ${clientDisplay}
-                        `;
+                        const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
+                        taskDiv.innerHTML = `${timeRange}<br>${formattedShiftType}<br>${clientName}`;
+                    }
+
+                    if (shift.is_approved === 1) {
+                        const checkIcon = document.createElement('span');
+                        checkIcon.innerHTML = '✔'; // Unicode for checkmark
+                        checkIcon.style.color = 'green';
+                        checkIcon.style.marginLeft = '5px';
+                        taskDiv.appendChild(checkIcon);
                     }
 
                     taskDiv.onclick = (e) => {
@@ -926,6 +1340,430 @@ function renderCalendar() {
     calendar.appendChild(addStaffCell);
 }
 
+/* ---------------- CLIENT CALENDAR ---------------- */
+function renderClientCalendar(filteredShifts = shifts) {
+    const calendar = document.getElementById('clientCalendar');
+    if (!calendar) return;
+    const weekRange = document.getElementById('client-week-range');
+
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    weekRange.textContent = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        const dayHeader = document.getElementById(`cday${i}`);
+        if (dayHeader) {
+            dayHeader.textContent = `${day.toLocaleDateString('en-US', { weekday: 'short' })} ${day.getDate()}`;
+        }
+    }
+
+    while (calendar.children.length > 8) {
+        calendar.removeChild(calendar.lastChild);
+    }
+
+    const staticTasks = ['Vacant Shift'];
+    staticTasks.forEach(task => {
+        const taskCell = document.createElement('div');
+        taskCell.className = 'staff-cell';
+        taskCell.textContent = task;
+        calendar.appendChild(taskCell);
+
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(startOfWeek);
+            day.setDate(startOfWeek.getDate() + i);
+            const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
+
+            if (task === 'Vacant Shift') {
+                const vacantShifts = filteredShifts.filter(shift => {
+                    if (!shift.is_vacant || shift.is_vacant !== 1) return false;
+
+                    const shiftStartDate = new Date(shift.start_date);
+                    const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
+                    const currentDay = new Date(dateKey);
+
+                    if (isNaN(shiftStartDate) || isNaN(shiftEndDate)) return false;
+                    if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
+
+                    const recurrance = shift.recurrance || 'None';
+                    const deltaDays = Math.floor((currentDay - shiftStartDate) / (24 * 60 * 60 * 1000));
+
+                    if (recurrance === 'Daily') {
+                        const repeatEveryDaily = parseInt(shift.repeat_every_daily) || 1;
+                        return deltaDays % repeatEveryDaily === 0;
+                    } else if (recurrance === 'Weekly') {
+                        const repeatEveryWeekly = parseInt(shift.repeat_every_weekly) || 1;
+                        const deltaWeeks = Math.floor(deltaDays / 7);
+                        if (deltaWeeks % repeatEveryWeekly === 0) {
+                            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                            const currentDayName = dayNames[currentDay.getUTCDay()];
+                            return shift.occurs_on_weekly && shift.occurs_on_weekly[currentDayName] === true;
+                        }
+                        return false;
+                    } else if (recurrance === 'Monthly') {
+                        const repeatEveryMonthly = parseInt(shift.repeat_every_monthly) || 1;
+                        const occursOnMonthly = parseInt(shift.occurs_on_monthly);
+                        if (isNaN(occursOnMonthly)) return false;
+                        const startYear = shiftStartDate.getUTCFullYear();
+                        const startMonth = shiftStartDate.getUTCMonth();
+                        const currentYear = currentDay.getUTCFullYear();
+                        const currentMonth = currentDay.getUTCMonth();
+                        const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
+                        if (monthsDelta % repeatEveryMonthly === 0) {
+                            return currentDay.getUTCDate() === occursOnMonthly;
+                        }
+                        return false;
+                    }
+                    return shift.start_date === dateKey && (!shift.repeat || recurrance === 'None');
+                });
+
+                if (vacantShifts.length > 0) {
+                    const groupedShifts = {};
+                    vacantShifts.forEach(shift => {
+                        const parsedClientSection = typeof shift.client_section === 'string' ? JSON.parse(shift.client_section) : shift.client_section || {};
+                        const clientIdsFromSection = Array.isArray(parsedClientSection.client_id) ? parsedClientSection.client_id.map(id => String(id)) : [];
+                        const clientIds = shift.is_advanced_shift ? clientIdsFromSection : [String(shift.client_id || '')].filter(id => id);
+
+                        if (!groupedShifts[shift.id]) {
+                            groupedShifts[shift.id] = {
+                                ...shift,
+                                clientIds: clientIds
+                            };
+                        } else {
+                            const newIds = clientIds.filter(id => !groupedShifts[shift.id].clientIds.includes(id));
+                            groupedShifts[shift.id].clientIds.push(...newIds);
+                        }
+                    });
+
+                    Object.values(groupedShifts).forEach(shift => {
+                        const taskDiv = document.createElement('div');
+                        taskDiv.className = 'task task-vacant';
+                        if (shift.is_advanced_shift) {
+                            taskDiv.classList.add('task-advanced-vacant');
+                        }
+                        const timeRange = shift.start_time && shift.end_time
+                            ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                            : 'No Time';
+                        const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+                        const formattedShiftType = shift.is_cancelled === true ? `<del>${shiftType}</del>` : shiftType;
+
+                        if (shift.is_advanced_shift) {
+                            let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
+                            let clientCount = 0;
+                            const header = document.createElement("div");
+                            header.innerHTML = `<strong>${timeRange}</strong> ${formattedShiftType}`;
+                            taskDiv.appendChild(header);
+                            const clientsWrapper = document.createElement("div");
+                            clientsWrapper.style.display = "flex";
+                            clientsWrapper.style.alignItems = "center";
+                            clientsWrapper.style.marginTop = "4px";
+                            clientIds.forEach(id => {
+                                const clientName = clientNames[String(id)] || "Unknown";
+                                const initials = getInitials(clientName);
+                                const avatar = document.createElement("div");
+                                avatar.classList.add("client-avatar");
+                                avatar.textContent = initials;
+                                clientsWrapper.appendChild(avatar);
+                                clientCount++;
+                            });
+                            const countSpan = document.createElement("span");
+                            countSpan.textContent = `${clientCount} Clients`;
+                            countSpan.style.marginLeft = "6px";
+                            countSpan.style.fontSize = "10px";
+                            clientsWrapper.appendChild(countSpan);
+                            taskDiv.appendChild(clientsWrapper);
+                        } else {
+                            const clientName = clientNames[String(shift.client_id)] || 'Unknown Client';
+                            taskDiv.innerHTML = `${timeRange}<br>${formattedShiftType}<br>${clientName}`;
+                        }
+
+
+                           if (shift.is_approved === 1) {
+                        const checkIcon = document.createElement('span');
+                        checkIcon.innerHTML = '✔'; // Unicode for checkmark
+                        checkIcon.style.color = 'green';
+                        checkIcon.style.marginLeft = '5px';
+                        taskDiv.appendChild(checkIcon);
+                    }
+                        taskDiv.onclick = (e) => {
+                            e.stopPropagation();
+                            openShiftSlider(shift.id, dateKey);
+                        };
+                        dayCell.appendChild(taskDiv);
+                    });
+                }
+            }
+
+            dayCell.onclick = () => openModal(`${task}_${dateKey}`, dateKey);
+            calendar.appendChild(dayCell);
+        }
+    });
+
+    // Sort clients based on currentSort
+    let sortedClients = Object.entries(clientNames);
+    if (currentSort === 'Shift Counts') {
+        sortedClients.sort((a, b) => {
+            const countA = filteredShifts.filter(shift => {
+                let parsedClientSection;
+                try {
+                    parsedClientSection = typeof shift.client_section === 'string' ? JSON.parse(shift.client_section) : shift.client_section || {};
+                } catch (e) {
+                    parsedClientSection = {};
+                }
+                const clientIdsFromSection = Array.isArray(parsedClientSection.client_id) ? parsedClientSection.client_id.map(id => String(id)) : [];
+                return String(shift.client_id) === a[0] || clientIdsFromSection.includes(a[0]);
+            }).length;
+            const countB = filteredShifts.filter(shift => {
+                let parsedClientSection;
+                try {
+                    parsedClientSection = typeof shift.client_section === 'string' ? JSON.parse(shift.client_section) : shift.client_section || {};
+                } catch (e) {
+                    parsedClientSection = {};
+                }
+                const clientIdsFromSection = Array.isArray(parsedClientSection.client_id) ? parsedClientSection.client_id.map(id => String(id)) : [];
+                return String(shift.client_id) === b[0] || clientIdsFromSection.includes(b[0]);
+            }).length;
+            return countB - countA; // Descending order by shift count
+        });
+    } else {
+        sortedClients.sort((a, b) => a[1].localeCompare(b[1])); // Alphabetical A-Z
+    }
+
+    sortedClients.forEach(([clientId, clientName]) => {
+        const clientCell = document.createElement('div');
+        clientCell.className = 'staff-cell';
+        clientCell.textContent = clientName;
+        calendar.appendChild(clientCell);
+
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(startOfWeek);
+            day.setDate(startOfWeek.getDate() + i);
+            const dateKey = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
+
+            // filter shifts for this client + day
+            const clientShifts = filteredShifts.filter(shift => {
+                let parsedClientSection;
+                try {
+                    parsedClientSection = typeof shift.client_section === 'string' ? JSON.parse(shift.client_section) : shift.client_section || {};
+                } catch (e) {
+                    parsedClientSection = {};
+                }
+                const clientIdsFromSection = Array.isArray(parsedClientSection.client_id) ? parsedClientSection.client_id.map(id => String(id)) : [];
+                const clientMatch = String(shift.client_id) === String(clientId) || clientIdsFromSection.includes(String(clientId));
+
+                if (!clientMatch) return false;
+
+                const shiftStartDate = new Date(shift.start_date);
+                const shiftEndDate = shift.end_date ? new Date(shift.end_date) : new Date('9999-12-31');
+                const currentDay = new Date(dateKey);
+                if (currentDay < shiftStartDate || currentDay > shiftEndDate) return false;
+
+                const recurrance = shift.recurrance || 'None';
+                const deltaDays = Math.floor((currentDay - shiftStartDate) / (24 * 60 * 60 * 1000));
+
+                if (recurrance === 'Daily') {
+                    const repeatEveryDaily = parseInt(shift.repeat_every_daily) || 1;
+                    return deltaDays % repeatEveryDaily === 0;
+                } else if (recurrance === 'Weekly') {
+                    const repeatEveryWeekly = parseInt(shift.repeat_every_weekly) || 1;
+                    const deltaWeeks = Math.floor(deltaDays / 7);
+                    if (deltaWeeks % repeatEveryWeekly === 0) {
+                        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        const currentDayName = dayNames[currentDay.getUTCDay()];
+                        return shift.occurs_on_weekly && shift.occurs_on_weekly[currentDayName] === true;
+                    }
+                    return false;
+                } else if (recurrance === 'Monthly') {
+                    const repeatEveryMonthly = parseInt(shift.repeat_every_monthly) || 1;
+                    const occursOnMonthly = parseInt(shift.occurs_on_monthly);
+                    if (isNaN(occursOnMonthly)) return false;
+                    const startYear = shiftStartDate.getUTCFullYear();
+                    const startMonth = shiftStartDate.getUTCMonth();
+                    const currentYear = currentDay.getUTCFullYear();
+                    const currentMonth = currentDay.getUTCMonth();
+                    const monthsDelta = (currentYear - startYear) * 12 + (currentMonth - startMonth);
+                    return monthsDelta % repeatEveryMonthly === 0 && currentDay.getUTCDate() === occursOnMonthly;
+                }
+                return shift.start_date === dateKey;
+            });
+
+            if (clientShifts.length > 0) {
+                const groupedShifts = {};
+                clientShifts.forEach(shift => {
+                    let parsedCarerSection;
+                    try {
+                        parsedCarerSection = typeof shift.carer_section === 'string' ? JSON.parse(shift.carer_section) : shift.carer_section || {};
+                    } catch (e) {
+                        parsedCarerSection = {};
+                    }
+                    const userIdsFromSection = Array.isArray(parsedCarerSection.user_id) ? parsedCarerSection.user_id.map(id => String(id)) : [];
+                    const userIds = shift.is_advanced_shift ? userIdsFromSection : [String(shift.user_id || '')].filter(id => id);
+
+                    if (!groupedShifts[shift.id]) {
+                        groupedShifts[shift.id] = {
+                            ...shift,
+                            userIds: userIds
+                        };
+                    } else {
+                        const newIds = userIds.filter(id => !groupedShifts[shift.id].userIds.includes(id));
+                        groupedShifts[shift.id].userIds.push(...newIds);
+                    }
+                });
+
+                Object.values(groupedShifts).forEach(shift => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task';
+                    if (shift.is_advanced_shift) {
+                        taskDiv.classList.add('task-advanced');
+                    }
+                    const timeRange = shift.start_time && shift.end_time
+                        ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                        : 'No Time';
+                    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Unknown Shift';
+                    const formattedShiftType = shift.is_cancelled === true ? `<del>${shiftType}</del>` : shiftType;
+
+                    if (shift.is_advanced_shift) {
+                        let userIds = Array.isArray(shift.userIds) ? shift.userIds : [shift.userIds];
+                        let userCount = 0;
+                        const header = document.createElement("div");
+                        header.innerHTML = `<strong>${timeRange}</strong> ${formattedShiftType}`;
+                        taskDiv.appendChild(header);
+                        const usersWrapper = document.createElement("div");
+                        usersWrapper.style.display = "flex";
+                        usersWrapper.style.alignItems = "center";
+                        usersWrapper.style.marginTop = "4px";
+                        userIds.forEach(id => {
+                            const userName = users[String(id)] || "Unassigned";
+                            const initials = getInitials(userName);
+                            const avatar = document.createElement("div");
+                            avatar.classList.add("client-avatar");
+                            avatar.textContent = initials;
+                            usersWrapper.appendChild(avatar);
+                            userCount++;
+                        });
+                        const countSpan = document.createElement("span");
+                        countSpan.textContent = `${userCount} Staff`;
+                        countSpan.style.marginLeft = "6px";
+                        countSpan.style.fontSize = "10px";
+                        usersWrapper.appendChild(countSpan);
+                        taskDiv.appendChild(usersWrapper);
+                    } else {
+                        const staffName = users[String(shift.user_id)] || 'Unassigned';
+                        taskDiv.innerHTML = `<strong>${timeRange}</strong><br>${formattedShiftType}<br>${staffName}`;
+                    }
+
+                    taskDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        openShiftSlider(shift.id, dateKey);
+                    };
+                    dayCell.appendChild(taskDiv);
+                });
+            }
+
+            dayCell.onclick = () => openModal(`${clientName}_${dateKey}`, dateKey);
+            calendar.appendChild(dayCell);
+        }
+    });
+}
+
+function highlightToday() {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        const dayHeader = document.getElementById(`day${i}`);
+        const cdayHeader = document.getElementById(`cday${i}`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to midnight for comparison
+        if (day.toDateString() === today.toDateString()) {
+            if (dayHeader) {
+                dayHeader.classList.add('today-highlight');
+                console.log(`Highlighting day${i} as today`);
+            }
+            if (cdayHeader) {
+                cdayHeader.classList.add('today-highlight');
+                console.log(`Highlighting cday${i} as today`);
+            }
+        } else {
+            if (dayHeader) dayHeader.classList.remove('today-highlight');
+            if (cdayHeader) cdayHeader.classList.remove('today-highlight');
+        }
+    }
+}
+
+document.querySelector('.today').addEventListener('click', function() {
+    currentDate = new Date();
+    highlightToday();
+    renderStaffCalendar(filteredShifts);
+    renderClientCalendar(filteredShifts);
+}); 
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Existing initialization code (e.g., renderStaffCalendar, renderClientCalendar)
+    renderStaffCalendar();
+    renderClientCalendar();
+
+    const customBtn = document.createElement('button');
+
+    const customPopup = document.createElement('div');
+    customPopup.className = 'custom-calendar-popup';
+    customPopup.id = 'customCalendarPopup';
+    customPopup.innerHTML = '<input type="date" id="customDatePicker">';
+    document.body.appendChild(customPopup);
+
+    const customDatePicker = document.getElementById('customDatePicker');
+
+    customBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        customPopup.style.display = customPopup.style.display === 'block' ? 'none' : 'block';
+        const rect = customBtn.getBoundingClientRect();
+        customPopup.style.left = rect.left + 'px';
+        customPopup.style.top = rect.bottom + 'px';
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!customPopup.contains(e.target) && e.target !== customBtn) {
+            customPopup.style.display = 'none';
+        }
+    });
+
+    customDatePicker.addEventListener('change', function(e) {
+        const selectedDate = new Date(e.target.value);
+        if (selectedDate) {
+            currentDate = selectedDate;
+            currentDate.setDate(currentDate.getDate() - currentDate.getDay()); // Set to start of week
+            highlightToday();
+            renderStaffCalendar(filteredShifts);
+            renderClientCalendar(filteredShifts);
+            customPopup.style.display = 'none'; // Hide popup after selection
+        }
+    });
+});
+
+
+/* ---------------- SHARED FUNCTIONS ---------------- */
+function prevWeek() {
+    currentDate.setDate(currentDate.getDate() - 7);
+    renderStaffCalendar(filteredShifts);
+    renderClientCalendar(filteredShifts);
+}
+
+function nextWeek() {
+    currentDate.setDate(currentDate.getDate() + 7);
+    renderStaffCalendar(filteredShifts);
+    renderClientCalendar(filteredShifts);
+}
+
 function openShiftSlider(shiftId, dateKey) {
     console.log('Opening slider for shift:', shiftId, 'on date:', dateKey);
     Livewire.dispatch('set-shift-details', { shiftId: shiftId, selectedDate: dateKey });
@@ -937,16 +1775,6 @@ function closeSlider() {
     const slider = document.getElementById('shiftSlider');
     if (slider) slider.classList.remove('open');
     Livewire.dispatch('set-shift-details', { shiftId: null, selectedDate: null });
-}
-
-function prevWeek() {
-    currentDate.setDate(currentDate.getDate() - 7);
-    renderCalendar();
-}
-
-function nextWeek() {
-    currentDate.setDate(currentDate.getDate() + 7);
-    renderCalendar();
 }
 
 function openModal(key, dateKey) {
@@ -1026,6 +1854,77 @@ document.addEventListener('livewire:initialized', () => {
     });
 });
 
-renderCalendar();
+/* ---------------- FILTER AND SORT FUNCTIONS ---------------- */
+document.getElementById('status').addEventListener('change', function() {
+    const selectedStatus = this.value;
+    filteredShifts = selectedStatus !== 'all' ? shifts.filter(shift => shift.status === selectedStatus) : shifts;
+    applyFiltersAndSort();
+});
+
+document.querySelector('#dropdown select:nth-child(1)').addEventListener('change', function() {
+    const selectedShiftType = this.value;
+    filteredShifts = selectedShiftType ? shifts.filter(shift => String(shift.shift_type_id) === selectedShiftType) : shifts;
+    applyFiltersAndSort();
+});
+
+document.querySelector('#dropdown select:nth-child(2)').addEventListener('change', function() {
+    currentSort = this.value;
+    applyFiltersAndSort();
+});
+
+function applyFiltersAndSort() {
+    let tempShifts = filteredShifts;
+    const selectedShiftType = document.querySelector('#dropdown select:nth-child(1)').value;
+    if (selectedShiftType) {
+        tempShifts = tempShifts.filter(shift => String(shift.shift_type_id) === selectedShiftType);
+    }
+    const selectedStatus = document.getElementById('status').value;
+    if (selectedStatus !== 'all') {
+        tempShifts = tempShifts.filter(shift => shift.status === selectedStatus);
+    }
+    filteredShifts = tempShifts;
+
+    renderStaffCalendar(filteredShifts);
+    renderClientCalendar(filteredShifts);
+}
+
+/* ---------------- INIT ---------------- */
+document.addEventListener('DOMContentLoaded', () => {
+    renderStaffCalendar();
+    renderClientCalendar();
+});
 </script>
+<script>
+    const dropdown = document.getElementById("dropdown");
+    const button = dropdown.querySelector(".dropdown-btn");
+
+    button.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("show");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove("show");
+      }
+    });
+</script>
+ <script>
+    const customBtn = document.getElementById("customCalendarToggle");
+    const customPopup = document.getElementById("customCalendarPopup");
+
+    customBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      customPopup.style.display = customPopup.style.display === "block" ? "none" : "block";
+      const rect = customBtn.getBoundingClientRect();
+      customPopup.style.left = rect.left + "px";
+      customPopup.style.top = rect.bottom + "px";
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!customPopup.contains(e.target) && e.target !== customBtn) {
+        customPopup.style.display = "none";
+      }
+    });
+  </script>
 </x-filament-panels::page>

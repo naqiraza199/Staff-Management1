@@ -20,6 +20,7 @@ class Shift extends Model
         'is_vacant',
         'is_approved',
         'is_cancelled',
+        'status',
     ];
 
     protected $casts = [

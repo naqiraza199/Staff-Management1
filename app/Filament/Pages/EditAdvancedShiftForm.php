@@ -31,6 +31,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextArea;
 use App\Models\Language;
 use App\Models\DocumentCategory;
+use App\Models\Event;
 
 class EditAdvancedShiftForm extends Page implements HasForms
 {
@@ -130,7 +131,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
         $this->data = [
             'add_to_job_board' => $this->shift->add_to_job_board ?? false,
             'client_id' => $clientIds,
-            'client_details' => $clientDetails,
+            'client_details' => $clientDetails, 
             'shift_type_id' => data_get($shiftSection, 'shift_type_id'),
             'additional_shift_types' => $additionalShiftTypes,
             'allowance_id' => $allowanceIds,
@@ -571,6 +572,25 @@ class EditAdvancedShiftForm extends Page implements HasForms
         $companyId = Company::where('user_id', $authUser->id)->value('id');
         // dd($data);
 
+         $carerSection = empty($data['add_to_job_board']) ? [
+            'user_id' => $data['user_id'] ?? [],
+            'notify' => $data['notify'] ?? false,
+            'user_details' => $data['user_details'] ?? [],
+                ] : null;
+
+                // Default
+                $isVacant = 0;
+
+                // Check conditions for vacant
+                if (
+                    empty($data['add_to_job_board']) && (
+                        ($carerSection['user_id'] === null && $carerSection['pay_group_id'] === null) ||
+                        ($carerSection['user_id'] === [] && $carerSection['user_details'] === [] && $carerSection['notify'] === false)
+                    )
+                ) {
+                    $isVacant = 1;
+                }
+$previousAddToJobBoard = $this->shift->add_to_job_board;
 
        $shiftData = [
     'client_section' => json_encode([
@@ -622,15 +642,53 @@ class EditAdvancedShiftForm extends Page implements HasForms
         'kpi_id' => $data['kpi_id'] ?? [],
         'distance_shift' => $data['distance_shift'] ?? null,
     ]) : null,
+     'status' => !empty($data['add_to_job_board'])
+    ? 'Job Board'
+    : 'Pending',
     // ✅ FIXED: save flat array of tasks
     'task_section' => json_encode($data['tasks'] ?? []),
     'instruction' => json_encode(['description' => $data['description'] ?? null]),
     'company_id' => $companyId,
     'is_advanced_shift' => true,
+        'is_vacant'  => $isVacant, 
+
 ];
+$shiftData['status'] = !empty($data['add_to_job_board'])
+    ? 'Job Board'
+    : 'Pending';
 
 
         $this->shift->update($shiftData);
+
+        $authUser = Auth::user();
+
+        // Always create "Updated Shift"
+        Event::create([
+            'shift_id' => $this->shift->id,
+            'title'    => $authUser->name . ' Updated Shift',
+            'from'     => 'Update',
+            'body'     => 'Shift updated',
+        ]);
+
+        // If removed from job board
+        if ($previousAddToJobBoard && empty($data['add_to_job_board'])) {
+            Event::create([
+                'shift_id' => $this->shift->id,
+                'title'    => 'Shift Unpinned by ' . $authUser->name,
+                'from'     => 'No Job',
+                'body'     => 'Shift is no longer available on Job Board',
+            ]);
+        }
+
+        // If added to job board
+        if (empty($previousAddToJobBoard) && !empty($data['add_to_job_board'])) {
+            Event::create([
+                'shift_id' => $this->shift->id,
+                'title'    => 'Job Listed by ' . $authUser->name,
+                'from'     => 'Job',
+                'body'     => 'Job listed on Job Board',
+            ]);
+        }
 
         Notification::make()
             ->title('Shift updated successfully')

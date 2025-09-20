@@ -35,13 +35,21 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions;
 use App\Models\ShiftCancel;
+use App\Models\ShiftNote;
+use App\Models\Event;
 use Filament\Actions\Concerns\InteractsWithActions;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\On;
+use Livewire\WithFileUploads;
+use Carbon\Carbon;
+use App\Models\ApprovedShift;
 
 
 class ShiftDetails extends Component implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
     use InteractsWithActions;
+    use WithFileUploads;
     public $shiftId = null;
     public $selectedDate = null;
     public $shift = null;
@@ -53,7 +61,14 @@ class ShiftDetails extends Component implements Forms\Contracts\HasForms
     public $startDateFormatted = '';
     public $endDateFormatted   = '';
     public $display_name   = '';
-     public static ?string $title = '';
+    public static ?string $title = '';
+    public $attachments = [];
+    public $activeStep = 1;
+    protected $allowances = [];
+    public $allowance = '';
+    public $carers = [];
+    public $mileage = null;   // Initialize as null
+    public $expense = null;
 
 
 
@@ -62,8 +77,28 @@ class ShiftDetails extends Component implements Forms\Contracts\HasForms
     public $formData = [];
 
     protected $listeners = ['updateShift',
-                            'cancelShift'
+                            'cancelShift',
+                            'saveNotes',
+                            'uploadAttachments',
                         ];
+
+#[On('updateIncidentHeader')]
+public function updateIncidentHeader($body)
+{
+    \App\Models\Note::where('type', 'Incident')->update([
+        'body' => $body,
+    ]);
+
+    // Sync frontend copy
+    $this->dispatch('incident-header-updated', body: $body);
+
+    // Show Filament notification
+    Notification::make()
+        ->title('Incident header updated successfully!')
+        ->success()
+        ->send();
+}
+
 
 
     public function updateShift($shiftId, $selectedDate)
@@ -79,134 +114,179 @@ public $clientSection = [];
 public $carerSection = [];
 public $timeAndLocation = [];
 
+
+
 public function loadShiftDetails()
-{
-    if (!$this->shiftId) {
-        return;
-    }
+    {
+        if (!$this->shiftId) {
+            return;
+        }
 
-    $this->shift = Shift::find($this->shiftId);
-    if (!$this->shift) {
-        return;
-    }
+        $this->shift = Shift::find($this->shiftId);
+        if (!$this->shift) {
+            return;
+        }
 
-    // Decode helper
-    $decode = fn($data) => is_string($data)
-        ? (json_decode($data, true) ?: [])
-        : (is_array($data) ? $data : []);
+        // Decode helper
+        $decode = fn($data) => is_string($data)
+            ? (json_decode($data, true) ?: [])
+            : (is_array($data) ? $data : []);
 
-    // Decode sections
-    $this->clientSection = $decode($this->shift->client_section);
-    $this->carerSection  = $decode($this->shift->carer_section);
-    $shiftSection        = $decode($this->shift->shift_section);
-    $this->timeAndLocation = $decode($this->shift->time_and_location);
+        // Decode sections
+        $this->clientSection = $decode($this->shift->client_section);
+        $this->carerSection = $decode($this->shift->carer_section);
+        $shiftSection = $decode($this->shift->shift_section);
+        $this->timeAndLocation = $decode($this->shift->time_and_location);
 
-    // ✅ Normalize clients
-    $clients = [];
-    if ($this->shift->is_advanced_shift && !empty($this->clientSection['client_details'])) {
-        foreach ($this->clientSection['client_details'] as $detail) {
+        // ✅ Normalize clients
+        $clients = [];
+        if ($this->shift->is_advanced_shift && !empty($this->clientSection['client_details'])) {
+            foreach ($this->clientSection['client_details'] as $detail) {
+                $clients[] = [
+                    'client' => \App\Models\Client::find((int)($detail['client_id'] ?? 0)),
+                    'priceBook' => \App\Models\PriceBook::find((int)($detail['price_book_id'] ?? 0)),
+                    'start' => $detail['client_start_time'] ?? null,
+                    'end' => $detail['client_end_time'] ?? null,
+                    'hours' => $detail['hours'] ?? '1:1',
+                ];
+            }
+        } elseif (!$this->shift->is_advanced_shift && !empty($this->clientSection['client_id'])) {
             $clients[] = [
-                'client'       => \App\Models\Client::find((int)($detail['client_id'] ?? 0)),
-                'priceBook'    => \App\Models\PriceBook::find((int)($detail['price_book_id'] ?? 0)),
-                'start'        => $detail['client_start_time'] ?? null,
-                'end'          => $detail['client_end_time'] ?? null,
-                'hours'        => $detail['hours'] ?? '1:1',
+                'client' => \App\Models\Client::find((int)$this->clientSection['client_id']),
+                'priceBook' => \App\Models\PriceBook::find((int)($this->clientSection['price_book_id'] ?? 0)),
+                'start' => $this->timeAndLocation['start_time'] ?? null,
+                'end' => $this->timeAndLocation['end_time'] ?? null,
+                'hours' => '1:1',
             ];
         }
-    } elseif (!$this->shift->is_advanced_shift && !empty($this->clientSection['client_id'])) {
-        $clients[] = [
-            'client'    => \App\Models\Client::find((int)$this->clientSection['client_id']),
-            'priceBook' => \App\Models\PriceBook::find((int)($this->clientSection['price_book_id'] ?? 0)),
-            'start'     => $this->timeAndLocation['start_time'] ?? null,
-            'end'       => $this->timeAndLocation['end_time'] ?? null,
-            'hours'     => '1:1',
-        ];
-    }
-    $this->clients = $clients;
+        $this->clients = $clients;
 
-    // ✅ Normalize carers
-    $carers = [];
-    if ($this->shift->is_advanced_shift && !empty($this->carerSection['user_details'])) {
-        foreach ($this->carerSection['user_details'] as $detail) {
+        // ✅ Normalize carers
+       $carers = [];
+        if ($this->shift->is_advanced_shift && !empty($this->carerSection['user_details'])) {
+            foreach ($this->carerSection['user_details'] as $detail) {
+                $carers[] = [
+                    'carer' => \App\Models\User::find((int)($detail['user_id'] ?? 0)),
+                    'rate' => $detail['rate'] ?? null,
+                    'start' => $detail['carer_start_time'] ?? null,
+                    'end' => $detail['carer_end_time'] ?? null,
+                    'hours' => $detail['hours'] ?? '1:1',
+                ];
+            }
+        } elseif (!$this->shift->is_advanced_shift && !empty($this->carerSection['user_id'])) {
             $carers[] = [
-                'carer'  => \App\Models\User::find((int)($detail['user_id'] ?? 0)),
-                'rate'   => $detail['rate'] ?? null,
-                'start'  => $detail['carer_start_time'] ?? null,
-                'end'    => $detail['carer_end_time'] ?? null,
-                'hours'  => $detail['hours'] ?? '1:1',
+                'carer' => \App\Models\User::find((int)$this->carerSection['user_id']),
+                'rate' => null,
+                'start' => $this->timeAndLocation['start_time'] ?? null,
+                'end' => $this->timeAndLocation['end_time'] ?? null,
+                'hours' => '1:1',
             ];
         }
-    } elseif (!$this->shift->is_advanced_shift && !empty($this->carerSection['user_id'])) {
-        $carers[] = [
-            'carer' => \App\Models\User::find((int)$this->carerSection['user_id']),
-            'rate'  => null,
-            'start' => $this->timeAndLocation['start_time'] ?? null,
-            'end'   => $this->timeAndLocation['end_time'] ?? null,
-            'hours' => '1:1',
-        ];
-    }
-    $this->carers = $carers;
+        $this->carers = $carers;
 
-    // Dates
-    $startDate = $this->timeAndLocation['start_date'] ?? null;
-    $endDate   = $this->timeAndLocation['end_date'] ?? null;
+        // Dates
+        $startDate = $this->timeAndLocation['start_date'] ?? null;
+        $endDate = $this->timeAndLocation['end_date'] ?? null;
 
-    $this->startDateFormatted = $startDate
-        ? \Carbon\Carbon::parse($startDate)->format('M d, Y')
-        : 'Not defined';
+        $this->startDateFormatted = $startDate
+            ? Carbon::parse($startDate)->format('M d, Y')
+            : 'Not defined';
 
-    $this->endDateFormatted = $endDate
-        ? \Carbon\Carbon::parse($endDate)->format('M d, Y')
-        : 'Ongoing';
+        $this->endDateFormatted = $endDate
+            ? Carbon::parse($endDate)->format('M d, Y')
+            : 'Ongoing';
 
-    // Times
-    $startTime = $this->timeAndLocation['start_time'] ?? null;
-    $endTime   = $this->timeAndLocation['end_time'] ?? null;
+        // Times
+        $startTime = $this->timeAndLocation['start_time'] ?? null;
+        $endTime = $this->timeAndLocation['end_time'] ?? null;
 
-    if ($startTime && $endTime) {
-        $this->timeset = \Carbon\Carbon::parse($startTime)->format('h:i a')
-            . ' - ' . \Carbon\Carbon::parse($endTime)->format('h:i a');
-    } elseif ($startTime) {
-        $this->timeset = \Carbon\Carbon::parse($startTime)->format('h:i a') . ' - ?';
-    } elseif ($endTime) {
-        $this->timeset = '? - ' . \Carbon\Carbon::parse($endTime)->format('h:i a');
-    } else {
-        $this->timeset = 'Time not defined';
+        if ($startTime && $endTime) {
+            $this->timeset = Carbon::parse($startTime)->format('h:i a')
+                . ' - ' . Carbon::parse($endTime)->format('h:i a');
+        } elseif ($startTime) {
+            $this->timeset = Carbon::parse($startTime)->format('h:i a') . ' - ?';
+        } elseif ($endTime) {
+            $this->timeset = '? - ' . Carbon::parse($endTime)->format('h:i a');
+        } else {
+            $this->timeset = 'Time not defined';
+        }
+
+        // Shift type
+        $shiftTypeId = $shiftSection['shift_type_id'] ?? null;
+        $this->shiftTypeName = $shiftTypeId
+            ? \App\Models\ShiftType::find($shiftTypeId)?->name
+            : 'Unknown Shift';
     }
 
-    // Shift type
-    $shiftTypeId = $shiftSection['shift_type_id'] ?? null;
-    $this->shiftTypeName = $shiftTypeId
-        ? \App\Models\ShiftType::find($shiftTypeId)?->name
-        : 'Unknown Shift';
-}
-
-public function advertiseBySms() { /* ... */ }
-public function approveTimesheet()
+public function confirm()
 {
-    if (! $this->shift) {
-        return;
-    }
-    // dd($this->shift);
+    $authUser = auth()->user();
+
+    $approvedShift = ApprovedShift::create([
+        'shift_id' => $this->shift->id,
+        'allowance' => $this->allowance,
+        'mileage' => $this->mileage ?? 0,
+        'expense' => $this->expense ?? 0, 
+    ]);
 
     $this->shift->update([
         'is_approved' => 1,
+        'status' => 'Approved',
     ]);
 
-   Notification::make()
+    // ✅ time_and_location is already an array
+    $timeLocation = $this->shift->time_and_location;
+
+    $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $timeLocation['start_time'])->format('h:i A');
+    $endTime   = \Carbon\Carbon::createFromFormat('H:i:s', $timeLocation['end_time'])->format('h:i A');
+    $timeRange = $startTime . ' - ' . $endTime;
+
+    Event::create([
+        'shift_id' => $this->shift->id,
+        'title'    => $authUser->name . ' approved timesheet',
+        'from'     => 'Approved',
+        'body'     => "Scheduled time approved for: {$timeRange} {$authUser->name}. "
+                     ."Mileage: {$approvedShift->mileage} km. "
+                     ."Expense: \${$approvedShift->expense}. "
+                     ."Allowance: {$approvedShift->allowance}. "
+                     ."Comment:",
+    ]);
+
+    Notification::make()
         ->title('Timesheet Approved')
         ->success()
         ->send();
 
-    // Refresh shift data
-       $this->redirect('/admin/schedular');
+    $this->redirect('/admin/schedular');
 
+    $this->dispatch('close-modal', id: 'approved-shift');
 }
+
+
+
+public function nextStep()
+    {
+        $this->activeStep = 2;
+    }
+
+    public function previousStep()
+    {
+        $this->activeStep = 1;
+    }
+
+    public function cancel()
+    {
+        $this->activeStep = 1;
+        $this->dispatch('close-modal', id: 'approved-shift');
+    }
+
+public function advertiseBySms() { /* ... */ }
+
 
 public function copy() { /* ... */ }
 public function cancelShift($reason, $type = null, $notes = null, $notifyCarer = false)
 {
-    ShiftCancel::create([
+    $shiftCancelData =  ShiftCancel::create([
         'shift_id'     => $this->shift->id,
         'type'         => $reason === 'client' ? 'Cancelled by clients' : 'Cancelled by us',
         'ndis'         => $type ?? null,
@@ -214,9 +294,21 @@ public function cancelShift($reason, $type = null, $notes = null, $notifyCarer =
         'notify_carer' => $notifyCarer ?? false,
     ]);
 
+
+     $authUser = Auth::user();
+    
+
     $this->shift->update([
-        'is_cancelled' => 1,  // Ensure this matches your blade condition ($shift->cancelled)
+        'is_cancelled' => 1,
+        'status' => 'Cancelled',
     ]);
+
+        Event::create([
+        'shift_id' => $this->shift->id,
+        'title'    => $authUser->name . '  Updated Shift',
+        'from'     => 'Cancelled',
+        'body'     => 'Cancelled Shift. Reason: ' . $shiftCancelData->reason,
+        ]);
 
     Notification::make()
         ->title('Shift cancelled successfully!')
@@ -227,34 +319,170 @@ public function cancelShift($reason, $type = null, $notes = null, $notifyCarer =
 
     $this->redirect('/admin/schedular');
 }
-public function addNotes() { /* ... */ }
-public function delete() { /* ... */ }
-public function rebook()
+  public function addNotes()
     {
-        $shiftCancel = ShiftCancel::where('shift_id', $this->shift->id)->first();
-        if ($shiftCancel) {
-            $shiftCancel->delete();
-        }
+        $this->dispatch('open-add-notes-modal');
+    }
 
-        $this->shift->update([
-            'is_cancelled' => 0,
+  public function saveNotes($noteType, $noteBody, $keepPrivate, $mileage = null)
+{
+    $attachmentData = [];
+
+    if (!empty($this->attachments)) {
+        foreach ($this->attachments as $file) {
+            $filePath = $file->store('shift_notes', 'public');
+            $attachmentData[] = [
+                'file_path' => $filePath,
+            ];
+        }
+        $this->attachments = [];
+    }
+
+     $authUser = Auth::user();
+
+    $shiftNote = ShiftNote::create([
+        'shift_id' => $this->shift->id,
+        'note_type' => $noteType,
+        'note_body' => $noteBody,
+        'keep_private' => $keepPrivate,
+        'mileage' => $mileage,
+        'attachments' => $attachmentData,
+    ]);
+
+    Event::create([
+        'shift_id' => $this->shift->id,
+        'title'    => $authUser->name . ' added a Note',
+        'from'     => 'Note',
+        'body'     => $shiftNote->note_body,
+        'note_attachments'     => $shiftNote->attachments,
+    ]);
+
+    Notification::make()->title('Note added successfully!')->success()->send();
+    $this->dispatch('note-added', message: 'Note added successfully!');
+    $this->redirect('/admin/schedular');
+}
+
+
+ public bool $confirmingShiftDeletion = false;
+
+public function delete(): void
+{
+    if (!$this->confirmingShiftDeletion) {
+        $this->confirmingShiftDeletion = true;
+        return;
+    }
+
+    $this->shift->delete();
+
+    Notification::make()
+        ->title('Shift deleted successfully!')
+        ->success()
+        ->send();
+
+    $this->redirect('/admin/schedular');
+}
+
+   
+public function rebook()
+{
+    $shiftCancel = ShiftCancel::where('shift_id', $this->shift->id)->first();
+    if ($shiftCancel) {
+        $shiftCancel->delete();
+    }
+
+    $updateData = [
+        'is_cancelled' => 0,
+    ];
+
+    // ✅ If shift is on Job Board, set status = Job Board, otherwise Pending
+    if ($this->shift->add_to_job_board) {
+        $updateData['status'] = 'Job Board';
+    } else {
+        $updateData['status'] = 'Pending';
+    }
+
+    $this->shift->update($updateData);
+
+    Notification::make()
+        ->title('Shift rebooked successfully!')
+        ->success()
+        ->send();
+
+    $this->redirect('/admin/schedular');
+}
+
+public function unapprove()
+{
+    $shiftApproved = ApprovedShift::where('shift_id', $this->shift->id)->first();
+    if ($shiftApproved) {
+        $shiftApproved->delete();
+    }
+
+    $updateData = [
+        'is_approved' => 0,
+    ];
+
+    if ($this->shift->add_to_job_board) {
+        $updateData['status'] = 'Job Board';
+    } else {
+        $updateData['status'] = 'Pending';
+    }
+
+    $this->shift->update($updateData);
+
+    $authUser = auth()->user();
+
+        $timeLocation = $this->shift->time_and_location;
+
+        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $timeLocation['start_time'])->format('h:i A');
+        $endTime   = \Carbon\Carbon::createFromFormat('H:i:s', $timeLocation['end_time'])->format('h:i A');
+        $timeRange = $startTime . ' - ' . $endTime;
+
+        $bodyMessage = "Timesheet verification cancelled for: {$timeRange} {$authUser->name}. Comment:";
+
+        Event::create([
+            'shift_id' => $this->shift->id,
+            'title'    => $authUser->name . ' unapproved timesheet',
+            'from'     => 'Unapproved',
+            'body'     => $bodyMessage,
         ]);
 
-        Notification::make()
-            ->title('Shift rebooked successfully!')
-            ->success()
-            ->send();
+    Notification::make()
+        ->title('Timesheet Unapproved')
+        ->success()
+        ->send();
 
-
-        $this->redirect('/admin/schedular');
+    $this->redirect('/admin/schedular');
 }
 
 
 
-    public function render()
-    {
-        return view('livewire.shift-details');
-    }
+
+        public function render()
+        {
+            $events = \App\Models\Event::where('shift_id', $this->shiftId)->orderByDesc('created_at')->take(3)->get();
+            $noteTypes = \App\Models\Note::select('type', 'body')->get();
+            $allowances = \App\Models\Allowance::get();
+
+            return view('livewire.shift-details', [
+                'noteTypes' => $noteTypes,
+                'events' => $events,
+                'allowances' => $allowances,
+            ]);
+        }
+
+   public bool $showAllEvents = false;
+public $allEvents = [];
+
+public function viewAllEvents()
+{
+    $this->allEvents = \App\Models\Event::where('shift_id', $this->shiftId)
+        ->orderByDesc('created_at')
+        ->get();
+
+    $this->showAllEvents = true;
+}
+
 
     public function startEditing()
     {
@@ -1019,31 +1247,93 @@ public function rebook()
     }
 
         public function save()
-    {
-        $data = $this->form->getState();
-        $shift = Shift::find(21);
-        dd($shift);
-        // dd($data);
+{
+    $data = $this->form->getState();
 
-        $this->shift->update([
-            'client_section'   => $data['client_section'] ?? [],
-            'shift_section'    => $data['shift_section'] ?? [],
-            'time_and_location'=> $data['time_and_location'] ?? [],
-            'carer_section'    => empty($data['add_to_job_board']) ? $data['carer_section'] : null,
-            'job_section'      => !empty($data['add_to_job_board']) ? $data['job_section'] : null,
-            'instruction'      => $data['instruction'] ?? [],
-            'add_to_job_board' => $data['add_to_job_board'] ?? false,
+    // --- Carer Section + Vacant logic ---
+    $carerSection = empty($data['add_to_job_board']) ? [
+        'user_id'      => data_get($data, 'carer_section.user_id'),
+        'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
+        'user_details' => data_get($data, 'carer_section.user_details', []),
+        'notify'       => data_get($data, 'carer_section.notify', false),
+    ] : null;
+
+    // Default
+    $isVacant = 0;
+
+    if (
+        empty($data['add_to_job_board']) && (
+            ($carerSection['user_id'] === null && $carerSection['pay_group_id'] === null) ||
+            ($carerSection['user_id'] === [] && $carerSection['user_details'] === [] && $carerSection['notify'] === false)
+        )
+    ) {
+        $isVacant = 1;
+    }
+
+    // --- Get previous value ---
+    $previousAddToJobBoard = $this->shift->add_to_job_board;
+
+    // --- Update Shift ---
+ $updateData = [
+    'client_section'    => $data['client_section'] ?? [],
+    'shift_section'     => $data['shift_section'] ?? [],
+    'time_and_location' => $data['time_and_location'] ?? [],
+    'carer_section'     => $carerSection,
+    'job_section'       => !empty($data['add_to_job_board']) ? $data['job_section'] : null,
+    'instruction'       => $data['instruction'] ?? [],
+    'add_to_job_board'  => $data['add_to_job_board'] ?? false,
+    'is_vacant'         => $isVacant,
+];
+
+// ✅ Only add "status" to the update if add_to_job_board is true
+$updateData['status'] = !empty($data['add_to_job_board'])
+    ? 'Job Board'
+    : 'Pending';
+
+
+$this->shift->update($updateData);
+
+    $authUser = Auth::user();
+
+    // Always create "Updated Shift"
+    Event::create([
+        'shift_id' => $this->shift->id,
+        'title'    => $authUser->name . ' Updated Shift',
+        'from'     => 'Update',
+        'body'     => 'Shift updated',
+    ]);
+
+    // If it was on Job Board, but now removed
+    if ($previousAddToJobBoard && empty($data['add_to_job_board'])) {
+        Event::create([
+            'shift_id' => $this->shift->id,
+            'title'    => 'Shift Unpinned by ' . $authUser->name,
+            'from'     => 'No Job',
+            'body'     => 'Shift is no longer available on Job Board',
         ]);
+    }
 
-        Notification::make()
-            ->title('Shift updated successfully!')
-            ->success()
-            ->send();
+    // If it was not on Job Board, but now added
+    if (empty($previousAddToJobBoard) && !empty($data['add_to_job_board'])) {
+        Event::create([
+            'shift_id' => $this->shift->id,
+            'title'    => 'Job Listed by ' . $authUser->name,
+            'from'     => 'Job',
+            'body'     => 'Job listed on Job Board',
+        ]);
+    }
+
+    Notification::make()
+        ->title('Shift updated successfully!')
+        ->success()
+        ->send();
 
     $this->redirect('/admin/schedular');
 
+    $this->isEditing = false;
+    $this->loadShiftDetails();
+}
 
-        $this->isEditing = false;
-        $this->loadShiftDetails();
-    }
+
+
 }
