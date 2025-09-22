@@ -15,3 +15,12 @@ Route::post('/set-selected-date', function (Request $request) {
     session(['selected_date' => $request->dateKey]);
     return response()->json(['success' => true]);
 })->name('set-selected-date');
+
+
+Route::get('/billing-report/timesheet/print', [App\Http\Controllers\DataPrintController::class, 'printTimesheet'])
+    ->name('billing-report.timesheet.print');
+
+
+
+Route::get('/billing-report/timesheet/detailed', [App\Http\Controllers\DataPrintController::class, 'printDetailed'])
+    ->name('billing-report.timesheet.detailed');
