@@ -22,7 +22,35 @@
     </style>
 </head>
 <body onload="window.print()">
-      @foreach($reports as $report)
+     
+
+
+    <h1>Client Billing Report</h1>
+
+    {{-- Totals --}}
+    <p><strong>Total Hours:</strong> {{ $totalHours }}</p>
+    <p><strong>Total Cost:</strong> ${{ number_format($totalCost, 2) }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Staff</th>
+                <th>Start Time</th>
+                <th>Finish Time</th>
+                <th>Hours x Rate</th>
+                <th>Additional Cost</th>
+                <th>Distance x Rate</th>
+                <th>Total Cost</th>
+                <th>Running Cost</th>
+                <th>Notes</th>
+                <th>Tasks</th>
+                <th>Client Signature</th>
+            </tr>
+        </thead>
+        <tbody>
+             @foreach($reports as $report)
                 @php
                     $shift = \App\Models\Shift::find($report->shift_id);
                     $note = \App\Models\ShiftNote::where('shift_id', $report->shift_id)->first();
@@ -70,33 +98,6 @@
                         }
                     }
                 @endphp
-
-
-    <h1>{{ $clientName }} Billing Report</h1>
-
-    {{-- Totals --}}
-    <p><strong>Total Hours:</strong> {{ $totalHours }}</p>
-    <p><strong>Total Cost:</strong> ${{ number_format($totalCost, 2) }}</p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Shift</th>
-                <th>Staff</th>
-                <th>Start Time</th>
-                <th>Finish Time</th>
-                <th>Hours x Rate</th>
-                <th>Additional Cost</th>
-                <th>Distance x Rate</th>
-                <th>Total Cost</th>
-                <th>Running Cost</th>
-                <th>Notes</th>
-                <th>Tasks</th>
-                <th>Client Signature</th>
-            </tr>
-        </thead>
-        <tbody>
           
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($report->date)->format('D, d M Y') }}</td>

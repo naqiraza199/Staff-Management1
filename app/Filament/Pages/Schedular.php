@@ -32,7 +32,9 @@ use App\Models\Shift;
 use Filament\Notifications\Notification;
 use Filament\Forms\Get;
 use App\Models\Event;
-
+use App\Models\BillingReport;
+use Carbon\Carbon;
+use App\Models\PriceBookDetail;
 
 
 
@@ -1053,6 +1055,78 @@ $newShift = Shift::create([
     'company_id' => $shiftCompanyID,
     'is_vacant'  => $isVacant, // ✅ set here
 ]);
+
+
+                  if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
+
+    $shiftDate   = Carbon::parse(data_get($data, 'time_and_location.start_date'));
+    $shiftStart  = Carbon::parse(data_get($data, 'time_and_location.start_time'));
+    $shiftEnd    = Carbon::parse(data_get($data, 'time_and_location.end_time'));
+    $priceBookId = data_get($data, 'client_section.price_book_id');
+
+    $hours = $shiftStart->floatDiffInHours($shiftEnd);
+
+    $dayOfWeek = $shiftDate->format('l');
+    $dayType = match ($dayOfWeek) {
+        'Saturday' => 'Saturday',
+        'Sunday'   => 'Sunday',
+        default    => 'Weekdays - I',
+    };
+
+    // ✅ Handle normal ranges + over-midnight + all-day
+    $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+        ->where('day_of_week', $dayType)
+        ->where(function ($q) use ($shiftEnd) {
+            $endTime = $shiftEnd->format('H:i:s');
+
+            $q->where(function ($sub) use ($endTime) {
+                // normal ranges
+                $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
+                    ->whereColumn('end_time', '>', 'start_time');
+            })
+            ->orWhere(function ($sub) use ($endTime) {
+                // over-midnight ranges like 20:00 → 00:00
+                $sub->whereColumn('end_time', '<', 'start_time')
+                    ->where(function ($wrap) use ($endTime) {
+                        $wrap->where('start_time', '<=', $endTime)
+                             ->orWhere('end_time', '>=', $endTime);
+                    });
+            })
+            ->orWhere(function ($sub) {
+                // all-day case
+                $sub->whereTime('start_time', '00:00:00')
+                    ->whereTime('end_time', '00:00:00');
+            });
+        })
+        ->orderBy('start_time')
+        ->first();
+
+    $rate = $priceDetail?->per_hour ?? 0;
+    $per_km_price = $priceDetail?->per_km ?? 0;
+
+    $totalCost = $hours * $rate;
+
+    $hoursXRate = number_format($hours, 1) . ' x $' . number_format($rate, 2);
+    $distanceXRate = 0.0 . ' x $' . number_format($per_km_price, 2);
+
+    $billingRecordForClient = BillingReport::create([
+        'date'            => $shiftDate->toDateString(),
+        'shift_id'        => $newShift->id,
+        'staff'           => data_get($data, 'carer_section.user_id'),
+        'start_time'      => $shiftStart->format('H:i'),
+        'end_time'        => $shiftEnd->format('H:i'),
+        'hours_x_rate'    => $hoursXRate,
+        'additional_cost' => 0.0,
+        'distance_x_rate' => $distanceXRate,
+        'total_cost'      => $totalCost,
+        'running_total'   => null,
+        'price_book_id'   => $priceBookId,
+        'client_id'       => data_get($data, 'client_section.client_id'),
+    ]);
+
+    // dd($billingRecordForClient);
+}
+
 
 
     Event::create([

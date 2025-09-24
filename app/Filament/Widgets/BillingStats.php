@@ -11,6 +11,8 @@ class BillingStats extends BaseWidget
 {
     protected static ?int $sort = 1; 
 
+    protected static bool $isDiscovered = false;
+
     protected static bool $isLazy = false;
 
     protected function getStats(): array

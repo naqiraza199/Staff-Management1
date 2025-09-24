@@ -159,7 +159,8 @@
         @if($shift)
             <div class="mt-4 gap-2">
             @if($shift && $shift->is_cancelled == 0)
-                @if($shift->is_advanced_shift == 0)
+               @if($shift->is_approved == 0)
+                     @if($shift->is_advanced_shift == 0)
                     <x-filament::button color="primary" wire:click="startEditing" style="padding: 10px 15px;">
                         Edit Shift
                     </x-filament::button>
@@ -171,6 +172,7 @@
                 >
                     Advanced Edit
                 </x-filament::button>
+               @endif
 
             </div>
                 @endif

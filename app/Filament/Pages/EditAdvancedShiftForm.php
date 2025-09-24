@@ -78,21 +78,41 @@ class EditAdvancedShiftForm extends Page implements HasForms
 
         // Initialize client_details and user_details based on IDs
         $clientDetails = [];
-        if (!empty($clientIds)) {
-            $clients = Client::whereIn('id', $clientIds)->get();
-            $existingDetails = $this->ensureArray(data_get($clientSection, 'client_details'));
-            foreach ($clients as $client) {
-                $existingDetail = collect($existingDetails)->firstWhere('client_id', $client->id) ?? [];
-                $clientDetails[] = [
-                    'client_id' => $client->id,
-                    'client_name' => $client->display_name,
-                    'client_start_time' => $existingDetail['client_start_time'] ?? '02:00 AM',
-                    'client_end_time' => $existingDetail['client_end_time'] ?? '03:00 AM',
-                    'price_book_id' => $existingDetail['price_book_id'] ?? null,
-                    'hours' => $existingDetail['hours'] ?? null,
-                ];
+
+            if (!empty($clientIds)) {
+                $clients = Client::whereIn('id', $clientIds)->get();
+                $existingDetails = $this->ensureArray(data_get($clientSection, 'client_details'));
+
+                foreach ($clients as $client) {
+                    // find ALL existing rows for this client_id
+                    $matches = collect($existingDetails)->where('client_id', $client->id);
+
+                    if ($matches->isNotEmpty()) {
+                        // keep each row separately (preserve duplicates)
+                        foreach ($matches as $existingDetail) {
+                            $clientDetails[] = [
+                                'client_id'         => $client->id,
+                                'client_name'       => $client->display_name,
+                                'client_start_time' => $existingDetail['client_start_time'] ?? '02:00 AM',
+                                'client_end_time'   => $existingDetail['client_end_time'] ?? '03:00 AM',
+                                'price_book_id'     => $existingDetail['price_book_id'] ?? null,
+                                'hours'             => $existingDetail['hours'] ?? null,
+                            ];
+                        }
+                    } else {
+                        // no existing rows → add one default
+                        $clientDetails[] = [
+                            'client_id'         => $client->id,
+                            'client_name'       => $client->display_name,
+                            'client_start_time' => '02:00 AM',
+                            'client_end_time'   => '03:00 AM',
+                            'price_book_id'     => null,
+                            'hours'             => null,
+                        ];
+                    }
+                }
             }
-        }
+
 
         $userDetails = [];
         if (!empty($userIds)) {
@@ -286,6 +306,14 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                             ])
                                     ->default(fn ($get) => $get('hours')),
                             ])
+                             ->cloneable()
+                                                    ->cloneAction(
+                                                        fn (\Filament\Forms\Components\Actions\Action $action) =>
+                                                            $action->icon('heroicon-m-scissors')
+                                                                ->button()
+                                                                ->label('Split')
+                                                                ->color('info')
+                                                    )
                             ->columns(5)
                             ->addable(false)
                             ->visible(fn ($get) => !empty($get('client_id')))
@@ -653,6 +681,83 @@ $previousAddToJobBoard = $this->shift->add_to_job_board;
         'is_vacant'  => $isVacant, 
 
 ];
+
+$shiftDate = \Carbon\Carbon::parse($data['start_date']);
+$dayOfWeek = $shiftDate->format('l');
+$dayType = match ($dayOfWeek) {
+    'Saturday' => 'Saturday',
+    'Sunday'   => 'Sunday',
+    default    => 'Weekdays - I',
+};
+
+$clientDetails = $data['client_details'] ?? [];
+
+$expectedBillingKeys = [];
+
+foreach ($clientDetails as $detail) {
+    $clientId     = $detail['client_id'];
+    $priceBookId  = $detail['price_book_id'];
+    $shiftStart   = \Carbon\Carbon::parse($detail['client_start_time']);
+    $shiftEnd     = \Carbon\Carbon::parse($detail['client_end_time']);
+    $hours        = $shiftStart->floatDiffInHours($shiftEnd);
+
+        $priceDetail = \App\Models\PriceBookDetail::where('price_book_id', $priceBookId)
+            ->where('day_of_week', $dayType)
+            ->where(function ($q) use ($shiftStart, $shiftEnd) {
+                $q->where(function ($sub) use ($shiftStart, $shiftEnd) {
+                    $sub->whereTime('start_time', '<=', $shiftStart->format('H:i'))
+                        ->where(function ($inner) use ($shiftEnd) {
+                            $inner->whereTime('end_time', '>=', $shiftEnd->format('H:i'))
+                                ->orWhere('end_time', '00:00:00'); // midnight means end of day
+                        });
+                })
+                ->orWhere(function ($sub) {
+                    $sub->whereTime('start_time', '00:00:00')
+                        ->whereTime('end_time', '00:00:00');
+                });
+            })
+            ->first();
+
+
+    $rate         = $priceDetail?->per_hour ?? 0;
+    $per_km_price = $priceDetail?->per_km ?? 0;
+
+    // ❗ If you track actual distance, replace this 0.0 with the real km
+    $distance     = $data['mileage'] ?? 0.0;
+    $additionalCostPrice = $data['additional_cost'] ?? 0.0;
+
+    $hoursXRate    = number_format($hours, 1) . ' x $' . number_format($rate, 2);
+    $distanceXRate = $distance . ' x $' . number_format($per_km_price, 2);
+    $totalCost     = ($hours * $rate) + ($distance * $per_km_price) + $additionalCostPrice;
+
+    // ✅ Add start_time and end_time to uniqueness check so multiple records per client can exist
+    $billing = \App\Models\BillingReport::updateOrCreate(
+        [
+            'shift_id'     => $this->shift->id,
+            'client_id'    => $clientId,
+            'price_book_id'=> $priceBookId,
+            'start_time'   => $shiftStart->format('H:i'),
+            'end_time'     => $shiftEnd->format('H:i'),
+        ],
+        [
+            'date'            => $shiftDate->toDateString(),
+            'staff'           => data_get($data, 'user_id.0'),
+            'hours_x_rate'    => $hoursXRate,
+            'additional_cost' => $data['additional_cost'] ?? 0.0,
+            'distance_x_rate' => $distanceXRate,
+            'total_cost'      => $totalCost,
+            'running_total'   => null,
+        ]
+    );
+
+    $expectedBillingKeys[] = $billing->id;
+}
+
+// ✅ Delete records no longer in client_details
+\App\Models\BillingReport::where('shift_id', $this->shift->id)
+    ->whereNotIn('id', $expectedBillingKeys)
+    ->delete();
+
 $shiftData['status'] = !empty($data['add_to_job_board'])
     ? 'Job Board'
     : 'Pending';

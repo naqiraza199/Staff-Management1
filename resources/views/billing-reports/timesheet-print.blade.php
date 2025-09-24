@@ -12,7 +12,32 @@
     </style>
 </head>
 <body onload="window.print()">
-@foreach($reports as $report)
+
+
+    <h2>Consolidated Timesheet Report</h2>
+
+    <div class="summary">
+        Total Hours: {{ number_format($totalHours, 2) }} <br>
+        Total Cost: ${{ number_format($totalCost, 2) }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Staff</th>
+                <th>Start Time</th>
+                <th>Finish Time</th>
+                <th>Hours × Rate</th>
+                <th>Additional Cost</th>
+                <th>Distance × Rate</th>
+                <th>Total Cost</th>
+                <th>Running Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($reports as $report)
                 @php
                     $shift = \App\Models\Shift::find($report->shift_id);
 
@@ -71,30 +96,6 @@
                         ? \Carbon\Carbon::parse($endDate->format('Y-m-d') . ' ' . $report->end_time)->format('h:i a (d/m/Y)')
                         : null;
                 @endphp
-
-    <h2>{{ $clientName }} Timesheet Report</h2>
-
-    <div class="summary">
-        Total Hours: {{ number_format($totalHours, 2) }} <br>
-        Total Cost: ${{ number_format($totalCost, 2) }}
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Shift</th>
-                <th>Staff</th>
-                <th>Start Time</th>
-                <th>Finish Time</th>
-                <th>Hours × Rate</th>
-                <th>Additional Cost</th>
-                <th>Distance × Rate</th>
-                <th>Total Cost</th>
-                <th>Running Total</th>
-            </tr>
-        </thead>
-        <tbody>
             
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($report->date)->format('D, d M Y') }}</td>

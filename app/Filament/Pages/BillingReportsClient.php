@@ -24,6 +24,18 @@ use App\Filament\Widgets\BillingStats;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Route;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Placeholder;
+use App\Models\PriceBook;
+use App\Models\PriceBookDetail;
+use App\Models\Company;
+use Filament\Notifications\Notification;
+
+
+
 
 class BillingReportsClient extends Page implements HasTable
 {
@@ -35,6 +47,8 @@ class BillingReportsClient extends Page implements HasTable
 
     protected static ?string $title = null;
 
+  
+
     public function getTitle(): string
     {
         return 'Billing Reports';
@@ -42,6 +56,9 @@ class BillingReportsClient extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+
+         $authUser = Auth::user();
+        $companyId = Company::where('user_id', $authUser->id)->value('id');
         return $table
             ->query(fn (): Builder => BillingReport::query())
             ->columns([
@@ -65,8 +82,8 @@ class BillingReportsClient extends Page implements HasTable
                     $shiftText = '';
 
                     if (! $shift->is_advanced_shift) {
-                        $clientName = \App\Models\Client::find($clientSection['client_id'] ?? null)->display_name ?? 'Unknown Client';
-                        $priceBookName = \App\Models\PriceBook::find($clientSection['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
+                        $clientName = \App\Models\Client::find($record['client_id'] ?? null)->display_name ?? 'Unknown Client';
+                        $priceBookName = \App\Models\PriceBook::find($record['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
 
                         $start = !empty($timeAndLocation['start_time']) 
                             ? \Carbon\Carbon::parse($timeAndLocation['start_time'])->format('h:i a') 
@@ -81,11 +98,17 @@ class BillingReportsClient extends Page implements HasTable
                         if (! $clientDetails) {
                             $shiftText = 'Advanced Shift';
                         } else {
-                            $clientName = $clientDetails['client_name'] ?? 'Unknown Client';
+                            $start = !empty($record['start_time']) 
+                            ? \Carbon\Carbon::parse($record['start_time'])->format('h:i a') 
+                            : '';
+                        $end = !empty($record['end_time']) 
+                            ? \Carbon\Carbon::parse($record['end_time'])->format('h:i a') 
+                            : '';
+                            $clientName = \App\Models\Client::find($record['client_id'] ?? null)->display_name ?? 'Unknown Client';
                             $ratio = $clientDetails['hours'] ?? '';
-                            $priceBookName = \App\Models\PriceBook::find($clientDetails['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
+                            $priceBookName = \App\Models\PriceBook::find($record['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
 
-                            $shiftText = "{$clientName} - {$ratio} - {$priceBookName}";
+                            $shiftText = "{$clientName} - {$priceBookName} | {$start} - {$end}";
                         }
                     }
 
@@ -93,36 +116,53 @@ class BillingReportsClient extends Page implements HasTable
                 })
                 ->html(),
 
-                Tables\Columns\TextColumn::make('staff')
-                ->label('Staff')
-                ->formatStateUsing(function ($record) {
-                    $shift = \App\Models\Shift::find($record->shift_id);
+               Tables\Columns\TextColumn::make('staff')
+    ->label('Staff')
+    ->formatStateUsing(function ($record) {
+        $shift = \App\Models\Shift::find($record->shift_id);
 
-                    if (! $shift) {
-                        return 'N/A';
-                    }
+        if (! $shift) {
+            return 'N/A';
+        }
 
-                    $carerSection = is_string($shift->carer_section)
-                        ? json_decode($shift->carer_section, true)
-                        : $shift->carer_section;
+        $carerSection = is_string($shift->carer_section)
+            ? json_decode($shift->carer_section, true)
+            : $shift->carer_section;
 
-                    if (! $shift->is_advanced_shift) {
-                        $userId = $carerSection['user_id'] ?? null;
-                        return \App\Models\User::find($userId)->name ?? 'Unknown Staff';
-                    } else {
-                        $userDetails = $carerSection['user_details'] ?? [];
-                        if (empty($userDetails)) {
-                            return 'Advanced Staff';
-                        }
+        // 🟢 Normal (non-advanced) shifts
+        if (! $shift->is_advanced_shift) {
+            $userId = $carerSection['user_id'] ?? null;
+            return $userId
+                ? (\App\Models\User::find($userId)?->name ?? 'Unknown Staff')
+                : 'Unknown Staff';
+        }
 
-                        $names = collect($userDetails)
-                            ->pluck('user_name')
-                            ->filter()
-                            ->implode(', ');
+        // 🟢 Advanced shifts
+        $userDetails = $carerSection['user_details'] ?? [];
+        if (empty($userDetails)) {
+            return 'Advanced Staff';
+        }
 
-                        return $names ?: 'Advanced Staff';
-                    }
-                }),
+        // Collect user_ids from user_details
+        $userIds = collect($userDetails)
+            ->pluck('user_id')
+            ->filter()
+            ->unique()
+            ->all();
+
+        if (empty($userIds)) {
+            return 'Advanced Staff';
+        }
+
+        // Load actual names from DB
+        $names = \App\Models\User::whereIn('id', $userIds)
+            ->pluck('name')
+            ->filter()
+            ->implode(', ');
+
+        return $names ?: 'Advanced Staff';
+    }),
+
                 Tables\Columns\TextColumn::make('start_time')
                 ->label('Start Time')
                 ->formatStateUsing(function ($state, $record) {
@@ -306,11 +346,9 @@ class BillingReportsClient extends Page implements HasTable
                     ->schema([
                         DatePicker::make('start_date')
                         ->label('From')
-                        ->default('2025-09-14') // Default as per image
                         ->closeOnDateSelection(),
                         DatePicker::make('end_date')
                         ->label('To')
-                        ->default('2025-09-20') // Default as per image
                         ->closeOnDateSelection(),
                     ]),
                 ])
@@ -322,7 +360,156 @@ class BillingReportsClient extends Page implements HasTable
                 }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label(''),
+               Tables\Actions\EditAction::make()
+    ->label('')
+    ->modalHeading('Client Attendance')
+    ->modalDescription('Editing start and end time will update shift time according to update shift time checkbox.')
+    ->form([
+        Select::make('price_book_id')
+            ->label('Prices')
+            ->options(
+                PriceBook::where('company_id', $companyId)
+                    ->pluck('name', 'id')
+                    ->toArray()
+            )
+            ->required()
+            ->searchable(),
+
+        Grid::make(3)->schema([
+            Select::make('fund')
+                ->label('Fund')
+                ->options([
+                    'no_fund' => 'No Fund',
+                ])
+                ->columnSpan(2)
+                ->searchable(),
+            
+            Placeholder::make('ratio')
+                ->label('Ratio')
+                ->content('1:1')
+        ]),
+
+        Grid::make(2)->schema([
+            TimePicker::make('start_time')
+                ->label('Start Time')
+                ->required(),
+            
+            TimePicker::make('end_time')
+                ->label('End Time')
+                ->required(),
+        ]),
+
+        Grid::make(2)->schema([
+            TextInput::make('mileage')
+                ->label('Mileage')
+                ->numeric()
+                ->default(0),
+            
+            TextInput::make('expense')
+                ->label('Expense')
+                ->numeric()
+                ->default(0.0),
+        ]),
+
+        Grid::make(2)->schema([
+            Checkbox::make('is_absent')
+                ->label('Absent'),
+            
+            Checkbox::make('is_remove')
+                ->label('Remove'),
+        ]),
+
+        Textarea::make('comment')
+            ->label('What was updated? Add a comment...')
+            ->rows(2),
+
+        Checkbox::make('update_shift_time')
+            ->label('Update Shift Time'),
+    ])
+    ->action(function (array $data, $record): void {
+        // Parse values
+        $shiftDate   = $record->date ?? now(); // If you store date in record
+        $shiftStart  = Carbon::parse($data['start_time']);
+        $shiftEnd    = Carbon::parse($data['end_time']);
+        $priceBookId = $data['price_book_id'];
+
+        $hours = $shiftStart->floatDiffInHours($shiftEnd);
+
+        $dayOfWeek = Carbon::parse($shiftDate)->format('l');
+        $dayType = match ($dayOfWeek) {
+            'Saturday' => 'Saturday',
+            'Sunday'   => 'Sunday',                                                                             //yaad rahe create or edit me change karna he code uske baad advanced pe jana he
+            default    => 'Weekdays - I',
+        };
+
+        // ✅ fetch price by END TIME
+        $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+    ->where('day_of_week', $dayType)
+    ->where(function ($q) use ($shiftEnd) {
+        $endTime = $shiftEnd->format('H:i:s');
+
+        $q->where(function ($sub) use ($endTime) {
+            // normal ranges
+            $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
+                ->whereColumn('end_time', '>', 'start_time');
+        })
+        ->orWhere(function ($sub) use ($endTime) {
+            // over-midnight ranges like 20:00 → 00:00
+            $sub->whereColumn('end_time', '<', 'start_time')
+                ->where(function ($wrap) use ($endTime) {
+                    $wrap->where('start_time', '<=', $endTime)
+                         ->orWhere('end_time', '>=', $endTime);
+                });
+        })
+        ->orWhere(function ($sub) {
+            // all-day special
+            $sub->whereTime('start_time', '00:00:00')
+                ->whereTime('end_time', '00:00:00');
+        });
+    })
+    ->orderBy('start_time')
+    ->first();
+
+
+
+        $rate = $priceDetail?->per_hour ?? 0;
+        $per_km_price = $priceDetail?->per_km ?? 0;
+
+        // --- Calculations ---
+        $hoursTotal      = $hours * $rate;
+        $distanceTotal   = ($data['mileage'] ?? 0) * $per_km_price;
+        $additionalCost  = $data['expense'] ?? 0;
+        $totalCost       = $hoursTotal + $distanceTotal + $additionalCost;
+
+        $hoursXRate = number_format($hours, 1)
+            . ' x $' . number_format($rate, 2);
+
+        $distanceXRate = ($data['mileage'] ?? 0)
+            . ' x $' . number_format($per_km_price, 2);
+
+        $record->update([
+            'price_book_id'   => $priceBookId,
+            'start_time'      => $shiftStart->format('H:i'),
+            'end_time'        => $shiftEnd->format('H:i'),
+            'hours_x_rate'    => $hoursXRate,
+            'distance_x_rate' => $distanceXRate,
+            'additional_cost' => $additionalCost,
+            'total_cost'      => $totalCost,
+            'fund'      => $data['fund'],
+            'mileage'      => $data['mileage'],
+            'expense'      => $data['expense'],
+            'is_absent'      => $data['is_absent'],
+            'is_remove'      => $data['is_remove'],
+            'comment'      => $data['comment'],
+            'update_shift_time'      => $data['update_shift_time'],
+        ]);
+
+        Notification::make()
+        ->title('Billing Report Updated')
+        ->body('Billing Report Updated Successfully')
+        ->success()
+        ->send();
+    })
             ]);
     }
     

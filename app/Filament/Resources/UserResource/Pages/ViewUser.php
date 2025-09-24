@@ -35,7 +35,9 @@ class ViewUser extends ViewRecord
 
             Action::make('calendar')
                 ->label('Calendar')
-                ->icon('heroicon-o-calendar'),
+                ->icon('heroicon-o-calendar')
+                ->url(fn ($record) => route('filament.admin.pages.staff-calender', ['user_id' => $record->id]))
+                ->openUrlInNewTab(),
 
             Action::make('documents')
                 ->label('Documents')
