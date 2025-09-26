@@ -17,17 +17,21 @@ class BillingStats extends BaseWidget
 
     protected function getStats(): array
     {
-        $reports = BillingReport::all();
+        $clientId = request()->query('client_id'); // always read from URL
+
+        $reports = BillingReport::query()
+            ->when($clientId, fn ($q) => $q->where('client_id', $clientId))
+            ->get();
 
         $totalCost = $reports->sum('total_cost');
 
-       $totalHours = $reports->sum(function ($report) {
+        $totalHours = $reports->sum(function ($report) {
             if (!$report->start_time || !$report->end_time || !$report->date) {
                 return 0;
             }
 
-            $start = Carbon::parse($report->date . ' ' . $report->start_time);
-            $end   = Carbon::parse($report->date . ' ' . $report->end_time);
+            $start = \Carbon\Carbon::parse($report->date . ' ' . $report->start_time);
+            $end   = \Carbon\Carbon::parse($report->date . ' ' . $report->end_time);
 
             if ($end->lessThanOrEqualTo($start)) {
                 $end->addDay();
@@ -50,4 +54,5 @@ class BillingStats extends BaseWidget
                 ->color('primary'),
         ];
     }
+
 }

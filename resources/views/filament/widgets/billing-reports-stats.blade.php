@@ -1,7 +1,6 @@
-<x-filament-panels::page>
-    <style>
+<style>
     .stats-grid {
-    display: flex;
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
@@ -110,6 +109,3 @@
         </div>
     </div>
 </div>
-
-    {{ $this->table }}
-</x-filament-panels::page>

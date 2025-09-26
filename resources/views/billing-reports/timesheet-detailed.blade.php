@@ -24,8 +24,8 @@
 <body onload="window.print()">
      
 
+    <h2>{{ $clientCheck->display_name }} Timesheet Report</h2>
 
-    <h1>Client Billing Report</h1>
 
     {{-- Totals --}}
     <p><strong>Total Hours:</strong> {{ $totalHours }}</p>
@@ -60,49 +60,93 @@
                         ? (is_string($shift->task_section) ? json_decode($shift->task_section, true) : $shift->task_section)
                         : [];
 
-                    // Staff
-                    $staffName = null;
-                    if ($shift) {
-                        $carerSection = is_string($shift->carer_section) ? json_decode($shift->carer_section, true) : $shift->carer_section;
-                        if ($shift->is_advanced_shift) {
-                            $staffName = collect($carerSection['user_details'] ?? [])->pluck('user_name')->implode(', ');
-                        } else {
-                            $staffName = \App\Models\User::find($carerSection['user_id'] ?? null)->name ?? 'Unknown Staff';
-                        }
-                    }
+                    // Get clientId from route param
+                                $clientId = request()->route('clientId');
+                                $clientName = \App\Models\Client::find($clientId)->display_name ?? 'Unknown Client';
 
-                    // Shift Text (like Timesheet print)
-                    $shiftText = '';
-                    if ($shift) {
-                        $clientSection = is_string($shift->client_section) ? json_decode($shift->client_section, true) : $shift->client_section;
-                        $timeAndLocation = is_string($shift->time_and_location) ? json_decode($shift->time_and_location, true) : $shift->time_and_location;
+                                if ($shift) {
+                                    $clientSection = is_string($shift->client_section) ? json_decode($shift->client_section, true) : ($shift->client_section ?? []);
+                                    $timeAndLocation = is_string($shift->time_and_location) ? json_decode($shift->time_and_location, true) : ($shift->time_and_location ?? []);
 
-                        if (!$shift->is_advanced_shift) {
-                            $clientName = \App\Models\Client::find($clientSection['client_id'] ?? null)->display_name ?? 'Unknown Client';
-                            $priceBookName = \App\Models\PriceBook::find($clientSection['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
+                                    if (! $shift->is_advanced_shift) {
+                                        // Simple shift
+                                        $priceBookName = \App\Models\PriceBook::find($clientSection['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
 
-                            $start = !empty($timeAndLocation['start_time']) ? \Carbon\Carbon::parse($timeAndLocation['start_time'])->format('h:i a') : '';
-                            $end   = !empty($timeAndLocation['end_time']) ? \Carbon\Carbon::parse($timeAndLocation['end_time'])->format('h:i a') : '';
+                                        $start = !empty($timeAndLocation['start_time']) 
+                                            ? \Carbon\Carbon::parse($timeAndLocation['start_time'])->format('h:i a') 
+                                            : '';
+                                        $end = !empty($timeAndLocation['end_time']) 
+                                            ? \Carbon\Carbon::parse($timeAndLocation['end_time'])->format('h:i a') 
+                                            : '';
 
-                            $shiftText = "{$clientName} - {$priceBookName} | {$start} - {$end}";
-                        } else {
-                            $clientDetails = $clientSection['client_details'][0] ?? null;
-                            if (!$clientDetails) {
-                                $shiftText = 'Advanced Shift';
+                                        $shiftText = "{$clientName} - {$priceBookName} | {$start} - {$end}";
+                                    } else {
+                                        // Advanced shift
+                                        $clientDetails = $clientSection['client_details'][0] ?? null;
+
+                                        if (! $clientDetails) {
+                                            $shiftText = 'Advanced Shift';
+                                        } else {
+                                            $ratio = $clientDetails['hours'] ?? '';
+                                            $priceBookName = \App\Models\PriceBook::find($clientDetails['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
+
+                                            $shiftText = "{$clientName} - {$ratio} - {$priceBookName}";
+                                        }
+                                    }
+                                } else {
+                                    $shiftText = 'N/A';
+                                }
+
+
+
+
+                                    if ($shift) {
+                            $carerSection = is_string($shift->carer_section) 
+                                ? json_decode($shift->carer_section, true) 
+                                : ($shift->carer_section ?? []);
+
+                            if (! $shift->is_advanced_shift) {
+                                // Simple shift → one staff
+                                $userId = $carerSection['user_id'] ?? null;
+                                $staffText = \App\Models\User::find($userId)->name ?? 'Unknown Staff';
                             } else {
-                                $clientName = $clientDetails['client_name'] ?? 'Unknown Client';
-                                $ratio = $clientDetails['hours'] ?? '';
-                                $priceBookName = \App\Models\PriceBook::find($clientDetails['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
-                                $shiftText = "{$clientName} - {$ratio} - {$priceBookName}";
+                                // Advanced shift
+                                $staffIds = [];
+
+                                // 1️⃣ Try to get from staff column
+                                if (!empty($shift->staff)) {
+                                    if (is_string($shift->staff)) {
+                                        $staffIds = array_filter(explode(',', $shift->staff));
+                                    } elseif (is_array($shift->staff)) {
+                                        $staffIds = $shift->staff;
+                                    }
+                                }
+
+                                // 2️⃣ If no IDs, try carer_section user_details
+                                if (empty($staffIds) && !empty($carerSection['user_details'])) {
+                                    $staffIds = collect($carerSection['user_details'])
+                                        ->pluck('user_id')
+                                        ->filter()
+                                        ->toArray();
+                                }
+
+                                // 3️⃣ Get names
+                                $staffNames = \App\Models\User::whereIn('id', $staffIds)->pluck('name')->toArray();
+
+                                $staffText = !empty($staffNames) 
+                                    ? implode(', ', $staffNames) 
+                                    : 'Advanced Staff';
                             }
+                        } else {
+                            $staffText = 'N/A';
                         }
-                    }
+
                 @endphp
           
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($report->date)->format('D, d M Y') }}</td>
                     <td>{!! $shiftText !!}</td>
-                    <td>{{ $staffName }}</td>
+                    <td>{{ $staffText }}</td>
                     <td>{{ $report->start_time ? \Carbon\Carbon::parse($report->date.' '.$report->start_time)->format('h:i a (d/m/Y)') : '' }}</td>
                     <td>{{ $report->end_time ? \Carbon\Carbon::parse($report->date.' '.$report->end_time)->format('h:i a (d/m/Y)') : '' }}</td>
                     <td>{{ $report->hours_x_rate }}</td>

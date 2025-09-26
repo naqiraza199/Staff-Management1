@@ -17,10 +17,10 @@ Route::post('/set-selected-date', function (Request $request) {
 })->name('set-selected-date');
 
 
-Route::get('/billing-report/timesheet/print', [App\Http\Controllers\DataPrintController::class, 'printTimesheet'])
-    ->name('billing-report.timesheet.print');
 
 
+Route::get('/billing-reports/{clientId}/print', [App\Http\Controllers\DataPrintController::class, 'printTimesheet'])
+    ->name('billing-reports.print');
 
-Route::get('/billing-report/timesheet/detailed', [App\Http\Controllers\DataPrintController::class, 'printDetailed'])
-    ->name('billing-report.timesheet.detailed');
+Route::get('/billing-reports/{clientId}/detailed', [App\Http\Controllers\DataPrintController::class, 'printDetailed'])
+    ->name('billing-reports.detailed');

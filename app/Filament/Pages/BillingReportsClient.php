@@ -32,7 +32,9 @@ use Filament\Forms\Components\Placeholder;
 use App\Models\PriceBook;
 use App\Models\PriceBookDetail;
 use App\Models\Company;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Collection;
 
 
 
@@ -46,21 +48,54 @@ class BillingReportsClient extends Page implements HasTable
     protected static string $view = 'filament.pages.billing-reports-client';
 
     protected static ?string $title = null;
-
+    public ?int $client_id = null;
+    public bool $actionsVisible = false;
+    public bool $showWidgets = true;
   
+
+public array $records = [];
+
+public function mount(): void
+{
+    $this->client_id = request()->query('client_id');
+
+    // preload the records for Alpine
+    $this->records = BillingReport::when($this->client_id, fn ($q) => $q->where('client_id', $this->client_id))
+        ->get(['id', 'total_cost'])
+        ->toArray();
+}
+
+
+
+
+           public static function shouldRegisterNavigation(): bool
+{
+    return false;
+}
+
 
     public function getTitle(): string
     {
         return 'Billing Reports';
     }
 
-    public function table(Table $table): Table
-    {
+    public function getSelectedTableRecordsProperty()
+{
+    return BillingReport::whereIn('id', $this->selected)->get();
+}
 
-         $authUser = Auth::user();
-        $companyId = Company::where('user_id', $authUser->id)->value('id');
-        return $table
-            ->query(fn (): Builder => BillingReport::query())
+
+
+
+public function table(Table $table): Table
+{
+    $authUser = Auth::user();
+    $companyId = Company::where('user_id', $authUser->id)->value('id');
+
+    return $table->query(fn (): Builder =>
+            BillingReport::query()
+                ->when($this->client_id, fn ($q) => $q->where('client_id', $this->client_id))
+        )
             ->columns([
                 Tables\Columns\TextColumn::make('date')
                 ->label('Date')
@@ -214,19 +249,20 @@ class BillingReportsClient extends Page implements HasTable
             ])
             ->headerActions([ 
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('only_timesheet')
-                            ->label('Only Timesheet')
-                            ->icon('heroicon-s-document-text')
-                            ->color('info')
-                            ->url(route('billing-report.timesheet.print'))
-                            ->openUrlInNewTab(),
+               Tables\Actions\Action::make('only_timesheet')
+                    ->label('Only Timesheet')
+                    ->icon('heroicon-s-document-text')
+                    ->color('info')
+                    ->url(fn () => route('billing-reports.print', ['clientId' => $this->client_id]))
+                    ->openUrlInNewTab(),
 
+                Tables\Actions\Action::make('detailed')
+                    ->label('Detailed')
+                    ->icon('heroicon-s-table-cells')
+                    ->color('warning')
+                    ->url(fn () => route('billing-reports.detailed', ['clientId' => $this->client_id]))
+                    ->openUrlInNewTab(),
 
-                            Tables\Actions\Action::make('detailed')
-                                    ->label('Detailed')
-                                    ->icon('heroicon-s-table-cells')
-                                    ->color('warning')
-                                    ->url(route('billing-report.timesheet.detailed'), true)
 
                 ])
                 ->label('Print')
@@ -235,67 +271,83 @@ class BillingReportsClient extends Page implements HasTable
                 ->label('')
                 ->button(),
 
-                  Tables\Actions\Action::make('Download')
-    ->label('')
-    ->icon('heroicon-s-cloud-arrow-down')
-    ->color('success')
-    ->action(function () {
-        $records = $this->getTable()->getRecords();
+                        Tables\Actions\Action::make('Download')
+                    ->label('')
+                    ->icon('heroicon-s-cloud-arrow-down')
+                    ->color('success')
+                    ->action(function () {
+                        $clientId = request()->query('client_id');
 
-        if ($records->isEmpty()) {
-            $this->notify('warning', 'No records found to export.');
-            return;
-        }
+                        $records = $this->getTable()->getRecords()
+                            ->when($clientId, fn ($q) => $q->where('client_id', $clientId));
 
-        $filename = 'invoices.csv';
+                        if ($records->isEmpty()) {
+                            $this->notify('warning', 'No records found to export.');
+                            return;
+                        }
 
-        $headers = [
-            'Date',
-            'Shift',
-            'Staff',
-            'Start Time',
-            'Finish Time',
-            'Hours x Rate',
-            'Additional Cost',
-            'Distance x Rate',
-            'Total Cost',
-            'Running Total',
-        ];
+                        $filename = 'invoices.csv';
 
-        $callback = function () use ($records, $headers) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $headers);
+                        $headers = [
+                            'Date',
+                            'Shift',
+                            'Staff',
+                            'Start Time',
+                            'Finish Time',
+                            'Hours x Rate',
+                            'Additional Cost',
+                            'Distance x Rate',
+                            'Total Cost',
+                            'Running Total',
+                        ];
 
-            foreach ($records as $record) {
-                $row = [
-                    \Carbon\Carbon::parse($record->date)->format('D, d M Y'),
-                    $record->shift_id, // you can also join client/pricebook like in table
-                    $record->staff ?? 'Unknown Staff',
-                    $record->start_time ? \Carbon\Carbon::parse($record->date . ' ' . $record->start_time)->format('h:i a') : '',
-                    $record->end_time ? \Carbon\Carbon::parse($record->date . ' ' . $record->end_time)->format('h:i a') : '',
-                    $record->hours_x_rate,
-                    $record->additional_cost !== null ? '$' . number_format($record->additional_cost, 2) : '',
-                    $record->distance_x_rate,
-                    $record->total_cost !== null ? '$' . number_format($record->total_cost, 2) : '',
-                    $record->running_total !== null ? '$' . number_format($record->running_total, 2) : '',
-                ];
+                        $callback = function () use ($records, $headers) {
+                            $file = fopen('php://output', 'w');
+                            fputcsv($file, $headers);
 
-                fputcsv($file, $row);
-            }
+                            foreach ($records as $record) {
+                                $row = [
+                                    \Carbon\Carbon::parse($record->date)->format('D, d M Y'),
+                                    $record->shift_id,
+                                    $record->staff ?? 'Unknown Staff',
+                                    $record->start_time ? \Carbon\Carbon::parse($record->date . ' ' . $record->start_time)->format('h:i a') : '',
+                                    $record->end_time ? \Carbon\Carbon::parse($record->date . ' ' . $record->end_time)->format('h:i a') : '',
+                                    $record->hours_x_rate,
+                                    $record->additional_cost !== null ? '$' . number_format($record->additional_cost, 2) : '',
+                                    $record->distance_x_rate,
+                                    $record->total_cost !== null ? '$' . number_format($record->total_cost, 2) : '',
+                                    $record->running_total !== null ? '$' . number_format($record->running_total, 2) : '',
+                                ];
 
-            fclose($file);
-        };
+                                fputcsv($file, $row);
+                            }
 
-        return response()->streamDownload($callback, $filename, [
-            'Content-Type' => 'text/csv',
-        ]);
-    }),
+                            fclose($file);
+                        };
+
+                        return response()->streamDownload($callback, $filename, [
+                            'Content-Type' => 'text/csv',
+                        ]);
+                    }),
+
 
 
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+      ->bulkActions([
+        Tables\Actions\BulkAction::make('invoice_summary')
+            ->label('')
+            ->color('warning')
+            ->icon('heroicon-s-clipboard-document-list')
+            ->tooltip('Count Invoice Total')
+            ->action(function (Collection $records) {
+                $total = $records->sum('total_cost');
+
+                $this->actionsVisible = true;
+                    $this->dispatch('refreshWidgets');
+            }),
+
+            Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\BulkAction::make('add_tax')
                     ->label('Add Tax')
                     ->icon('heroicon-s-plus-circle')
@@ -318,11 +370,17 @@ class BillingReportsClient extends Page implements HasTable
                         }
                     }),
                 ])
-                // The label closure has been fixed to correctly retrieve the selected records.
-                ->label(fn () => 'Invoices: $' . number_format($this->getSelectedTableRecords()->sum('total_cost'), 2))
+                  ->label(function (): string {
+                        $total = $this->getSelectedTableRecords()->sum('total_cost');
+
+                        return $total > 0
+                            ? 'Invoices ($' . number_format($total, 2) . ')'
+                            : 'Invoices';
+                    })
                 ->icon('heroicon-s-currency-dollar')
-                ->color('info'),
-            ])
+                ->color('rado')
+                ->hidden(fn () => !$this->actionsVisible),
+])
 
             ->filters([
                 Tables\Filters\Filter::make('fund')
@@ -512,11 +570,45 @@ class BillingReportsClient extends Page implements HasTable
     })
             ]);
     }
-    
-    protected function getHeaderWidgets(): array
+
+//   protected function getHeaderWidgets(): array
+//     {
+//         if ($this->showWidgets && $this->actionsVisible) {
+//             return [
+//                 \App\Filament\Widgets\BillingReportsStats::class,
+//             ];
+//         }
+
+//         return [];
+//     }
+    public function getData(): array
     {
+        $clientId = request()->query('client_id');
+
+        $reports = BillingReport::query()
+            ->when($clientId, fn ($q) => $q->where('client_id', $clientId))
+            ->get();
+
+        $totalCost = $reports->sum('total_cost');
+
+        $totalHours = $reports->sum(function ($report) {
+            if (!$report->start_time || !$report->end_time || !$report->date) {
+                return 0;
+            }
+
+            $start = Carbon::parse($report->date . ' ' . $report->start_time);
+            $end   = Carbon::parse($report->date . ' ' . $report->end_time);
+
+            if ($end->lessThanOrEqualTo($start)) {
+                $end->addDay();
+            }
+
+            return abs($end->diffInMinutes($start) / 60);
+        });
+
         return [
-            BillingStats::class,
+            'totalCost' => $totalCost,
+            'totalHours' => $totalHours,
         ];
     }
 }

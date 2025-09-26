@@ -112,4 +112,10 @@ class Client extends Model
         ->withTimestamps();
 }
 
+public function billingReports()
+{
+    return $this->hasMany(BillingReport::class, 'client_id');
+}
+
+
 }
