@@ -100,10 +100,7 @@ class Client extends Model
     /**
      * Get the additional contacts for the client.
      */
-    public function additionalContacts()
-    {
-        return $this->hasMany(AdditionalContact::class);
-    }
+  
 
     public function priceBooks()
 {
@@ -112,9 +109,16 @@ class Client extends Model
         ->withTimestamps();
 }
 
+// Client.php
 public function billingReports()
 {
-    return $this->hasMany(BillingReport::class, 'client_id');
+    return $this->hasMany(BillingReport::class);
+}
+
+// Client.php
+public function additionalContacts()
+{
+    return $this->hasMany(\App\Models\AdditionalContact::class, 'client_id');
 }
 
 

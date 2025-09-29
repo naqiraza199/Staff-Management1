@@ -43,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
                 'darkk' => Color::hex('#BE3144'),
                 'ngree' => Color::hex('#643843'),
                 'stripe' => Color::hex('#6860FF'),
+                'ligi' => Color::hex('#13c4ffff'),
                 'blackk' => Color::hex('#101016ff'),
             ])
             ->defaultThemeMode(ThemeMode::Light)

@@ -14,6 +14,7 @@ use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\CheckboxColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -25,17 +26,47 @@ use App\Models\AdditionalContact;
 use Filament\Tables\Columns\TextInputColumn;
 use Carbon\Carbon;
 use App\Models\BillingReport;
+use Filament\Tables;
+use Filament\Forms;
+use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Grid;
+use App\Filament\Widgets\BillingStats;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Route;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Checkbox;
+use App\Models\PriceBook;
+use App\Models\PriceBookDetail;
+use App\Models\Company;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Collection;
+use App\Models\Invoice;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 
-class InvoiceGenerate extends Page implements HasForms, HasTable
+
+class InvoiceGenerate extends Page implements HasForms
 {
     use InteractsWithForms;
-    use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-s-document-chart-bar';
     protected static string $view = 'filament.pages.invoice-generate';
     protected static ?string $navigationGroup = 'Invoices';
      public ?string $group_by = 'client';
      public array $selectedRows = [];
+    public $clients;
+    public $count;
+    public array $selectedClients = [];
+
 
 
     public function getTitle(): string
@@ -47,28 +78,91 @@ class InvoiceGenerate extends Page implements HasForms, HasTable
 
     public function mount(): void
     {
-        $this->form->fill([
-            'group_by' => 'client',
-            'metrics' => ['hours', 'mileage', 'expenses'], // Updated to match CheckboxList name
-            'shift_start' => '18-09-2025',
-            'shift_end' => '24-09-2025',
-            'advanced_options' => false, // Toggle for advanced section
-            'due_at' => '08-10-2025',
-            'issued_at' => '24-09-2025',
-        ]);
+        $authUser = auth()->user();
+
+       $this->clients = Client::withSum(
+                ['billingReports as unpaid_total_cost' => function ($query) {
+                    $query->where('status', 'Unpaid');
+                }],
+                'total_cost'
+            )
+            ->withCount([
+                'billingReports as not_paid_reports_count' => function ($query) {
+                    $query->where('status', '!=', 'Paid');
+                }
+            ])
+            ->where('is_archive', 'Unarchive')
+            ->where('user_id', $authUser->id)
+            ->having('unpaid_total_cost', '>', 0)
+            ->get();
+
     }
 
-protected function getHeaderActions(): array
-{
-    return [
-        \Filament\Pages\Actions\Action::make('generate')
-            ->label('Generate')
-            ->color('primary')
-            ->action(function () {
-             
-            }),
-    ];
-}
+    #[On('generateInvoices')]
+    public function generateInvoices(array $selectedClients): void
+    {
+        $authUser = auth()->user();
+        $companyId = Company::where('user_id', $authUser->id)->value('id');
+
+        foreach ($selectedClients as $clientData) {
+            $clientId  = $clientData['id'];
+            $contactId = $clientData['additional_contact_id'] ?? null;
+            $issueDate = now()->toDateString(); // today’s date
+            $paymentDue = $clientData['payment_due'];
+            $purchaseOrder = $clientData['ref_no'] ?? null;
+
+            // Fetch unpaid billing reports
+            $billingReports = BillingReport::where('client_id', $clientId)
+                ->where('status', 'Unpaid')
+                ->get();
+
+            if ($billingReports->isEmpty()) {
+                continue;
+            }
+
+            $totalCost = $billingReports->sum('total_cost');
+            $billingReportIds = $billingReports->pluck('id')->toArray();
+
+            // Tax handling
+            $isTaxChecked = $clientData['tax_checked'] ?? false;
+            $taxAmount = $isTaxChecked ? $totalCost * 0.10 : 0.00;
+
+            // Random invoice no & NDIS/ref_no
+            $invoiceNo = random_int(1000000, 9999999);
+            $ndisRef = random_int(100000000, 999999999);
+
+            // Create invoice
+            Invoice::create([
+                'company_id'            => $companyId,
+                'client_id'             => $clientId,
+                'additional_contact_id' => $contactId,
+                'billing_reports_ids'   => $billingReportIds,
+                'invoice_no'            => "#{$invoiceNo}",
+                'issue_date'            => $issueDate,
+                'payment_due'           => $paymentDue,
+                'NDIS'                  => $ndisRef,
+                'ref_no'                => $ndisRef,
+                'status'                => 'Unpaid/Overdue',
+                'amount'                => $totalCost,
+                'tax'                   => $taxAmount,
+                'balance'               => $totalCost + $taxAmount,
+            ]);
+
+            // Update billing reports → Paid
+            BillingReport::whereIn('id', $billingReportIds)->update([
+                'status' => 'Paid',
+            ]);
+        }
+
+        // Show Filament notification
+        Notification::make()
+            ->title('Invoices Generated Successfully')
+            ->success()
+            ->send();
+
+        // Refresh page
+        $this->redirect(request()->header('Referer'));
+    }
 
     public function form(Form $form): Form
     {
@@ -134,124 +228,6 @@ protected function getHeaderActions(): array
             ->statePath('data');
     }
 
-    public function generate(): void
-    {
-        $data = $this->form->getState();
-        // Logic to generate/filter data based on $data
-        $this->table->getQuery()->applyFilters($data); // Refresh table with filters
-        session()->flash('message', 'Invoices generated!');
-    }
 
-    public function table(Table $table): Table
-    {
-        return $table
-            ->query(fn (): Builder => Client::query())
-            ->columns([
-             CheckboxColumn::make('id') // use any name not in DB
-                    ->label(''),
-
-                    
-
-
-                TextColumn::make('display_name')
-                    ->label('Client')
-                    ->weight('bold'),
-                TextColumn::make('first_name')
-                        ->label('Total Shifts')
-                        ->formatStateUsing(function ($record) {
-                            $count = $record->billingReports()->count(); // count reports for this client
-
-                           return "<a href='" . url('/admin/billing-reports-client?client_id=' . $record->id) . "' target='_blank'
-                                        style='
-                                            display:inline-block;
-                                            padding:4px 8px;
-                                            font-size:12px;
-                                            font-weight:500;
-                                            border-radius:12px;
-                                            background:#e0f0ff;
-                                            color:#1a88d7;
-                                            text-decoration:none;
-                                        '>
-                                        {$count} View Reports
-                                    </a>";
-
-                        })
-                        ->html(),
-
-                   TextColumn::make('fund_name')
-                                ->label('Fund Name')
-                                ->getStateUsing(fn ($record) => '-')
-                                ->visible(fn ($record, $livewire) => $livewire->group_by === 'fund'),
-
-                            TextColumn::make('fund_type')
-                                ->label('Fund Type')
-                                ->getStateUsing(fn ($record) => 'N/A')
-                                ->visible(fn ($record, $livewire) => $livewire->group_by === 'fund'),
-
-
-                            TextColumn::make('payment_Types')
-                        ->label('Payment Type')
-                        ->getStateUsing(function ($record) {
-                            return 'N\A';
-                        })
-                                ->visible(fn ($record, $livewire) => $livewire->group_by === 'payment_type'),
-
-                   
-                   SelectColumn::make('to')
-                        ->label('To')
-                        ->options(function ($record) {
-                            if (! $record || ! $record->id) {
-                                return [];
-                            }
-
-                            // Fetch contacts
-                            $contacts = AdditionalContact::where('client_id', $record->id)
-                                ->get()
-                                ->mapWithKeys(function ($contact) {
-                                    return [$contact->id => $contact->first_name . ' ' . $contact->last_name];
-                                })
-                                ->toArray();
-
-                            // Prepend "Client" option at the top
-                            return ['client' => 'Client'] + $contacts;
-                        })
-                        ->searchable(),
-
-               TextInputColumn::make('purchase_order')
-                        ->label('Purchase Order')
-                        ->placeholder('Enter Purchase')
-                        ->rules(['string', 'nullable'])
-                        ->sortable()
-                        ->searchable(),
-
-                 
-                TextInputColumn::make('due_at')
-                        ->label('Due At')
-                        ->type('date') // browser date picker
-                        ->getStateUsing(fn ($record) => $record->due_at
-                            ? Carbon::parse($record->due_at)->format('Y-m-d')
-                            : null
-                        )
-                        ->rules(['nullable', 'date'])
-                        ->placeholder('YYYY-MM-DD'),
-
-                CheckboxColumn::make('tax')
-                    ->label('Tax'),
-                TextColumn::make('total_cost')
-                        ->label('Total Cost')
-                        ->money('USD')
-                        ->getStateUsing(function ($record) {
-                            return BillingReport::where('client_id', $record->id)
-                                ->sum('total_cost');
-                        }),
-               BadgeColumn::make('status_check')
-                    ->label('Status')
-                    ->getStateUsing(fn () => 'Ready to invoice')
-                    ->colors([
-                        'warning' => fn ($state) => $state === 'Ready to invoice',
-                    ]),
-            ])
-            ->striped()
-            ->emptyStateHeading('No invoices ready.');
-    }
+   
 }

@@ -82,6 +82,36 @@
     50% { transform: translateY(-5px); }
 }
 
+/* Paid status row styling */
+.paid-row {
+    background-color: #f0fdf4 !important;
+    border-left: 4px solid #22c55e !important;
+}
+
+.paid-row td {
+    background-color: transparent !important;
+}
+
+/* More specific targeting for Filament table rows */
+.fi-ta-row.paid-row {
+    background-color: #f0fdf4 !important;
+    border-left: 4px solid #22c55e !important;
+}
+
+.fi-ta-row.paid-row td {
+    background-color: transparent !important;
+}
+
+/* Even more specific targeting */
+.fi-ta tbody .fi-ta-row.paid-row {
+    background-color: #f0fdf4 !important;
+    border-left: 4px solid #22c55e !important;
+}
+
+.fi-ta tbody .fi-ta-row.paid-row td {
+    background-color: transparent !important;
+}
+
 </style>
 
 

@@ -96,6 +96,9 @@ public function table(Table $table): Table
             BillingReport::query()
                 ->when($this->client_id, fn ($q) => $q->where('client_id', $this->client_id))
         )
+            ->recordClasses(fn (BillingReport $record): array => [
+                'paid-row' => $record->status === 'Paid',
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('date')
                 ->label('Date')
@@ -348,16 +351,27 @@ public function table(Table $table): Table
             }),
 
             Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('add_tax')
-                    ->label('Add Tax')
-                    ->icon('heroicon-s-plus-circle')
-                    ->action(function ($records) {
-                        foreach ($records as $record) {
-                            $record->update([
-                                'total_cost' => $record->total_cost * 1.1, // +10% example
-                            ]);
-                        }
-                    }),
+              Tables\Actions\BulkAction::make('add_tax')
+                        ->label('Add Tax')
+                        ->icon('heroicon-s-plus-circle')
+                        ->action(function (Collection $records) {
+                            // Collect multiple billing IDs
+                            $billingIds = $records->pluck('id')->toArray();
+
+                            // Sum total_cost across selected records
+                            $totalCost = $records->sum('total_cost');
+
+                            // Assume all belong to the same client (or pick the first one if mixed)
+                            $clientId = $records->first()?->client_id;
+
+                            if ($clientId && !empty($billingIds)) {
+                                return redirect()->to(
+                                    '/admin/add-tax?client_id=' . $clientId .
+                                    '&billing_ids=' . implode(',', $billingIds)
+                                );
+                            }
+                        }),
+
 
                     Tables\Actions\BulkAction::make('tax_free')
                     ->label('Tax Free')
@@ -420,6 +434,7 @@ public function table(Table $table): Table
             ->actions([
                Tables\Actions\EditAction::make()
     ->label('')
+    ->hidden( fn($record) => $record->status == 'Paid')
     ->modalHeading('Client Attendance')
     ->modalDescription('Editing start and end time will update shift time according to update shift time checkbox.')
     ->form([
