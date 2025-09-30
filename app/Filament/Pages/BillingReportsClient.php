@@ -376,13 +376,20 @@ public function table(Table $table): Table
                     Tables\Actions\BulkAction::make('tax_free')
                     ->label('Tax Free')
                     ->icon('heroicon-s-minus-circle')
-                    ->action(function ($records) {
-                        foreach ($records as $record) {
-                            $record->update([
-                                'total_cost' => $record->total_cost, // keep as is
-                            ]);
-                        }
-                    }),
+                    ->action(function (Collection $records) {
+                            $billingIds = $records->pluck('id')->toArray();
+
+                            $totalCost = $records->sum('total_cost');
+
+                            $clientId = $records->first()?->client_id;
+
+                            if ($clientId && !empty($billingIds)) {
+                                return redirect()->to(
+                                    '/admin/tax-free?client_id=' . $clientId .
+                                    '&billing_ids=' . implode(',', $billingIds)
+                                );
+                            }
+                        }),
                 ])
                   ->label(function (): string {
                         $total = $this->getSelectedTableRecords()->sum('total_cost');

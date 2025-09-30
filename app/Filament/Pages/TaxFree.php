@@ -6,13 +6,13 @@ use Filament\Pages\Page;
 use App\Models\Company;
 use App\Models\InvoiceCategory;
 
-class AddTax extends Page
+class TaxFree extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.pages.add-tax';
+    protected static string $view = 'filament.pages.tax-free';
 
-    protected static ?string $title = null;
+      protected static ?string $title = null;
     public ?int $client_id = null;
     public $contactOptions = [];
     public $company;
@@ -190,13 +190,10 @@ public function createInvoice()
         ->success()
         ->send();
 
-    return redirect()->route('filament.admin.pages.add-tax', [
+    return redirect()->route('filament.admin.pages.tax-free', [
         'client_id'   => $this->client_id,
         'billing_ids' => implode(',', $this->billing_ids),
     ]);
 }
 
-
-
-       
 }

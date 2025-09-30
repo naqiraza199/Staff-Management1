@@ -398,7 +398,7 @@
                                 <td class="px-6 py-4" style="font-size:13px;">
                                     <div class="tooltip-container">
                                         <input type="checkbox" class="tax-checkbox"
-                                                {{ $report->status === 'Paid' ? 'disabled' : 'checked' }}
+                                                {{ $report->status === 'Paid' ? 'disabled' : '' }}
                                             @if($report->status === 'Paid')
                                                 <div class="tooltip">Already invoiced.</div>
                                             @endif
@@ -438,7 +438,7 @@
                                 <td class="px-6 py-4" style="font-size:13px;">
                                     <div class="tooltip-container">
                                         <input type="checkbox" name="tax" 
-                                               {{ $report->status === 'Paid' ? 'disabled' : 'checked' }}
+                                               {{ $report->status === 'Paid' ? 'disabled' : '' }}
                                                title="">
                                         @if($report->status === 'Paid')
                                             <div class="tooltip">Already invoiced.</div>
@@ -481,7 +481,7 @@
                                 <td class="px-6 py-4" style="font-size:13px;">
                                     <div class="tooltip-container">
                                         <input type="checkbox" name="tax" 
-                                               {{ $report->status === 'Paid' ? 'disabled' : 'checked' }}
+                                               {{ $report->status === 'Paid' ? 'disabled' : '' }}
                                                title="">
                                         @if($report->status === 'Paid')
                                             <div class="tooltip">Already invoiced.</div>
@@ -524,7 +524,7 @@
                                 <td class="px-6 py-4" style="font-size:13px;">
                                     <div class="tooltip-container">
                                         <input type="checkbox" name="tax" 
-                                               {{ $report->status === 'Paid' ? 'disabled' : 'checked' }}
+                                               {{ $report->status === 'Paid' ? 'disabled' : '' }}
                                                title="">
                                         @if($report->status === 'Paid')
                                             <div class="tooltip">Already invoiced.</div>
@@ -604,6 +604,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const includeCheckbox = row.querySelector(".include-checkbox");
             const taxCheckbox = row.querySelector(".tax-checkbox");
 
+            // Skip if the row is already paid (disabled checkboxes indicate paid status)
+            if (includeCheckbox.disabled || taxCheckbox.disabled) {
+                return; // Skip this row - it's already paid
+            }
+
             if (includeCheckbox.checked) {
                 taxCheckbox.disabled = false; // editable
                 subtotal += amount;
@@ -634,8 +639,8 @@ document.addEventListener("DOMContentLoaded", function () {
         tax.addEventListener("change", calculateTotals);
     });
 
-    // Initialize with PHP values - don't override on first load
-    // The PHP values are already displayed in the HTML
+    // Run calculation on initial load to show correct tax amount based on checkbox states
+    calculateTotals();
 });
 
 // Function to create invoice with HTML values
