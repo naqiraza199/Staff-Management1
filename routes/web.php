@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\RedirectController;
+use App\Http\Controllers\InvoicePrintController;
+use App\Http\Controllers\InvoicePaymentController;
 
 use Illuminate\Http\Request;
 
@@ -24,3 +26,20 @@ Route::get('/billing-reports/{clientId}/print', [App\Http\Controllers\DataPrintC
 
 Route::get('/billing-reports/{clientId}/detailed', [App\Http\Controllers\DataPrintController::class, 'printDetailed'])
     ->name('billing-reports.detailed');
+
+// Invoice print friendly view
+Route::post('/invoices/{invoice}/payments', [InvoicePaymentController::class, 'store'])
+    ->name('invoices.payments.store');
+
+Route::delete('/invoice-payments/{invoicePayment}', [InvoicePaymentController::class, 'destroy'])
+    ->name('invoice-payments.destroy');
+
+Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])
+    ->name('invoices.print');
+
+Route::post('/invoices/{invoice}/notes', [InvoicePaymentController::class, 'addNote'])
+->name('invoices.notes.store');
+
+Route::put('/invoices/{invoice}', [InvoicePaymentController::class, 'update'])
+->name('invoices.update');
+

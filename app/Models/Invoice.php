@@ -11,4 +11,20 @@ class Invoice extends Model
     protected $casts = [
     'billing_reports_ids' => 'array',
     ];
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function additionalContact()
+    {
+        return $this->belongsTo(Client::class, 'additional_contact_id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(InvoicePayment::class);
+    }
+
 }

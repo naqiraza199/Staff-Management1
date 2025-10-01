@@ -49,6 +49,7 @@ use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use App\Models\Invoice;
+use App\Models\Event;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -132,7 +133,7 @@ class InvoiceGenerate extends Page implements HasForms
             $ndisRef = random_int(100000000, 999999999);
 
             // Create invoice
-            Invoice::create([
+            $invoiceCreate = Invoice::create([
                 'company_id'            => $companyId,
                 'client_id'             => $clientId,
                 'additional_contact_id' => $contactId,
@@ -153,6 +154,13 @@ class InvoiceGenerate extends Page implements HasForms
                 'status' => 'Paid',
             ]);
         }
+
+        Event::create([
+            'invoice_id' => $invoiceCreate->id,
+            'title'    => $authUser->name . ' Created Invoice',
+            'from'     => 'Invoice',
+            'body'     => 'Invoice created',
+        ]);
 
         // Show Filament notification
         Notification::make()

@@ -184,6 +184,13 @@ public function createInvoice()
         'status' => 'Paid',
     ]);
 
+         \App\Models\Event::create([
+            'invoice_id' => $invoice->id,
+            'title'    => $authUser->name . ' Created Invoice',
+            'from'     => 'Invoice',
+            'body'     => 'Invoice created',
+        ]);
+
     \Filament\Notifications\Notification::make()
         ->title('Invoice Created')
         ->body('Invoice ' . $invoice->invoice_no . ' created successfully.')

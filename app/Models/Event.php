@@ -13,6 +13,8 @@ class Event extends Model
         'status',
         'from',
         'note_attachments',
+        'invoice_id',
+        'invoice_payment_id',
     ];  
 
     protected $casts = ['note_attachments' => 'array'];
