@@ -557,7 +557,11 @@
                 </div>
                 <!-- Action Buttons -->
                 <div class="invoice-actions">
-                    <button type="button">📧 Email</button>
+                    <form action="{{ route('invoices.sendEmail', $invoice->id) }}" method="POST" style="display:inline;">
+                            @csrf
+                            <button type="submit" class="btn btn-email">📧 Email</button>
+                        </form>
+
                     <a href="{{ route('invoices.print', ['invoice' => $invoice->id]) }}" target="_blank" rel="noopener" id="printBtnLink" style="text-decoration:none;">
                         <button type="button">🖨 Print</button>
                     </a>
@@ -610,7 +614,19 @@
                   </div>
               </div>
 
-                  <button type="button" class="void">Void</button>
+                  <form id="void-form" action="{{ route('invoices.void', $invoice->id) }}" method="POST" style="display:none;">
+                        @csrf
+                    </form>
+
+                    <button type="button" class="void" onclick="confirmVoid()">Void</button>
+
+                    <script>
+                        function confirmVoid() {
+                            if (confirm('Are you sure you want to void this invoice?')) {
+                                document.getElementById('void-form').submit();
+                            }
+                        }
+                    </script>
               @endif
                 </div>
 

@@ -6,11 +6,12 @@ use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use App\Models\User;
 use App\Models\Company;
 use App\Models\StaffProfile;
+use Filament\Tables\Columns\IconColumn;
+
 use Illuminate\Support\Facades\Auth;
 use App\Models\DocumentCategory;
 use App\Models\Invoice;
@@ -22,34 +23,34 @@ use Str;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
+use Filament\Notifications\Notification;
+
 use App\Filament\Exports\InvoiceExportExporter;
 use Filament\Tables\Actions\ExportAction;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\URL;
 
-class InvoiceList extends Page implements Tables\Contracts\HasTable
+class InvoiceVoid extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-s-document-text';
+    protected static ?string $navigationIcon = 'heroicon-s-document-minus';
 
-    protected static string $view = 'filament.pages.invoice-list';
+    protected static string $view = 'filament.pages.invoice-void';
 
     protected static ?string $navigationGroup = 'Invoices';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
-    
-
-    public function table(Table $table): Table
+public function table(Table $table): Table
     {
         $authUser = Auth::user();
         $companyId = Company::where('user_id', $authUser->id)->value('id');
 
     return $table
          ->query(fn (): Builder =>
-                Invoice::query()->where('company_id', $companyId)->where('is_void',0)
+                Invoice::query()->where('company_id', $companyId)->where('is_void',1)
             )
         ->columns([
             TextColumn::make('invoice_no')
@@ -133,15 +134,36 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
                     ->date('d M Y') 
                     ->sortable(),
 
-                IconColumn::make('send_mail')
+                    IconColumn::make('send_mail')
                         ->label('Emailed')
-                        ->boolean() // interprets 1 as ✅ (true), 0 as ❌ (false)
-                        ->trueIcon('heroicon-s-envelope') // shown when = 1
-                        ->falseIcon(null), // nothing when = 0
+                        ->boolean() 
+                        ->trueIcon('heroicon-s-envelope') 
+                        ->falseIcon(null), 
 
 
 
+        ])
+        ->actions([
+            Tables\Actions\Action::make('undone')
+                ->label('')
+                ->button()
+                ->tooltip('Remove from void this invoice')
+                ->color('ligi')
+                ->icon('heroicon-s-arrow-path-rounded-square')
+                ->action( function ($record) {
+                        
+                    $record->update([
+                            'is_void' => 0,
+                        ]);
 
+                    Notification::make()
+                        ->title('Remove Void')
+                        ->body('The invoice remove from void successfully.')
+                        ->success()
+                        ->send();
+                    
+
+                }),
         ])
 
         ->headerActions([
@@ -155,28 +177,13 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
         ->icon('heroicon-s-arrow-down-tray')
         ->exporter(InvoiceExportExporter::class),
 
-    // Tables\Actions\Action::make('import')
-    //     ->label('')
-    //     ->tooltip('Import')
-    //     ->color('ligi')
-    //     ->icon('heroicon-s-arrow-up-tray')
-    //     ->action(function () {
-    //         // Your custom logic here (download, redirect, etc.)
-    //         // Example: export invoices to CSV
-    //     }),
-
         Tables\Actions\Action::make('print')
                 ->label('')
                 ->tooltip('Print')
                 ->color('stripe')
                 ->icon('heroicon-s-printer')
-                ->url(fn () => URL::route('invoices.print-list'))
+                ->url(fn () => URL::route('invoices.print-void-list'))
                 ->openUrlInNewTab(),
-
-    Tables\Actions\Action::make('generate')
-        ->label('Generate')
-        ->icon('heroicon-s-plus')
-        ->url(fn () => route('filament.admin.pages.invoice-generate')),
 ])
 
         ->filters([
@@ -264,9 +271,8 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
                 $query->whereBetween('issue_date', [$data['from'], $data['to']]);
             }
         }),
-])
+    ]);
 
-        ->recordUrl(fn ($record) => url("/admin/invoice-view?invoice_id={$record->id}"));
     }
 
             public function getFilteredInvoices()
@@ -297,5 +303,4 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
                 'overdueBalance' => $overdueBalance,
             ];
         }
-
 }

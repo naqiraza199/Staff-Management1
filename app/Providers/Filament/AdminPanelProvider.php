@@ -72,7 +72,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
                 EnsureProfileAndCompanyCompleted::class,
             ])
-            ->databaseNotifications();
+             ->databaseNotifications();
     }
 
     

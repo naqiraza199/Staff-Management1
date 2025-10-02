@@ -69,6 +69,7 @@ class InvoiceGenerate extends Page implements HasForms
     public array $selectedClients = [];
 
 
+    protected static ?int $navigationSort = 3;
 
     public function getTitle(): string
     {

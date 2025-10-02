@@ -10,6 +10,10 @@ use App\Models\AdditionalContact;
 use App\Models\BillingReport;
 use App\Models\PriceBookDetail;
 
+use App\Models\InvoicePayment;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+
 class InvoicePrintController extends Controller
 {
     public function show(int $invoice)
@@ -105,6 +109,77 @@ class InvoicePrintController extends Controller
             'additional_address',
             'totalPaid',
             'latestDate'
+        ));
+    }
+
+     public function printList()
+    {
+        $authUser = Auth::user();
+        $company = Company::where('user_id', $authUser->id)->first();
+
+        $invoices = collect();
+
+        $totalAmount = $totalTax = $grandTotal = $paidAmount = 0;
+        $unpaidOverdueBalance = $overdueBalance = 0;
+
+        if ($company) {
+            $invoices = Invoice::where('company_id', $company->id)->where('is_void',0)->with('client')->get();
+
+            $totalAmount = $invoices->sum('amount');
+            $totalTax    = $invoices->sum('tax');
+            $grandTotal  = $totalAmount + $totalTax;
+
+            $invoiceIds  = $invoices->pluck('id');
+            $paidAmount  = InvoicePayment::whereIn('invoice_id', $invoiceIds)->sum('paid_amount') ?? 0;
+
+            $unpaidOverdueBalance = $invoices->where('status', 'Unpaid/Overdue')->sum('balance');
+            $overdueBalance       = $invoices->where('status', 'Overdue')->sum('balance');
+        }
+
+        return view('filament.pages.invoice-print-list', compact(
+            'invoices',
+            'totalAmount',
+            'totalTax',
+            'grandTotal',
+            'paidAmount',
+            'unpaidOverdueBalance',
+            'overdueBalance'
+        ));
+    }
+
+
+    public function voidList()
+    {
+        $authUser = Auth::user();
+        $company = Company::where('user_id', $authUser->id)->first();
+
+        $invoices = collect();
+
+        $totalAmount = $totalTax = $grandTotal = $paidAmount = 0;
+        $unpaidOverdueBalance = $overdueBalance = 0;
+
+        if ($company) {
+            $invoices = Invoice::where('company_id', $company->id)->where('is_void',1)->with('client')->get();
+
+            $totalAmount = $invoices->sum('amount');
+            $totalTax    = $invoices->sum('tax');
+            $grandTotal  = $totalAmount + $totalTax;
+
+            $invoiceIds  = $invoices->pluck('id');
+            $paidAmount  = InvoicePayment::whereIn('invoice_id', $invoiceIds)->sum('paid_amount') ?? 0;
+
+            $unpaidOverdueBalance = $invoices->where('status', 'Unpaid/Overdue')->sum('balance');
+            $overdueBalance       = $invoices->where('status', 'Overdue')->sum('balance');
+        }
+
+        return view('filament.pages.invoice-print-void-list', compact(
+            'invoices',
+            'totalAmount',
+            'totalTax',
+            'grandTotal',
+            'paidAmount',
+            'unpaidOverdueBalance',
+            'overdueBalance'
         ));
     }
 }
