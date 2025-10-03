@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
 use App\Models\Client;
-
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DocumentSignatureRequest;
 
 
 class ClientDocumentResource extends Resource
@@ -114,6 +117,12 @@ class ClientDocumentResource extends Resource
                             ->since()
                             ->sortable(),
 
+                            Tables\Columns\IconColumn::make('is_verified')
+                        ->label('Signature')
+                        ->boolean() 
+                        ->trueIcon('heroicon-s-document-check') 
+                        ->falseIcon(null), 
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
@@ -164,6 +173,11 @@ class ClientDocumentResource extends Resource
                         ->preserveFilenames()
                         ->disk('public')
                         ->maxSize(2048),
+
+                        Forms\Components\TextArea::make('details')
+                                ->label('Content')
+                                ->rows(5)
+                                ->placeholder('Enter Content Here'),
                 ])
                 ->action(function (array $data): void {
                     $file = $data['file'];
@@ -171,15 +185,19 @@ class ClientDocumentResource extends Resource
                     $expires = $data['expired_at'] ?? null;
                     $extension = strtoupper(pathinfo($file, PATHINFO_EXTENSION));
 
-                    \App\Models\Document::create([
-                        'user_id' => auth()->id(),
-                        'client_id' => $data['client_id'],
-                        'name' => $file,
-                        'type' => $extension,
-                        'document_category_id' => $doCategory,
-                        'no_expiration'        => $data['no_expiration'] ?? 0,
-                        'expired_at' => $expires,
-                    ]);
+                            $clientDoc = Document::create([
+                                'user_id'              => auth()->id(),
+                                'client_id'            => $data['client_id'],
+                                'name'                 => $file,
+                                'type'                 => $extension,
+                                'document_category_id' => $doCategory,
+                                'no_expiration'        => $data['no_expiration'] ?? 0,
+                                'expired_at'           => $expires,
+                                'signature_token'      => Str::uuid(),
+                                 'details' => $data['details'],
+                            ]);
+
+                            Mail::to($clientDoc->client->email)->send(new DocumentSignatureRequest($clientDoc));
 
                     \Filament\Notifications\Notification::make()
                         ->title('Document uploaded successfully')
@@ -191,11 +209,21 @@ class ClientDocumentResource extends Resource
                 ->color('primary'),
         ])
             ->actions([
-
-           Action::make('View')
+        ActionGroup::make([
+            Action::make('viewSignature')
+                 ->label('Verfied')
+                 ->color('lightgreen')
+                ->tooltip('View Signature')
+                ->icon('heroicon-s-check-badge')
+                ->modalHeading('Client Signature')
+                ->modalContent(fn ($record) => view('documents.signature-modal', [
+                    'record' => $record,
+                ]))
+                ->modalSubmitAction(false) 
+                ->visible(fn ($record) => $record->is_verified),
+ Action::make('View')
                 ->icon('heroicon-s-eye')
-                ->iconButton()
-                ->tooltip('View Document')
+                ->label('View')
                 ->color('warning')
                 ->modalHeading('Document Preview')
                 ->modalSubmitAction(false)
@@ -239,9 +267,8 @@ class ClientDocumentResource extends Resource
                 
               Tables\Actions\Action::make('edit')
                 ->icon('heroicon-s-pencil-square')
-                ->label('')
-                ->iconButton()
-                ->tooltip('Edit Document')
+                ->label('Edit')
+                ->hidden(fn ($record) => $record->is_verified)
                 ->modalHeading('Edit Document')
                 ->color('stripe')
                 ->form(function (\Filament\Tables\Actions\Action $action): array {
@@ -301,6 +328,12 @@ class ClientDocumentResource extends Resource
                             ->maxSize(2048)
                             ->default($record->name)
                             ->required(),
+
+                             Forms\Components\TextArea::make('details')
+                                ->label('Content')
+                                ->rows(5)
+                                ->default($record->details)
+                                ->placeholder('Enter Content Here'),
                     ];
                 })
                 ->action(function (array $data, $record): void {
@@ -311,24 +344,27 @@ class ClientDocumentResource extends Resource
                         'client_id' => $data['client_id'],
                         'document_category_id' => $data['document_category_id'],
                         'no_expiration' => $data['no_expiration'],
-                        'expired_at' => $data['expired_at'],
+                        'expired_at'           => $data['expired_at'] ?? null,
                         'type' => $extension,
+                        'details' => $data['details'],
+                        'signature_token'      => Str::uuid(),
                     ]);
+
+                            Mail::to($record->client->email)->send(new DocumentSignatureRequest($record));
+
 
                     \Filament\Notifications\Notification::make()
                         ->title('Document updated successfully')
                         ->success()
                         ->send();
                 }),
-                Tables\Actions\DeleteAction::make()->button()->color('danger')->label('')->tooltip('Delete Document')
-                ->iconButton()
+                Tables\Actions\DeleteAction::make()->color('danger')->label('Delete')
+                
                 ,
 
                 Action::make('Download')
                     ->icon('heroicon-s-cloud-arrow-down')
-                    ->label('')
-                    ->iconButton()
-                    ->tooltip('Download Document')
+                    ->label('Download')
                     ->color('rado')
                     ->action(function ($record): StreamedResponse {
                         $filePath = $record->name; // 'documents/my.pdf'
@@ -339,6 +375,11 @@ class ClientDocumentResource extends Resource
                         }, $fileName);
                     })
 
+
+        ]),
+                 
+
+          
 
             ])
             ->bulkActions([

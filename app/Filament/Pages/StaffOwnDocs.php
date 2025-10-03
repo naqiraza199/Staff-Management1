@@ -19,6 +19,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
 use App\Models\DocumentCategory;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DocumentSignatureRequest;
+use Filament\Tables\Actions\ActionGroup;
 
 class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
 {
@@ -90,6 +94,11 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                 Tables\Columns\TextColumn::make('documentCategory.name')->label('Category')->searchable(),
                 Tables\Columns\TextColumn::make('expired_at')->label('Expired At')->date('d/m/Y')->searchable(),
                 Tables\Columns\IconColumn::make('no_expiration')->boolean()->label('No Expiration')->searchable(),
+                   Tables\Columns\IconColumn::make('is_verified')
+                        ->label('Signature')
+                        ->boolean() 
+                        ->trueIcon('heroicon-s-document-check') 
+                        ->falseIcon(null), 
                 Tables\Columns\TextColumn::make('created_at')->label('Last Update')->since()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])->headerActions([
@@ -171,19 +180,29 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                 ->preserveFilenames()
                 ->disk('public')
                 ->maxSize(2048),
+
+                Forms\Components\TextArea::make('details')
+                                ->label('Content')
+                                ->rows(5)
+                                ->placeholder('Enter Content Here'),
         ])
         ->action(function (array $data, Tables\Actions\Action $action) {
             $filePath = $data['file']; // relative path on 'public' disk
             $extension = strtoupper(pathinfo($filePath, PATHINFO_EXTENSION));
 
-            \App\Models\Document::create([
+          $staffDoc =  \App\Models\Document::create([
                 'user_id'              => $data['user_id'],
                 'name'                 => $filePath,
                 'type'                 => $extension,
                 'document_category_id' => $data['document_category_id'],
                 'no_expiration'        => $data['no_expiration'] ?? 0,
                 'expired_at'           => $data['expired_at'] ?? null,
-            ]);
+                'signature_token'      => Str::uuid(),
+                'details' => $data['details'],
+                         
+                    ]);
+
+                            Mail::to($staffDoc->user->email)->send(new DocumentSignatureRequest($staffDoc));
 
             // ✅ Close modal
             $action->success();
@@ -203,11 +222,22 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
 ])
 
             ->actions([
+                 ActionGroup::make([
 
-           Action::make('View')
+                     Action::make('viewSignature')
+                 ->label('Verfied')
+                 ->color('lightgreen')
+                ->tooltip('View Signature')
+                ->icon('heroicon-s-check-badge')
+                ->modalHeading('Staff Signature')
+                ->modalContent(fn ($record) => view('documents.signature-modal', [
+                    'record' => $record,
+                ]))
+                ->modalSubmitAction(false)
+                ->visible(fn ($record) => $record->is_verified),
+ Action::make('View')
                 ->icon('heroicon-s-eye')
-                ->iconButton()
-                ->tooltip('View Document')
+                ->label('View')
                 ->color('warning')
                 ->modalHeading('Document Preview')
                 ->modalSubmitAction(false)
@@ -251,10 +281,9 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                 
               Tables\Actions\Action::make('edit')
                 ->icon('heroicon-s-pencil-square')
-                ->label('')
-                ->iconButton()
-                ->tooltip('Edit Document')
+                ->label('Edit')
                 ->modalHeading('Edit Document')
+                ->hidden(fn ($record) => $record->is_verified)
                 ->color('stripe')
                 ->form(function (\Filament\Tables\Actions\Action $action): array {
                     /** @var \App\Models\Document $record */
@@ -337,33 +366,45 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->maxSize(2048)
                             ->default($record->name)
                             ->required(),
+
+                              Forms\Components\TextArea::make('details')
+                                ->label('Content')
+                                ->rows(5)
+                                ->default($record->details)
+                                ->placeholder('Enter Content Here'),
                     ];
+
+                    
                 })
                 ->action(function (array $data, $record): void {
                     $extension = strtoupper(pathinfo($data['name'], PATHINFO_EXTENSION));
 
-                    $record->update([
+                $record->update([
                         'name' => $data['name'],
                         'document_category_id' => $data['document_category_id'],
-                        'expired_at' => $data['expired_at'],
-                        'no_expiration' => $data['no_expiration'],
-                        'type' => $extension,
+                        'expired_at'           => $data['expired_at'] ?? null,
+                        'no_expiration'        => $data['no_expiration'],
+                        'type'                 => $extension,
+                        'details'              => $data['details'],
+                        'signature_token'      => Str::uuid(),
                     ]);
+
+                    Mail::to($record->user->email)->send(new DocumentSignatureRequest($record));
+
 
                     \Filament\Notifications\Notification::make()
                         ->title('Document updated successfully')
                         ->success()
                         ->send();
                 }),
-                Tables\Actions\DeleteAction::make()->button()->color('danger')->label('')->tooltip('Delete Document')
-                ->iconButton()
+                Tables\Actions\DeleteAction::make()->color('danger')->label('Delete')
+                
                 ,
 
                 Action::make('Download')
                     ->icon('heroicon-s-cloud-arrow-down')
-                    ->label('')
-                    ->iconButton()
-                    ->tooltip('Download Document')
+                    ->label('Download')
+                    
                     ->color('rado')
                     ->action(function ($record): StreamedResponse {
                         $filePath = $record->name; // 'documents/my.pdf'
@@ -373,6 +414,9 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                             echo Storage::disk('public')->get($filePath);
                         }, $fileName);
                     })
+
+                 ]),
+          
 
 
             ])

@@ -7,6 +7,8 @@ use App\Http\Controllers\RedirectController;
 use App\Http\Controllers\InvoicePrintController;
 use App\Http\Controllers\InvoicePaymentController;
 use Filament\Notifications\Notification;
+use App\Http\Controllers\ClientDocumentController;
+
 
 
 use Illuminate\Http\Request;
@@ -58,6 +60,10 @@ Route::post('/invoices/{invoice}/void', [InvoicePaymentController::class, 'void'
 Route::post('/invoices/{invoice}/send-email', [InvoicePaymentController::class, 'sendEmail'])
     ->name('invoices.sendEmail');
 
+
+Route::get('/documents/sign/{token}', [ClientDocumentController::class, 'show'])->name('documents.sign');
+Route::post('/documents/sign/{token}', [ClientDocumentController::class, 'store'])->name('documents.sign.store');
+Route::get('/documents/demo', [ClientDocumentController::class, 'demo'])->name('documents.demo');
 
 
 Route::get('test' , function(){

@@ -13,12 +13,16 @@ use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Storage;
+use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
 use App\Models\DocumentCategory;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DocumentSignatureRequest;
 
 class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 {
@@ -94,6 +98,11 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                 Tables\Columns\IconColumn::make('no_expiration')->boolean()->label('No Expiration')->searchable(),
                 Tables\Columns\TextColumn::make('created_at')->label('Last Update')->since()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('is_verified')
+                        ->label('Signature')
+                        ->boolean() 
+                        ->trueIcon('heroicon-s-document-check') 
+                        ->falseIcon(null), 
             ])
             ->headerActions([ // ✅ use this instead of ->actions()
             Tables\Actions\Action::make('Upload Document')
@@ -130,6 +139,11 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                         ->preserveFilenames()
                         ->disk('public')
                         ->maxSize(2048),
+
+                        Forms\Components\TextArea::make('details')
+                                ->label('Content')
+                                ->rows(5)
+                                ->placeholder('Enter Content Here'),
                 ])
                 ->action(function (array $data): void {
                     $file = $data['file'];
@@ -137,7 +151,7 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                     $expires = $data['expired_at'] ?? null;
                     $extension = strtoupper(pathinfo($file, PATHINFO_EXTENSION));
 
-                    \App\Models\Document::create([
+                   $clientDoc = \App\Models\Document::create([
                         'user_id' => auth()->id(),
                         'client_id' => $data['client_id'],
                         'name' => $file,
@@ -145,7 +159,11 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                         'document_category_id' => $doCategory,
                         'no_expiration'        => $data['no_expiration'] ?? 0,
                         'expired_at' => $expires,
-                    ]);
+                        'signature_token'      => Str::uuid(),
+                        'details' => $data['details'],
+                            ]);
+
+                            Mail::to($clientDoc->client->email)->send(new DocumentSignatureRequest($clientDoc));
 
                     \Filament\Notifications\Notification::make()
                         ->title('Document uploaded successfully')
@@ -158,10 +176,22 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
         ])
             ->actions([
 
-           Action::make('View')
+                 ActionGroup::make([
+
+                     Action::make('viewSignature')
+                 ->label('Verfied')
+                 ->color('lightgreen')
+                ->tooltip('View Signature')
+                ->icon('heroicon-s-check-badge')
+                ->modalHeading('Client Signature')
+                ->modalContent(fn ($record) => view('documents.signature-modal', [
+                    'record' => $record,
+                ]))
+                ->modalSubmitAction(false) 
+                ->visible(fn ($record) => $record->is_verified),
+  Action::make('View')
                 ->icon('heroicon-s-eye')
-                ->iconButton()
-                ->tooltip('View Document')
+                ->label('View')
                 ->color('warning')
                 ->modalHeading('Document Preview')
                 ->modalSubmitAction(false)
@@ -204,10 +234,9 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 
                 
               Tables\Actions\Action::make('edit')
+                ->hidden(fn ($record) => $record->is_verified)
                 ->icon('heroicon-s-pencil-square')
-                ->label('')
-                ->iconButton()
-                ->tooltip('Edit Document')
+                ->label('Edit')
                 ->modalHeading('Edit Document')
                 ->color('stripe')
                 ->form(function (\Filament\Tables\Actions\Action $action): array {
@@ -258,33 +287,42 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->maxSize(2048)
                             ->default($record->name)
                             ->required(),
+
+                             Forms\Components\TextArea::make('details')
+                                ->label('Content')
+                                ->rows(5)
+                                ->default($record->details)
+                                ->placeholder('Enter Content Here'),
                     ];
                 })
                 ->action(function (array $data, $record): void {
                     $extension = strtoupper(pathinfo($data['name'], PATHINFO_EXTENSION));
 
-                    $record->update([
+                     $record->update([
                         'name' => $data['name'],
                         'document_category_id' => $data['document_category_id'],
                         'no_expiration' => $data['no_expiration'],
-                        'expired_at' => $data['expired_at'],
+                        'expired_at'           => $data['expired_at'] ?? null,
                         'type' => $extension,
+                        'details' => $data['details'],
+                        'signature_token'      => Str::uuid(),
                     ]);
+
+                            Mail::to($record->client->email)->send(new DocumentSignatureRequest($record));
+
 
                     \Filament\Notifications\Notification::make()
                         ->title('Document updated successfully')
                         ->success()
                         ->send();
                 }),
-                Tables\Actions\DeleteAction::make()->button()->color('danger')->label('')->tooltip('Delete Document')
-                ->iconButton()
+                Tables\Actions\DeleteAction::make()->color('danger')->label('Delete')
+                
                 ,
 
                 Action::make('Download')
                     ->icon('heroicon-s-cloud-arrow-down')
-                    ->label('')
-                    ->iconButton()
-                    ->tooltip('Download Document')
+                    ->label('Download')
                     ->color('rado')
                     ->action(function ($record): StreamedResponse {
                         $filePath = $record->name; // 'documents/my.pdf'
@@ -294,6 +332,9 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                             echo Storage::disk('public')->get($filePath);
                         }, $fileName);
                     })
+                 ]),
+
+         
 
 
             ])
