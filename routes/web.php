@@ -8,7 +8,7 @@ use App\Http\Controllers\InvoicePrintController;
 use App\Http\Controllers\InvoicePaymentController;
 use Filament\Notifications\Notification;
 use App\Http\Controllers\ClientDocumentController;
-
+use App\Http\Controllers\InvoiceSettingsController;
 
 
 use Illuminate\Http\Request;
@@ -64,6 +64,14 @@ Route::post('/invoices/{invoice}/send-email', [InvoicePaymentController::class, 
 Route::get('/documents/sign/{token}', [ClientDocumentController::class, 'show'])->name('documents.sign');
 Route::post('/documents/sign/{token}', [ClientDocumentController::class, 'store'])->name('documents.sign.store');
 Route::get('/documents/demo', [ClientDocumentController::class, 'demo'])->name('documents.demo');
+
+
+  Route::post('/invoice-settings/store', [InvoiceSettingsController::class, 'store'])->name('invoice-settings.store');
+    Route::put('/invoice-settings/update/{id}', [InvoiceSettingsController::class, 'update'])->name('invoice-settings.update');
+
+    Route::post('/filament/taxes/save', [InvoiceSettingsController::class, 'taxSaving'])
+    ->name('filament.taxes.save');
+
 
 
 Route::get('test' , function(){

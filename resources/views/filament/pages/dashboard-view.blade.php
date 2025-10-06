@@ -1,3 +1,4 @@
+<x-filament-panels::page>
 
     <div class="filament-widget dashboard-widget">
           <div style="    display: flex
@@ -77,10 +78,7 @@
 <style>
     .dashboard-widget {
         font-family: 'Poppins', sans-serif;
-        background-color: #f5f7fa;
-        padding: 25px;
         border-radius: 15px;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
     }
     .dashboard-grid {
         display: grid;
@@ -95,8 +93,9 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
         text-align: center;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
-        width: 16%;
+        background: linear-gradient(135deg, #F3F5F9 0%, #c9c9c9 100%);
+        width: 19%;
+        height: 120px;
     }
     .summary-card:hover {
         transform: translateY(-5px);
@@ -119,14 +118,15 @@
         font-weight: 700;
         margin: 0;
     }
-    .chart-card {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: linear-gradient(135deg, #ffffff 0%, #e9ecef 100%);
-    }
+        .chart-card
+        {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: linear-gradient(135deg, #F3F5F9 0%, #c9c9c9 100%);
+            width: 99% !important;
+        }
     .chart-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
@@ -316,3 +316,5 @@
 });
 </script>
 
+
+</x-filament-panels::page>

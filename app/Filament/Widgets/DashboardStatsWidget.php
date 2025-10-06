@@ -12,6 +12,8 @@ class DashboardStatsWidget extends BaseWidget
 {
    protected static bool $isLazy = true;
 
+    protected static bool $isDiscovered = false;
+
     protected function getCards(): array
     {
         return [

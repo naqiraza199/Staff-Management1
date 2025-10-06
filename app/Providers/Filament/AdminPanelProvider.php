@@ -21,6 +21,7 @@ use App\Http\Middleware\EnsureProfileAndCompanyCompleted;
 use App\Filament\Pages\Auth\Register;
 use Filament\Enums\ThemeMode;
 use App\Filament\Pages\StaffOwnDocs;
+use App\Filament\Pages\DashboardView;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -50,7 +51,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                DashboardView::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
