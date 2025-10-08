@@ -199,8 +199,6 @@ class UserResource extends Resource
     {
         return $table
             ->deferLoading()
-            ->paginated([25, 50, 100])
-            ->defaultPaginationPageOption(25)
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()

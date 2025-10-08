@@ -9,7 +9,8 @@ use App\Http\Controllers\InvoicePaymentController;
 use Filament\Notifications\Notification;
 use App\Http\Controllers\ClientDocumentController;
 use App\Http\Controllers\InvoiceSettingsController;
-
+use App\Models\User;
+use Spatie\Permission\Models\Role;
 
 use Illuminate\Http\Request;
 
@@ -80,4 +81,35 @@ Route::get('test' , function(){
 Notification::make()
     ->title('Saved successfully')
     ->sendToDatabase($recipient);
+});
+
+
+
+Route::get('/make-superadmin', function () {
+
+    $user = User::where('email', 'superadmin@gmail.com')->first();
+
+    if (!$user) {
+        return '❌ User with this email not found.';
+    }
+
+    $user->assignRole('superadmin');
+
+    return '✅ Superadmin role assigned successfully to ' . $user->email;
+});
+
+Route::get('/remove-admin-role', function () {
+    $user = User::where('email', 'superadmin@gmail.com')->first();
+
+    if (! $user) {
+        return '❌ User not found.';
+    }
+
+    if (! $user->hasRole('Admin')) {
+        return 'ℹ️ This user does not have the admin role.';
+    }
+
+    $user->removeRole('Admin');
+
+    return '✅ Admin role removed successfully from ' . $user->email;
 });
