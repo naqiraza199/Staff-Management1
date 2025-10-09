@@ -9,10 +9,12 @@ use Filament\Forms\Form;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
-   use Filament\Actions\Action;
+use Filament\Actions\Action;
+use App\Models\SubscriptionPlan;
 
 class ProfileSetting extends Page implements Forms\Contracts\HasForms
 {
@@ -43,6 +45,7 @@ class ProfileSetting extends Page implements Forms\Contracts\HasForms
                 'company_no' => $company?->company_no,
                 'staff_invitation_link' => $company?->staff_invitation_link,
                 'company_logo' => $company?->company_logo,
+                'subscription_plan_id' => $company?->subscription_plan_id,
             ],
         ]);
     }
@@ -72,7 +75,9 @@ class ProfileSetting extends Page implements Forms\Contracts\HasForms
                             ])
                             ->columnSpan(1),
 
-                        Section::make('Company Information')
+                       Section::make()
+                       ->schema([
+ Section::make('Company Information')
                             ->schema([
                                 Grid::make(1)->schema([
                                 TextInput::make('company.company_name')
@@ -104,6 +109,21 @@ class ProfileSetting extends Page implements Forms\Contracts\HasForms
                             ])
                              ])
                             ->columnSpan(1),
+
+
+                            
+                        Section::make('Subscriptions')
+                            ->schema([
+                                Grid::make(1)->schema([
+                                    Select::make('company.subscription_plan_id')->label('Subscription Plans')
+                                    ->options(
+                                                SubscriptionPlan::pluck('name', 'id') 
+                                    ),
+                            ])
+                             ])
+                            ->columnSpan(1),
+                       ])->columnSpan(1)
+                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
                     ]),
             ])
             ->statePath('data');
@@ -137,6 +157,8 @@ public function saveAll(): void
         $company->update([
             'name' => $state['company']['company_name'],
             'country' => $state['company']['company_country'],
+            'subscription_plan_id' => $state['company']['subscription_plan_id'],
+            'is_subscribed' => !empty($state['company']['subscription_plan_id']),
             'company_logo' => $state['company']['company_logo'],
         ]);
     } else {
@@ -147,7 +169,9 @@ public function saveAll(): void
             'user_id' => $user->id,
             'name' => $state['company']['company_name'],
             'country' => $state['company']['company_country'],
+            'subscription_plan_id' => $state['company']['subscription_plan_id'],
             'company_logo' => $state['company']['company_logo'],
+            'is_subscribed' => !empty($state['company']['subscription_plan_id']),
             'staff_invitation_link' => $this->generateStaffInvitationLink(
                 $state['company']['company_name'],
                 $user->email

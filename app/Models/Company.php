@@ -12,7 +12,9 @@ class Company extends Model
         'name',
         'country',
         'staff_invitation_link',
-        'company_logo'
+        'company_logo',
+        'is_subscribed',
+        'subscription_plan_id'
     ];
 
     public function user()
