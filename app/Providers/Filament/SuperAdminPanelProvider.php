@@ -18,6 +18,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Http\Middleware\SuperAdminOnly;
+use App\Filament\SuperAdmin\Widgets\SuperAdminStats;
 
 class SuperAdminPanelProvider extends PanelProvider
 {
@@ -48,7 +49,8 @@ class SuperAdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/SuperAdmin/Widgets'), for: 'App\\Filament\\SuperAdmin\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
+                SuperAdminStats::class,
+                // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
