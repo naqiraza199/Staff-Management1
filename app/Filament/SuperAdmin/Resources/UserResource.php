@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use App\Models\StaffProfile;
+use App\Models\Company;
 
 class UserResource extends Resource
 
@@ -147,7 +148,7 @@ class UserResource extends Resource
                     Tables\Columns\TextColumn::make('contact_number')
                         ->label('Contact Number')
                         ->sortable()
-                        ->toggleable(isToggledHiddenByDefault: false),
+                        ->toggleable(isToggledHiddenByDefault: true),
                         Tables\Columns\TextColumn::make('roles')
                                 ->label('Role')
                                 ->badge()
@@ -175,7 +176,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('country')
                         ->label('Country')
                         ->sortable()
-                        ->toggleable(isToggledHiddenByDefault: false),
+                        ->toggleable(isToggledHiddenByDefault: true),
 
                         Tables\Columns\TextColumn::make('status')
                                     ->label('Status')
@@ -193,6 +194,17 @@ class UserResource extends Resource
                                         'danger' => 'No access',
                                     ])
                                     ->toggleable(isToggledHiddenByDefault: false),
+
+                                     Tables\Columns\IconColumn::make('has_company')
+                                        ->label('Has Company')
+                                        ->boolean() 
+                                        ->getStateUsing(function ($record) {
+                                            return Company::where('user_id', $record->id)->exists();
+                                        })
+                                        ->trueIcon('heroicon-s-building-office')   
+                                        ->falseIcon('heroicon-s-x-mark')         
+                                        ->trueColor('success')
+                                        ->falseColor('danger'),
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
