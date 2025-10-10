@@ -45,9 +45,16 @@ class SubscriptionPlanResource extends Resource
                         'Inactive' => 'Inactive',
                     ])
                     ->required(),
+                Forms\Components\Select::make('duration')
+                ->options([
+                    'Weekly' => 'Weekly',
+                    'Monthly' => 'Monthly',
+                    'Yearly' => 'Yearly',
+                ])
+                ->required(),
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
-            ])->columns(2),
+            ])->columns(3),
             ]);
     }
 
@@ -80,7 +87,8 @@ class SubscriptionPlanResource extends Resource
                             'heroicon-s-x-circle' => 'Inactive',
                         ])
                         ->sortable(),
-
+                    Tables\Columns\TextColumn::make('duration')
+                                        ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

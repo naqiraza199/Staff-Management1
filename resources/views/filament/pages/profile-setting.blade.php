@@ -8,4 +8,9 @@
             </x-filament::button>
         </div>
     </div>
+    <script>
+    window.addEventListener('redirect-to-stripe', event => {
+        window.location.href = event.detail.url;
+    });
+</script>
 </x-filament::page>

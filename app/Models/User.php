@@ -10,12 +10,12 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Spatie\Permission\Models\Role;
-
+use Laravel\Cashier\Billable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, Billable;
 
     /**
      * The attributes that are mass assignable.

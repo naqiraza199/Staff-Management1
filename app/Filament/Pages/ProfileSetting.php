@@ -15,6 +15,8 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Actions\Action;
 use App\Models\SubscriptionPlan;
+use Laravel\Cashier\Checkout;
+
 
 class ProfileSetting extends Page implements Forms\Contracts\HasForms
 {
@@ -113,15 +115,67 @@ class ProfileSetting extends Page implements Forms\Contracts\HasForms
 
                             
                         Section::make('Subscriptions')
-                            ->schema([
-                                Grid::make(1)->schema([
-                                    Select::make('company.subscription_plan_id')->label('Subscription Plans')
-                                    ->options(
-                                                SubscriptionPlan::pluck('name', 'id') 
-                                    ),
-                            ])
-                             ])
-                            ->columnSpan(1),
+                                ->schema([
+                                    Grid::make(1)->schema([
+                                        Select::make('company.subscription_plan_id')
+                                            ->label('Subscription Plans')
+                                            ->options(
+                                                SubscriptionPlan::pluck('name', 'id')
+                                            )
+                                            ->disabled(fn() => auth()->user()->company?->is_subscribed),
+                                    ]),
+                                ])
+                                ->headerActions([
+                                    Forms\Components\Actions\Action::make('cancelSubscription')
+                                        ->label('Cancel Subscription')
+                                        ->icon('heroicon-o-x-circle')
+                                        ->color('danger')
+                                        ->requiresConfirmation()
+                                        ->modalHeading('Cancel Subscription?')
+                                        ->modalSubheading('Are you sure you want to cancel your active subscription? This will deactivate access immediately.')
+                                        ->modalButton('Yes, Cancel It')
+                                        ->visible(fn() => auth()->user()->company?->is_subscribed)
+                                        ->action(function () {
+                                            $user = auth()->user();
+                                            $company = $user->company;
+
+                                            if ($company && $company->is_subscribed && $company->subscription_plan_id) {
+                                                try {
+                                                    // Cancel the Stripe subscription
+                                                    if ($user->subscribed('default')) {
+                                                        $user->subscription('default')->cancel();
+                                                    }
+
+                                                    // Update company table
+                                                    $company->update([
+                                                        'is_subscribed' => 0,
+                                                        'subscription_plan_id' => null,
+                                                    ]);
+
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Subscription Cancelled')
+                                                        ->success()
+                                                        ->body('Your subscription has been cancelled successfully.')
+                                                        ->send();
+
+                                                } catch (\Exception $e) {
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Stripe Error')
+                                                        ->danger()
+                                                        ->body('Unable to cancel subscription: ' . $e->getMessage())
+                                                        ->send();
+                                                }
+                                            } else {
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title('No Active Subscription')
+                                                    ->warning()
+                                                    ->body('You do not have an active subscription to cancel.')
+                                                    ->send();
+                                            }
+                                        }),
+                                ])
+                                ->columnSpan(1),
+
                        ])->columnSpan(1)
                     ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
                     ]),
@@ -179,11 +233,40 @@ public function saveAll(): void
         ]);
     }
 
+// 🧩 Stripe subscription creation logic
+if (!empty($state['company']['subscription_plan_id'])) {
+    $plan = \App\Models\SubscriptionPlan::find($state['company']['subscription_plan_id']);
+
+    if ($plan && $plan->stripe_price_id) {
+        try {
+            // Create checkout session
+            $checkout = $user->newSubscription('default', $plan->stripe_price_id)
+                ->checkout([
+                    'success_url' => route('subscription.success'),
+                    'cancel_url' => route('subscription.cancel'),
+                ]);
+
+            // ✅ Simply redirect to Stripe checkout page
+            redirect($checkout->url)->send();
+            exit; // stop further execution
+
+        } catch (\Exception $e) {
+            \Filament\Notifications\Notification::make()
+                ->title('Stripe Error')
+                ->body('Unable to start subscription: ' . $e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+}
+
+
     Notification::make()
         ->title('Profile & Company info saved successfully!')
         ->success()
         ->send();
 }
+
 
 
 

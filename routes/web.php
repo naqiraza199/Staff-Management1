@@ -11,6 +11,8 @@ use App\Http\Controllers\ClientDocumentController;
 use App\Http\Controllers\InvoiceSettingsController;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
+use App\Http\Controllers\SubscriptionController;
+
 
 use Illuminate\Http\Request;
 
@@ -82,6 +84,10 @@ Notification::make()
     ->title('Saved successfully')
     ->sendToDatabase($recipient);
 });
+
+
+Route::get('/subscription/success', [SubscriptionController::class, 'success'])->name('subscription.success');
+Route::get('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
 
 
 
