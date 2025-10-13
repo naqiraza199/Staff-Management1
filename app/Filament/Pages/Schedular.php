@@ -35,8 +35,10 @@ use App\Models\Event;
 use App\Models\BillingReport;
 use Carbon\Carbon;
 use App\Models\PriceBookDetail;
+use App\Models\TimesheetReport;
+use App\Models\Timesheet;
 
-
+use Carbon\CarbonInterval;
 
 
 class Schedular extends Page
@@ -1124,7 +1126,144 @@ $newShift = Shift::create([
         'client_id'       => data_get($data, 'client_section.client_id'),
     ]);
 
-    // dd($billingRecordForClient);
+
+        $TimesheetReportForStaff = TimesheetReport::create([
+            'user_id'    => data_get($data, 'carer_section.user_id'),
+            'shift_id'   => $newShift->id,
+            'date'       => $shiftDate->toDateString(),
+            'clients'    => json_encode($newShift->client_section), // ensure stored as JSON
+            'start_time' => $shiftStart->format('H:i:s'),
+            'end_time'   => $shiftEnd->format('H:i:s'),
+            'break_time' => 0,
+            'hours'      => $hours,
+            'distance'   => null,
+            'expense'    => null,
+            'allowances' => json_encode(data_get($data, 'shift_section.allowance_id', [])),
+            'clockin'    => null,
+            'clockout'   => null,
+        ]);
+
+
+
+      // -------------------------------------------------------------
+        // 🧾 Create Timesheet (Detailed Logic)
+        // -------------------------------------------------------------
+        $authUser   = Auth::user();
+        $companyId  = Company::where('user_id', $authUser->id)->value('id');
+        $userId     = data_get($data, 'carer_section.user_id');
+        $shiftStart = Carbon::parse(data_get($data, 'time_and_location.start_time'));
+        $shiftEnd   = Carbon::parse(data_get($data, 'time_and_location.end_time'));
+        $shiftDate  = Carbon::parse(data_get($data, 'time_and_location.start_date'));
+        $totalHours = $hours;
+
+        // Determine approval status
+        $isApproved = $newShift->is_approved ?? false;
+        $approvedStatus = $isApproved ? 0 : 1; // 1 = pending approval
+
+        // -------------------------------------------------------------
+        // 🕒 Determine Hours by Time Ranges (Weekdays / Sat / Sun)
+        // -------------------------------------------------------------
+        $weekday_12a_6a = 0;
+        $weekday_6a_8p  = 0;
+        $weekday_8p_10p = 0;
+        $weekday_10p_12a = 0;
+        $saturday = 0;
+        $sunday = 0;
+        $public_holidays = 0;
+
+        // ✅ Check if date is Saturday / Sunday / Public Holiday
+        $dayOfWeek = $shiftDate->format('l');
+        $isPublicHoliday = false;
+
+        // Optional: if you have a public holiday table
+        // $isPublicHoliday = PublicHoliday::whereDate('date', $shiftDate)->exists();
+
+        if ($dayOfWeek === 'Saturday') {
+            $saturday = $totalHours;
+        } elseif ($dayOfWeek === 'Sunday') {
+            $sunday = $totalHours;
+        } elseif ($isPublicHoliday) {
+            $public_holidays = $totalHours;
+        } else {
+            // -------------------------------------------------------------
+            // 🕒 Improved Weekday Time Range Logic (Accurate to the minute)
+            // -------------------------------------------------------------
+            // Convert both start and end into absolute minutes from 00:00
+            $startMinutes = ($shiftStart->hour * 60) + $shiftStart->minute;
+            $endMinutes   = ($shiftEnd->hour * 60) + $shiftEnd->minute;
+
+            // Handle overnight (e.g., 22:00 → 06:00 next day)
+            if ($endMinutes <= $startMinutes) {
+                $endMinutes += 24 * 60;
+            }
+
+            // Define weekday segments in minutes from midnight
+            $segments = [
+                '12a_6a'  => [0, 360],     // 00:00 – 06:00
+                '6a_8p'   => [360, 1200],  // 06:00 – 20:00
+                '8p_10p'  => [1200, 1320], // 20:00 – 22:00
+                '10p_12a' => [1320, 1440], // 22:00 – 24:00
+            ];
+
+            // Helper closure to calculate overlap in hours
+            $calcOverlap = function ($rangeStart, $rangeEnd) use ($startMinutes, $endMinutes) {
+                $overlap = max(0, min($endMinutes, $rangeEnd) - max($startMinutes, $rangeStart));
+                return round($overlap / 60, 2); // in hours, rounded
+            };
+
+            // Apply the overlap logic for each segment
+            $weekday_12a_6a  = $calcOverlap(...$segments['12a_6a']);
+            $weekday_6a_8p   = $calcOverlap(...$segments['6a_8p']);
+            $weekday_8p_10p  = $calcOverlap(...$segments['8p_10p']);
+            $weekday_10p_12a = $calcOverlap(...$segments['10p_12a']);
+        }
+
+        // -------------------------------------------------------------
+        // ✅ Calculate Standard Hours & Total as the Sum of All Hour Columns
+        // -------------------------------------------------------------
+        $standard_hours = 
+            $weekday_12a_6a +
+            $weekday_6a_8p +
+            $weekday_8p_10p +
+            $weekday_10p_12a +
+            $saturday +
+            $sunday +
+            $public_holidays;
+
+        $total = $standard_hours;
+
+        // -------------------------------------------------------------
+        // 💾 Create Timesheet Record
+        // -------------------------------------------------------------
+        $timesheet = Timesheet::create([
+            'user_id'             => $userId,
+            'company_id'          => $companyId,
+            'shift_id'            => $newShift->id,
+            'timesheet_report_id' => $TimesheetReportForStaff->id,
+            'approved_status'     => $approvedStatus,
+            'weekday_12a_6a'      => $weekday_12a_6a,
+            'weekday_6a_8p'       => $weekday_6a_8p,
+            'weekday_8p_10p'      => $weekday_8p_10p,
+            'weekday_10p_12a'     => $weekday_10p_12a,
+            'saturday'            => $saturday,
+            'sunday'              => $sunday,
+            'public_holidays'     => $public_holidays,
+            'break_time'          => 0,
+            'standard_hours'      => $standard_hours,
+            'total'               => $total,
+            'mileage'             => 0,
+            'expense'             => 0,
+            'sleepover'           => 0,
+        ]);
+
+
+
+    //    dd([
+    //         'TIMESHEET REPORT' => $TimesheetReportForStaff,
+    //         'TIMESHEET' => $timesheet,
+    //     ]);
+
+
 }
 
 

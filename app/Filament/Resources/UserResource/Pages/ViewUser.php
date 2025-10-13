@@ -23,26 +23,27 @@ class ViewUser extends ViewRecord
         ActionGroup::make([
             Action::make('add_shift')
                 ->label('Add Shift')
-                ->icon('heroicon-o-plus'),
+                ->icon('heroicon-s-plus'),
 
             Action::make('communications')
                 ->label('Communications')
-                ->icon('heroicon-o-chat-bubble-left-right'),
+                ->icon('heroicon-s-chat-bubble-left-right'),
 
             Action::make('timesheet')
                 ->label('Timesheet')
-                ->icon('heroicon-o-clock'),
+                ->url(fn ($record) => url("/admin/timesheet-of-staff?user_id={$record->id}"))
+                ->icon('heroicon-s-clock'),
 
             Action::make('calendar')
                 ->label('Calendar')
-                ->icon('heroicon-o-calendar')
+                ->icon('heroicon-s-calendar')
                 ->url(fn ($record) => route('filament.admin.pages.staff-calender', ['user_id' => $record->id]))
                 ->openUrlInNewTab(),
 
             Action::make('documents')
                 ->label('Documents')
                 ->url(fn ($record) => route('filament.admin.pages.staff-own-docs', ['user_id' => $record->id]))
-                ->icon('heroicon-o-document'),
+                ->icon('heroicon-s-document'),
         ])
             ->button()                     
             ->label('Manage')        

@@ -20,7 +20,7 @@ class CompanyResource extends Resource
 {
     protected static ?string $model = Company::class;
 
-    protected static ?string $navigationIcon = 'heroicon-s-building-office';
+    protected static ?string $navigationIcon = 'heroicon-s-building-office-2';
 
     protected static ?string $navigationGroup = 'System Management';
 
@@ -100,6 +100,13 @@ class CompanyResource extends Resource
                         ->dateTime('d M Y') 
                         ->sortable()
                         ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\IconColumn::make('is_subscribed')
+                                ->label('Subscribed')
+                                ->boolean() 
+                                ->trueIcon('heroicon-s-shield-check')   
+                                ->falseIcon('heroicon-s-x-circle')         
+                                ->trueColor('success')
+                                ->falseColor('danger'),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

@@ -43,6 +43,8 @@ use App\Models\PriceBookDetail;
 use App\Models\BillingReport;
 use Carbon\Carbon;
 
+use App\Models\TimesheetReport;
+use App\Models\Timesheet;
 
 class AdvancedShiftForm extends Page implements HasForms
 {
@@ -1145,6 +1147,139 @@ public function createShift()
         'is_vacant'  => $isVacant, // ✅ set here
 
     ]);
+
+     if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
+
+    $shiftDate     = Carbon::parse(data_get($data, 'time_and_location.start_date'));
+    $shiftEndDate  = Carbon::parse(data_get($data, 'time_and_location.end_date'));
+    $authUser      = Auth::user();
+    $companyId     = Company::where('user_id', $authUser->id)->value('id');
+    $carerUsers    = data_get($newShift, 'carer_section.user_details', []);
+
+    $allReports    = [];
+    $allTimesheets = [];
+
+    if (!empty($data['carer_section']['user_details'])) {
+
+        foreach ($newShift->carer_section['user_details'] as $carer) {
+
+            $userId     = $carer['user_id'];
+            $shiftStart = Carbon::parse($carer['user_start_time']);
+            $shiftEnd   = Carbon::parse($carer['user_end_time']);
+
+            // ✅ Calculate total hours
+            $totalHours = round($shiftEnd->floatDiffInHours($shiftStart), 2);
+
+            // ------------------------------
+            // Weekday Segmentation Logic
+            // ------------------------------
+            $dayOfWeek = $shiftDate->format('l');
+            $isPublicHoliday = false;
+
+            $weekday_12a_6a  = 0;
+            $weekday_6a_8p   = 0;
+            $weekday_8p_10p  = 0;
+            $weekday_10p_12a = 0;
+            $saturday        = 0;
+            $sunday          = 0;
+            $public_holidays = 0;
+
+            if ($dayOfWeek === 'Saturday') {
+                $saturday = $totalHours;
+            } elseif ($dayOfWeek === 'Sunday') {
+                $sunday = $totalHours;
+            } elseif ($isPublicHoliday) {
+                $public_holidays = $totalHours;
+            } else {
+                $startMinutes = ($shiftStart->hour * 60) + $shiftStart->minute;
+                $endMinutes   = ($shiftEnd->hour * 60) + $shiftEnd->minute;
+
+                if ($endMinutes <= $startMinutes) {
+                    $endMinutes += 24 * 60;
+                }
+
+                $segments = [
+                    '12a_6a'  => [0, 360],
+                    '6a_8p'   => [360, 1200],
+                    '8p_10p'  => [1200, 1320],
+                    '10p_12a' => [1320, 1440],
+                ];
+
+                $calcOverlap = function ($rangeStart, $rangeEnd) use ($startMinutes, $endMinutes) {
+                    $overlap = max(0, min($endMinutes, $rangeEnd) - max($startMinutes, $rangeStart));
+                    return round($overlap / 60, 2);
+                };
+
+                $weekday_12a_6a  = $calcOverlap(...$segments['12a_6a']);
+                $weekday_6a_8p   = $calcOverlap(...$segments['6a_8p']);
+                $weekday_8p_10p  = $calcOverlap(...$segments['8p_10p']);
+                $weekday_10p_12a = $calcOverlap(...$segments['10p_12a']);
+            }
+
+            $standard_hours =
+                $weekday_12a_6a +
+                $weekday_6a_8p +
+                $weekday_8p_10p +
+                $weekday_10p_12a +
+                $saturday +
+                $sunday +
+                $public_holidays;
+
+            $total = $standard_hours;
+
+            // ✅ Create Timesheet Report
+            $report = TimesheetReport::create([
+                'user_id'    => $userId,
+                'shift_id'   => $newShift->id,
+                'date'       => $shiftDate->toDateString(),
+                'clients'    => $data['client_section']['client_details'] ?? [],
+                'start_time' => $shiftStart->format('H:i:s'),
+                'end_time'   => $shiftEnd->format('H:i:s'),
+                'break_time' => $newShift->time_and_location['break_time'] ?? 0,
+                'hours'      => $total,
+                'distance'   => $newShift->shift_section['mileage'] ?? 0,
+                'expense'    => $newShift->shift_section['additional_cost'] ?? 0,
+                'allowances' => data_get($data, 'shift_section.allowance_id', []),
+                'status'     => 'Pending',
+            ]);
+
+            $isApproved     = $newShift->is_approved ?? false;
+            $approvedStatus = $isApproved ? 0 : 1; // 1 = pending approval
+
+            // ✅ Create Timesheet
+            $timesheet = Timesheet::create([
+                'user_id'             => $userId,
+                'shift_id'            => $newShift->id,
+                'timesheet_report_id' => $report->id,
+                'company_id'          => $companyId,
+                'approved_status'     => $approvedStatus,
+                'break_time'          => $newShift->time_and_location['break_time'] ?? 0,
+                'weekday_12a_6a'      => $weekday_12a_6a,
+                'weekday_6a_8p'       => $weekday_6a_8p,
+                'weekday_8p_10p'      => $weekday_8p_10p,
+                'weekday_10p_12a'     => $weekday_10p_12a,
+                'saturday'            => $saturday,
+                'sunday'              => $sunday,
+                'public_holidays'     => $public_holidays,
+                'standard_hours'      => $standard_hours,
+                'total'               => $total,
+                'mileage'             => $newShift->shift_section['mileage'] ?? 0,
+                'expense'             => $newShift->shift_section['additional_cost'] ?? 0,
+            ]);
+
+            // Collect results for debugging
+            $allReports[]    = $report;
+            $allTimesheets[] = $timesheet;
+        }
+    }
+
+    // ✅ Debug multiple results
+    // dd([
+    //     'TIMESHEET REPORTS' => $allReports,
+    //     'TIMESHEETS'        => $allTimesheets,
+    // ]);
+}
+ 
 
     if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
     $shiftDate = Carbon::parse(data_get($data, 'time_and_location.start_date'));

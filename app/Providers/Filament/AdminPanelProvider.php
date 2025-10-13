@@ -22,6 +22,7 @@ use App\Filament\Pages\Auth\Register;
 use Filament\Enums\ThemeMode;
 use App\Filament\Pages\StaffOwnDocs;
 use App\Filament\Pages\DashboardView;
+use App\Filament\Pages\AdminRegistration;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -32,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->registration(Register::class)
+            ->registration(AdminRegistration::class)
             ->colors([
                 'primary' => Color::Blue,
                 'brown' => Color::hex('#8f6232'),

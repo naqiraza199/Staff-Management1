@@ -211,8 +211,6 @@ public function saveAll(): void
         $company->update([
             'name' => $state['company']['company_name'],
             'country' => $state['company']['company_country'],
-            'subscription_plan_id' => $state['company']['subscription_plan_id'],
-            'is_subscribed' => !empty($state['company']['subscription_plan_id']),
             'company_logo' => $state['company']['company_logo'],
         ]);
     } else {
@@ -246,16 +244,14 @@ if (!empty($state['company']['subscription_plan_id'])) {
                     'cancel_url' => route('subscription.cancel'),
                 ]);
 
-            // ✅ Simply redirect to Stripe checkout page
             redirect($checkout->url)->send();
-            exit; // stop further execution
 
         } catch (\Exception $e) {
-            \Filament\Notifications\Notification::make()
-                ->title('Stripe Error')
-                ->body('Unable to start subscription: ' . $e->getMessage())
-                ->danger()
-                ->send();
+            // \Filament\Notifications\Notification::make()
+            //     ->title('Stripe Error')
+            //     ->body('Unable to start subscription: ' . $e->getMessage())
+            //     ->danger()
+            //     ->send();
         }
     }
 }

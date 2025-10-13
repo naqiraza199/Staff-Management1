@@ -12,6 +12,12 @@ use App\Http\Controllers\InvoiceSettingsController;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\TimesheetController;
+use Illuminate\Support\Facades\DB;
+use App\Models\Timesheet;
+use App\Models\Company;
+use App\Filament\Exports\TimesheetsGroupedExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 use Illuminate\Http\Request;
@@ -43,6 +49,8 @@ Route::delete('/invoice-payments/{invoicePayment}', [InvoicePaymentController::c
 
 Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])
     ->name('invoices.print');
+
+
 
 Route::post('/invoices/{invoice}/notes', [InvoicePaymentController::class, 'addNote'])
 ->name('invoices.notes.store');
@@ -89,7 +97,8 @@ Notification::make()
 Route::get('/subscription/success', [SubscriptionController::class, 'success'])->name('subscription.success');
 Route::get('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
 
-
+Route::get('/subscription/success/admin', [SubscriptionController::class, 'successAdmin'])->name('admin.subscription.success');
+Route::get('/subscription/cancel/admin', [SubscriptionController::class, 'cancelAdmin'])->name('admin.subscription.cancel');
 
 Route::get('/make-superadmin', function () {
 
@@ -119,3 +128,43 @@ Route::get('/remove-admin-role', function () {
 
     return '✅ Admin role removed successfully from ' . $user->email;
 });
+
+
+Route::middleware(['web','auth'])->group(function () {
+
+    Route::get('/filament/timesheets/print', function () {
+        $authUser = Auth::user();
+        $companyId = Company::where('user_id', $authUser->id)->value('id');
+
+        $data = Timesheet::query()
+            ->join('users', 'timesheets.user_id', '=', 'users.id')
+            ->select([
+                'timesheets.user_id as id',
+                'users.name as user_name',
+                DB::raw('SUM(timesheets.weekday_12a_6a) as weekday_12a_6a'),
+                DB::raw('SUM(timesheets.weekday_6a_8p) as weekday_6a_8p'),
+                DB::raw('SUM(timesheets.weekday_8p_10p) as weekday_8p_10p'),
+                DB::raw('SUM(timesheets.weekday_10p_12a) as weekday_10p_12a'),
+                DB::raw('SUM(timesheets.saturday) as saturday'),
+                DB::raw('SUM(timesheets.sunday) as sunday'),
+                DB::raw('SUM(timesheets.standard_hours) as standard_hours'),
+                DB::raw('SUM(timesheets.break_time) as break_time'),
+                DB::raw('SUM(timesheets.public_holidays) as public_holidays'),
+                DB::raw('SUM(timesheets.total) as total'),
+                DB::raw('SUM(timesheets.mileage) as mileage'),
+                DB::raw('SUM(timesheets.expense) as expense'),
+                DB::raw('SUM(timesheets.sleepover) as sleepover'),
+                DB::raw('SUM(timesheets.approved_status) as approved_status'),
+            ])
+            ->when($companyId, fn($q) => $q->where('timesheets.company_id', $companyId))
+            ->groupBy('timesheets.user_id', 'users.name')
+            ->get();
+
+        return view('filament.pages.timesheet-print-inline', compact('data'));
+    })->name('filament.timesheets.reports.print');
+
+});
+
+
+Route::get('/timesheet/print', [TimesheetController::class, 'printReport'])
+    ->name('timesheet.print');

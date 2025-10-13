@@ -201,8 +201,8 @@ class UserResource extends Resource
                                         ->getStateUsing(function ($record) {
                                             return Company::where('user_id', $record->id)->exists();
                                         })
-                                        ->trueIcon('heroicon-s-building-office')   
-                                        ->falseIcon('heroicon-s-x-mark')         
+                                        ->trueIcon('heroicon-s-identification')   
+                                        ->falseIcon('heroicon-s-x-circle')         
                                         ->trueColor('success')
                                         ->falseColor('danger'),
 
