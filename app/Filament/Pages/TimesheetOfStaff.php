@@ -36,6 +36,7 @@ class TimesheetOfStaff extends Page implements Tables\Contracts\HasTable
     protected static string $view = 'filament.pages.timesheet-of-staff';
     protected static ?string $title = 'Timesheet Report';
 
+
     public ?int $userId = null;
 
     public static function shouldRegisterNavigation(): bool

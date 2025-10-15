@@ -151,16 +151,39 @@ public function updateHtmlValues($subtotal, $tax, $grandTotal)
 
 public function createInvoice()
 {
-    // Recalculate totals excluding paid records to ensure accuracy
+    $authUser = auth()->user();
+
+    // 🔹 Step 1: Get related shift IDs from selected billing reports
+    $shiftIds = \App\Models\BillingReport::whereIn('id', $this->billing_ids)
+        ->pluck('shift_id')
+        ->filter() // remove nulls
+        ->toArray();
+
+    // 🔹 Step 2: Check for unapproved shifts
+    $unapprovedShifts = \App\Models\Shift::whereIn('id', $shiftIds)
+        ->where('is_approved', false)
+        ->count();
+
+    if ($unapprovedShifts > 0) {
+        \Filament\Notifications\Notification::make()
+            ->title('Approval Required')
+            ->body('Some shifts are not approved. Please approve all shifts before generating an invoice.')
+            ->danger()
+            ->send();
+
+        return; // stop here
+    }
+
+    // 🔹 Step 3: Calculate totals
     $subtotalFromDB = \App\Models\BillingReport::whereIn('id', $this->billing_ids)
         ->where('status', '!=', 'Paid')
         ->sum('total_cost');
     
-    // Use HTML values if they exist, otherwise use recalculated values
     $subtotalValue = $this->htmlSubtotal > 0 ? $this->htmlSubtotal : $subtotalFromDB;
     $taxValue = $this->htmlTax > 0 ? $this->htmlTax : 0.0;
     $grandTotalValue = $this->htmlGrandTotal > 0 ? $this->htmlGrandTotal : ($subtotalFromDB + ($subtotalFromDB * 0.10));
-    
+
+    // 🔹 Step 4: Create invoice
     $invoice = \App\Models\Invoice::create([
         'company_id'          => $this->company->id,
         'client_id'           => $this->client_id,
@@ -178,30 +201,38 @@ public function createInvoice()
         'balance'             => $grandTotalValue, 
     ]);
 
-    // dd($invoice);
+    // 🔹 Step 5: Update Billing Reports to Paid
+    \App\Models\BillingReport::whereIn('id', $this->billing_ids)
+        ->update(['status' => 'Paid']);
 
-    \App\Models\BillingReport::whereIn('id', $this->billing_ids)->update([
-        'status' => 'Paid',
+    // 🔹 Step 6: Update related Shifts to "Invoiced"
+    if (!empty($shiftIds)) {
+        \App\Models\Shift::whereIn('id', $shiftIds)
+            ->update(['status' => 'Invoiced']);
+    }
+
+    // 🔹 Step 7: Log Event
+    \App\Models\Event::create([
+        'invoice_id' => $invoice->id,
+        'title'      => $authUser->name . ' Created Invoice',
+        'from'       => 'Invoice',
+        'body'       => 'Invoice created successfully',
     ]);
 
-            \App\Models\Event::create([
-            'invoice_id' => $invoiceCreate->id,
-            'title'    => $authUser->name . ' Created Invoice',
-            'from'     => 'Invoice',
-            'body'     => 'Invoice created',
-        ]);
-
+    // 🔹 Step 8: Notify success
     \Filament\Notifications\Notification::make()
         ->title('Invoice Created')
         ->body('Invoice ' . $invoice->invoice_no . ' created successfully.')
         ->success()
         ->send();
 
+    // 🔹 Step 9: Redirect
     return redirect()->route('filament.admin.pages.add-tax', [
         'client_id'   => $this->client_id,
         'billing_ids' => implode(',', $this->billing_ids),
     ]);
 }
+
 
 
 

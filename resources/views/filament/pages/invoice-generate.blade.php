@@ -124,7 +124,7 @@
                                 @endphp
                                 <tr data-client-id="{{ $client->id }}">
                                      <td class="py-4" style="text-align: center;">
-                                                <input type="checkbox" class="include-checkbox">
+                                                <input type="checkbox" class="include-checkbox">    
                                             </td>
                                 <td class=" py-4" style="font-size:13px;">{{ $client->display_name }}</td>
 
@@ -140,8 +140,8 @@
                                 </td>
                                 <td class=" py-4" style="font-size:13px;">
                                     <select style="font-size: 12px;width: 150px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
+                                        <option value="Client">Client</option>
                                      @if($client->additionalContacts->isNotEmpty())
-                                     <option value="Client">Client</option>
                                       @foreach($client->additionalContacts as $contact)
                                         <option value="{{ $contact->id }}">{{ $contact->first_name }} {{ $contact->last_name }}</option>
                                           @endforeach

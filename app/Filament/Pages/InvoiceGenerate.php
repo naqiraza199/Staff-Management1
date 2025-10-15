@@ -53,6 +53,7 @@ use App\Models\Event;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
+use App\Models\Shift;
 
 
 class InvoiceGenerate extends Page implements HasForms
@@ -100,62 +101,85 @@ class InvoiceGenerate extends Page implements HasForms
 
     }
 
-    #[On('generateInvoices')]
-    public function generateInvoices(array $selectedClients): void
-    {
-        $authUser = auth()->user();
-        $companyId = Company::where('user_id', $authUser->id)->value('id');
+   #[On('generateInvoices')]
+public function generateInvoices(array $selectedClients): void
+{
+    $authUser = auth()->user();
+    $companyId = Company::where('user_id', $authUser->id)->value('id');
 
-        foreach ($selectedClients as $clientData) {
-            $clientId  = $clientData['id'];
-            $contactId = $clientData['additional_contact_id'] ?? null;
-            $issueDate = now()->toDateString(); // today’s date
-            $paymentDue = $clientData['payment_due'];
-            $purchaseOrder = $clientData['ref_no'] ?? null;
+    foreach ($selectedClients as $clientData) {
+        $clientId  = $clientData['id'];
+        $contactId = $clientData['additional_contact_id'] ?? null;
+        $issueDate = now()->toDateString();
+        $paymentDue = $clientData['payment_due'];
+        $purchaseOrder = $clientData['ref_no'] ?? null;
 
-            // Fetch unpaid billing reports
-            $billingReports = BillingReport::where('client_id', $clientId)
-                ->where('status', 'Unpaid')
-                ->get();
+        // Fetch unpaid billing reports
+        $billingReports = BillingReport::where('client_id', $clientId)
+            ->where('status', 'Unpaid')
+            ->get();
 
-            if ($billingReports->isEmpty()) {
-                continue;
-            }
-
-            $totalCost = $billingReports->sum('total_cost');
-            $billingReportIds = $billingReports->pluck('id')->toArray();
-
-            // Tax handling
-            $isTaxChecked = $clientData['tax_checked'] ?? false;
-            $taxAmount = $isTaxChecked ? $totalCost * 0.10 : 0.00;
-
-            // Random invoice no & NDIS/ref_no
-            $invoiceNo = random_int(1000000, 9999999);
-            $ndisRef = random_int(100000000, 999999999);
-
-            // Create invoice
-            $invoiceCreate = Invoice::create([
-                'company_id'            => $companyId,
-                'client_id'             => $clientId,
-                'additional_contact_id' => $contactId,
-                'billing_reports_ids'   => $billingReportIds,
-                'invoice_no'            => "#{$invoiceNo}",
-                'issue_date'            => $issueDate,
-                'payment_due'           => $paymentDue,
-                'NDIS'                  => $ndisRef,
-                'ref_no'                => $ndisRef,
-                'status'                => 'Unpaid/Overdue',
-                'amount'                => $totalCost,
-                'tax'                   => $taxAmount,
-                'balance'               => $totalCost + $taxAmount,
-            ]);
-
-            // Update billing reports → Paid
-            BillingReport::whereIn('id', $billingReportIds)->update([
-                'status' => 'Paid',
-            ]);
+        if ($billingReports->isEmpty()) {
+            continue;
         }
 
+        // ✅ Collect shift IDs
+        $shiftIds = $billingReports->pluck('shift_id')->filter()->unique()->toArray();
+
+        // ✅ Check if any related shift is not approved
+        $unapprovedShiftExists = Shift::whereIn('id', $shiftIds)
+            ->where('is_approved', false)
+            ->exists();
+
+        if ($unapprovedShiftExists) {
+            Notification::make()
+                ->title("Please approve all shifts before generating invoices for this client.")
+                ->danger()
+                ->send();
+
+            // Stop further processing for this client
+            continue;
+        }
+
+        $totalCost = $billingReports->sum('total_cost');
+        $billingReportIds = $billingReports->pluck('id')->toArray();
+
+        // Tax handling
+        $isTaxChecked = $clientData['tax_checked'] ?? false;
+        $taxAmount = $isTaxChecked ? $totalCost * 0.10 : 0.00;
+
+        // Random invoice no & NDIS/ref_no
+        $invoiceNo = random_int(1000000, 9999999);
+        $ndisRef = random_int(100000000, 999999999);
+
+        // ✅ Create invoice
+        $invoiceCreate = Invoice::create([
+            'company_id'            => $companyId,
+            'client_id'             => $clientId,
+            'additional_contact_id' => $contactId,
+            'billing_reports_ids'   => $billingReportIds,
+            'invoice_no'            => "#{$invoiceNo}",
+            'issue_date'            => $issueDate,
+            'payment_due'           => $paymentDue,
+            'NDIS'                  => $ndisRef,
+            'ref_no'                => $ndisRef,
+            'status'                => 'Unpaid/Overdue',
+            'amount'                => $totalCost,
+            'tax'                   => $taxAmount,
+            'balance'               => $totalCost + $taxAmount,
+        ]);
+
+        // ✅ Update BillingReports → Paid
+        BillingReport::whereIn('id', $billingReportIds)->update([
+            'status' => 'Paid',
+        ]);
+
+        // ✅ Update related shifts → Invoiced
+        Shift::whereIn('id', $shiftIds)->update([
+            'status' => 'Invoiced',
+        ]);
+
+        // ✅ Log Event
         Event::create([
             'invoice_id' => $invoiceCreate->id,
             'title'    => $authUser->name . ' Created Invoice',
@@ -163,15 +187,18 @@ class InvoiceGenerate extends Page implements HasForms
             'body'     => 'Invoice created',
         ]);
 
-        // Show Filament notification
-        Notification::make()
-            ->title('Invoices Generated Successfully')
-            ->success()
-            ->send();
-
-        // Refresh page
-        $this->redirect(request()->header('Referer'));
+            // ✅ Final notification if all went well
+    Notification::make()
+        ->title('Invoices Generated Successfully')
+        ->success()
+        ->send();
     }
+
+
+
+    $this->redirect(request()->header('Referer'));
+}
+
 
     public function form(Form $form): Form
     {

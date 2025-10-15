@@ -237,7 +237,7 @@ public function confirm()
 
     $this->shift->update([
         'is_approved' => 1,
-        'status'      => 'Approved',
+        'status'      => 'Booked',
     ]);
 
     if (! $this->shift->is_advanced_shift) {
