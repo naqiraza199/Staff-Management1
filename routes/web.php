@@ -19,7 +19,7 @@ use App\Models\Company;
 use App\Filament\Exports\TimesheetsGroupedExport;
 use Maatwebsite\Excel\Facades\Excel;
 
-
+use App\Models\Client;
 use Illuminate\Http\Request;
 
 Route::get('/', [RedirectController::class, 'home']);
@@ -168,3 +168,17 @@ Route::middleware(['web','auth'])->group(function () {
 
 Route::get('/timesheet/print', [TimesheetController::class, 'printReport'])
     ->name('timesheet.print');
+
+
+
+
+Route::post('/admin/clients/{client}/archive', function (Client $client) {
+    $client->update(['is_archive' => 'Archive']);
+
+    Notification::make()
+        ->title('Client archived successfully.')
+        ->success()
+        ->send();
+
+    return redirect()->route('filament.admin.resources.clients.index');
+})->name('filament.admin.resources.clients.archive');

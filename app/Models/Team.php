@@ -10,7 +10,12 @@ class Team extends Model
         'name',
         'status',
         'user_id',
+        'clients',
     ];
+
+     protected $casts = [
+    'clients' => 'array',
+];
 
     public function assignees()
     {

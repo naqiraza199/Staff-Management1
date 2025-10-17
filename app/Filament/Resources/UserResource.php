@@ -51,25 +51,41 @@ class UserResource extends Resource
         return 'Staff';
     }
 
-        public static function getEloquentQuery(): Builder
-        {
-            $authUser = Auth::user();
+public static function getEloquentQuery(): Builder
+{
+    $authUser = Auth::user();
 
-            $companyId = Cache::remember("user:{$authUser->id}:company_id", now()->addMinutes(10), function () use ($authUser) {
-                return Company::where('user_id', $authUser->id)->value('id');
-            });
+    $companyId = Cache::remember("user:{$authUser->id}:company_id", now()->addMinutes(10), function () use ($authUser) {
+        return Company::where('user_id', $authUser->id)->value('id');
+    });
 
-            if (! $companyId) {
-                return User::whereRaw('0 = 1');
-            }
+    if (! $companyId) {
+        return User::whereRaw('0 = 1');
+    }
 
-            $staffUserIds = StaffProfile::where('company_id', $companyId)->where('is_archive','Unarchive')->pluck('user_id');
+    // ✅ Get staff user IDs for this company
+    $staffUserIds = StaffProfile::where('company_id', $companyId)
+        ->where('is_archive', 'Unarchive')
+        ->pluck('user_id')
+        ->toArray();
 
-            return User::with(['staffProfile'])
-                ->select(['id', 'name', 'email', 'created_at', 'updated_at'])
-                ->whereIn('id', $staffUserIds)
-                ->role('staff');
-        }
+    // ✅ Include the logged-in user
+    if (!in_array($authUser->id, $staffUserIds)) {
+        $staffUserIds[] = $authUser->id;
+    }
+
+    // ✅ Return the query including the logged-in user
+    return User::with(['staffProfile'])
+        ->select(['id', 'name', 'email', 'created_at', 'updated_at'])
+        ->whereIn('id', $staffUserIds)
+        ->where(function ($query) {
+            $query->role('staff')
+                  ->orWhereHas('roles', function ($q) {
+                      $q->where('name', '!=', 'staff'); // ensures logged-in non-staff users are also included
+                  });
+        });
+}
+
 
     public static function form(Form $form): Form
     {

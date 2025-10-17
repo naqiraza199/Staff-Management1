@@ -33,6 +33,8 @@ use App\Models\ClientHasPriceBook;
 use Filament\Forms\Components\View;
 use Filament\Infolists\Components\View as InfolistView;
 use Illuminate\Support\HtmlString;
+use Filament\Forms\Components\ViewField;
+use App\Models\Team;
 
 
 class ClientResource extends Resource
@@ -60,8 +62,7 @@ class ClientResource extends Resource
     {
         $authUser = Auth::user();
 
-        return Client::select(['id','client_no','display_name','first_name','last_name','email','mobile_number','gender','status','created_at','updated_at'])
-            ->where('user_id', $authUser->id)->where('is_archive', 'Unarchive');
+        return Client::where('user_id', $authUser->id)->where('is_archive', 'Unarchive');
     }
 
     public static function form(Form $form): Form
@@ -261,6 +262,29 @@ class ClientResource extends Resource
                             ->schema([
                                 Forms\Components\FileUpload::make('pic')->label('')->placeholder('Profile Picture')->columnSpanFull(),
                             ]),
+
+                          Forms\Components\Fieldset::make('Client Settings')
+                            ->schema([
+                                Forms\Components\Grid::make(['default' => 3])
+                                    ->schema([
+                                        Forms\Components\TextInput::make('NDIS_number')->placeholder('Enter NDIS Number')->columnSpan(1),
+                                        Forms\Components\TextInput::make('aged_care_recipient_ID')->placeholder('Enter Aged Care Recipient ID')->columnSpan(1),
+                                        Forms\Components\TextInput::make('reference_number')->placeholder('Enter Reference Number')->columnSpan(1),
+                                        Forms\Components\TextInput::make('custom_field')->placeholder('Enter Custom Field')->columnSpan(1),
+                                        Forms\Components\TextInput::make('PO_number')->placeholder('Enter PO Number')->columnSpan(1),
+                                        Forms\Components\Select::make('client_type')->options([
+                                            'Self Managed' => 'Self Managed',
+                                            'Plan Managed' => 'Plan Managed',
+                                            'Ndis Managed' => 'Ndis Managed',
+                                            'Level 1 Aged Care' => 'Level 1 Aged Care',
+                                            'Level 2 Aged Care' => 'Level 2 Aged Care',
+                                            'Level 3 Aged Care' => 'Level 3 Aged Care',
+                                            'Level 4 Aged Care' => 'Level 4 Aged Care',
+                                            'Sil' => 'Sil',
+                                        ])->columnSpan(1),
+                                     
+                                    ]),
+                            ]),
                     ])
             ]);
     }
@@ -364,7 +388,7 @@ class ClientResource extends Resource
                                     ->size(200)
                                     ->visible(fn ($state) => $state !== null),
                                     ]),
-                                Grid::make(3)
+                                Grid::make(2)
                                     ->schema([
                                         TextEntry::make('mobile_number')
                                             ->label('Mobile Number')
@@ -507,13 +531,171 @@ $fields[] = Forms\Components\Section::make('Price Books')
             ->send();
     })
 
-                            ])
+]),
+                          Section::make('General Client Info | Shared Accessed')
+                                ->schema([
+                                    InfolistView::make('filament.infolists.client-general')
+                                        ->columnSpanFull(),
+                                ])
+                                ->headerActions([
+                                    // ✅ Add Action (Visible only if empty)
+                                    InfolistAction::make('addGeneralInfo')
+                                        ->label('Add')
+                                        ->visible(fn ($record) =>
+                                            empty($record->need_to_know_information)
+                                            && empty($record->useful_information)
+                                        )
+                                        ->color('primary')
+                                        ->icon('heroicon-o-plus')
+                                        ->modalHeading('Add General Client Information')
+                                        ->modalSubmitActionLabel('Create')
+                                        ->modalWidth('xl')
+                                        ->form([
+                                            Forms\Components\Textarea::make('need_to_know_information')
+                                                ->label('Need to Know Information')
+                                                ->rows(5)
+                                                ->placeholder('Enter need to know details...')
+                                                ->required(),
+
+                                            Forms\Components\Textarea::make('useful_information')
+                                                ->label('Useful Information')
+                                                ->rows(5)
+                                                ->placeholder('Enter useful information...')
+                                                ->required(),
+                                        ])
+                                        ->action(function (array $data, $record): void {
+                                            // ✅ Create (update existing record)
+                                            $record->update([
+                                                'need_to_know_information' => $data['need_to_know_information'],
+                                                'useful_information'       => $data['useful_information'],
+                                            ]);
+
+                                            Notification::make()
+                                                ->title('Client general information added successfully.')
+                                                ->success()
+                                                ->send();
+                                        }),
+
+                                    // ✅ Edit Action (Visible only if data exists)
+                                    InfolistAction::make('editGeneralInfo')
+                                        ->label('Edit')
+                                        ->visible(fn ($record) =>
+                                            !empty($record->need_to_know_information)
+                                            || !empty($record->useful_information)
+                                        )
+                                        ->color('primary')
+                                        ->icon('heroicon-o-pencil')
+                                        ->modalHeading('Edit General Client Information')
+                                        ->modalSubmitActionLabel('Update')
+                                        ->modalWidth('xl')
+                                        ->form([
+                                            Forms\Components\Textarea::make('need_to_know_information')
+                                                ->label('Need to Know Information')
+                                                ->rows(5)
+                                                ->default(fn ($record) => $record?->need_to_know_information)
+                                                ->placeholder('Enter need to know details...'),
+
+                                            Forms\Components\Textarea::make('useful_information')
+                                                ->label('Useful Information')
+                                                ->rows(5)
+                                                ->default(fn ($record) => $record?->useful_information)
+                                                ->placeholder('Enter useful information...'),
+                                        ])
+                                        ->action(function (array $data, $record): void {
+                                            // ✅ Update existing record
+                                            $record->update([
+                                                'need_to_know_information' => $data['need_to_know_information'],
+                                                'useful_information'       => $data['useful_information'],
+                                            ]);
+
+                                            Notification::make()
+                                                ->title('Client general information updated successfully.')
+                                                ->success()
+                                                ->send();
+                                        }),
+                                ]),
+                                Section::make('Additional Information')
+                                        ->schema([
+                                            InfolistView::make('filament.infolists.client-private')
+                                                ->columnSpanFull(),
+                                        ])
+                                        ->headerActions([
+                                            // ✅ Add Action (when no data exists)
+                                            InfolistAction::make('addPrivateInfo')
+                                                ->label('Add')
+                                                ->visible(fn ($record) =>
+                                                    empty($record->private_info) && empty($record->review_date)
+                                                )
+                                                ->color('primary')
+                                                ->icon('heroicon-o-plus')
+                                                ->modalHeading('Add Private Info')
+                                                ->modalSubmitActionLabel('Create')
+                                                ->modalWidth('xl')
+                                                ->form([
+                                                    Forms\Components\Textarea::make('private_info')
+                                                        ->label('Private Info')
+                                                        ->rows(5)
+                                                        ->placeholder('Enter private client information...')
+                                                        ->required(),
+
+                                                    Forms\Components\DatePicker::make('review_date')
+                                                        ->label('Replace Date')
+                                                        ->displayFormat('d M Y')
+                                                        ->required(),
+                                                ])
+                                                ->action(function (array $data, $record): void {
+                                                    $record->update([
+                                                        'private_info' => $data['private_info'],
+                                                        'review_date'  => $data['review_date'],
+                                                    ]);
+
+                                                    Notification::make()
+                                                        ->title('Private info added successfully.')
+                                                        ->success()
+                                                        ->send();
+                                                }),
+
+                                            // ✅ Edit Action (when data exists)
+                                            InfolistAction::make('editPrivateInfo')
+                                                ->label('Edit')
+                                                ->visible(fn ($record) =>
+                                                    !empty($record->private_info) || !empty($record->review_date)
+                                                )
+                                                ->color('primary')
+                                                ->icon('heroicon-o-pencil')
+                                                ->modalHeading('Edit Private Info')
+                                                ->modalSubmitActionLabel('Update')
+                                                ->modalWidth('xl')
+                                                ->form([
+                                                    Forms\Components\Textarea::make('private_info')
+                                                        ->label('Private Info')
+                                                        ->rows(5)
+                                                        ->default(fn ($record) => $record?->private_info)
+                                                        ->placeholder('Enter private client information...'),
+
+                                                    Forms\Components\DatePicker::make('review_date')
+                                                        ->label('Replace Date')
+                                                        ->displayFormat('d M Y')
+                                                        ->default(fn ($record) => $record?->review_date),
+                                                ])
+                                                ->action(function (array $data, $record): void {
+                                                    $record->update([
+                                                        'private_info' => $data['private_info'],
+                                                        'review_date'  => $data['review_date'],
+                                                    ]);
+
+                                                    Notification::make()
+                                                        ->title('Private info updated successfully.')
+                                                        ->success()
+                                                        ->send();
+                                                }),
+                                        ]),
                             ])
                             ->columnSpan(3)
 
                     ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
-
-                        // Primary Contact Section
+Section::make('')
+->schema([
 Section::make('Additional Information')
     ->schema(fn ($record) =>
         $record->additionalContacts()
@@ -684,9 +866,9 @@ Section::make('Additional Information')
                        
                     ]);
             })
-            ->toArray()
+            ->toArray(),
+            
     )
-    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;'])
     ->columnSpan(2)
     ->headerActions([
         InfolistAction::make('add')
@@ -798,9 +980,41 @@ Section::make('Additional Information')
                     ->success()
                     ->send();
             }),
-    ])
+            
+        ]),
 
-       
+
+                            Section::make('Teams')
+                        ->schema([
+                            InfolistView::make('filament.infolists.client-teams')
+                                                        ->columnSpanFull(),
+                        ])
+                        ->headerActions([
+                                InfolistAction::make('Add_Team')
+                                    ->label('Add')
+                                    ->size('sm')
+                                    ->color('primary')
+                                    ->url( fn() => route('filament.admin.resources.teams.index'))   
+                            ]),
+
+                            Section::make('Settings')
+                                ->schema([
+                                    InfolistView::make('filament.infolists.client-setting')
+                                                                ->columnSpanFull(),
+                                ])
+                                ->headerActions([
+                                InfolistAction::make('Edit_Setting')
+                                    ->label('Edit')
+                                    ->size('sm')
+                                    ->color('primary')
+                                     ->url(fn ($record) => ClientResource::getUrl('edit', ['record' => $record]))
+                                    ->openUrlInNewTab(false) 
+                            ]),
+])->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;'])
+->columnSpan(2),
+                        // Primary Contact Section
+
+
                     ]),
             ]);
     }

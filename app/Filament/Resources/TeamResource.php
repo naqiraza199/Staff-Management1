@@ -50,29 +50,52 @@ public static function getEloquentQuery(): Builder
                 //     ->required(),
 
 
-                 Forms\Components\Select::make('assignees')
-                ->label('Select Staff')
-                ->multiple()
-                ->searchable()
-                ->options(function () {
-                    $authUser = Auth::user();
+            Forms\Components\Select::make('assignees')
+    ->label('Select Staff')
+    ->multiple()
+    ->searchable()
+    ->options(function () {
+        $authUser = Auth::user();
 
-                    $companyId = \App\Models\Company::where('user_id', $authUser->id)->value('id');
+        $companyId = \App\Models\Company::where('user_id', $authUser->id)->value('id');
 
-                    if (! $companyId) {
-                        return [];
-                    }
+        if (! $companyId) {
+            return [];
+        }
 
-                    $staffUserIds = \App\Models\StaffProfile::where('company_id', $companyId)
-                        ->where('is_archive', 'Unarchive')
-                        ->pluck('user_id');
+        // ✅ Fetch staff under this company
+        $staffUserIds = \App\Models\StaffProfile::where('company_id', $companyId)
+            ->where('is_archive', 'Unarchive')
+            ->pluck('user_id')
+            ->toArray();
 
-                    return \App\Models\User::whereIn('id', $staffUserIds)
-                        ->role('staff')
-                        ->pluck('name', 'id')
-                        ->toArray();
-                })
-                ->required()
+        // ✅ Include logged-in user
+        if (!in_array($authUser->id, $staffUserIds)) {
+            $staffUserIds[] = $authUser->id;
+        }
+
+        // ✅ Return names keyed by ID
+        return \App\Models\User::whereIn('id', $staffUserIds)
+            ->pluck('name', 'id')
+            ->toArray();
+    })
+    ->required(),
+
+Forms\Components\Select::make('clients')
+    ->label('Select Client')
+    ->multiple()
+    ->searchable()
+    ->options(function () {
+        $authUser = auth()->user();
+
+        if (!$authUser) return [];
+
+        $companyId = \App\Models\Company::where('user_id', $authUser->id)->value('id');
+
+        return \App\Models\Client::where('user_id', $authUser->id)
+            ->pluck('display_name', 'id')
+            ->toArray();
+    })
 
 
 
@@ -101,6 +124,35 @@ public static function getEloquentQuery(): Builder
                     ->badge()
                     ->color('success')
                     ->separator(','),
+
+    Tables\Columns\TextColumn::make('clients')
+    ->label('Clients')
+    ->badge()
+    ->color('info')
+    ->formatStateUsing(function ($state) {
+        if (blank($state)) return '-';
+
+        // Normalize $state to an array of IDs
+        if (is_string($state)) {
+            $ids = json_decode($state, true);
+            $ids = is_array($ids) ? $ids : [$state];
+        } elseif (is_int($state)) {
+            $ids = [$state];
+        } elseif (is_array($state)) {
+            $ids = $state;
+        } else {
+            return '-';
+        }
+
+        // Fetch and join client names
+        $names = \App\Models\Client::whereIn('id', $ids)
+            ->pluck('display_name')
+            ->toArray();
+
+        return implode(', ', $names);
+    })
+    ->limit(50),
+
                 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

@@ -36,6 +36,16 @@ class Client extends Model
         'pic',
         'is_archive',
         'status',
+        'NDIS_number',
+        'aged_care_recipient_ID',
+        'reference_number',
+        'custom_field',
+        'PO_number',
+        'client_type',
+        'need_to_know_information',
+        'useful_information',
+        'private_info',
+        'review_date',
     ];
 
     /**
