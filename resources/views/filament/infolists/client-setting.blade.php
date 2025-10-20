@@ -53,7 +53,7 @@
     <div>
         <span class="text-gray-500 font-medium">Client Type</span>
         <p class="mt-1 text-gray-700 font-semibold">
-            {{ $client->client_type ?? '—' }}
+            {{ $client->clientType->name ?? '—' }}
         </p>
     </div>
 </div>

@@ -27,7 +27,7 @@ class MediaManagerResource extends Resource
 
   protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-check';
 
-      protected static ?string $navigationGroup = 'Documnets Management';
+      protected static ?string $navigationGroup = 'Documents Management';
 
           public static function getModelLabel(): string
     {
@@ -120,11 +120,19 @@ public static function getEloquentQuery(): Builder
                 ->form([
                     Grid::make(12)
                         ->schema([
-                            Select::make('document_category_id')
-                                ->relationship('documentCategory', 'name')
-                                ->label('Document Category')
-                                ->required()
-                                ->columnSpan(6),
+                           Select::make('document_category_id')
+                            ->label('Document Category')
+                            ->options(function () {
+                                $companyId = \App\Models\Company::where('user_id', \Illuminate\Support\Facades\Auth::id())->value('id');
+
+                                return \App\Models\DocumentCategory::query()
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+                            })
+                            ->relationship('documentCategory', 'name')
+                            ->required()
+                            ->columnSpan(6),
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
@@ -226,11 +234,18 @@ public static function getEloquentQuery(): Builder
                           Grid::make(12)
                         ->schema([
                             Select::make('document_category_id')
-                                ->relationship('documentCategory', 'name')
-                                ->label('Document Category')
-                                ->required()
-                                ->default($record->document_category_id)
-                                ->columnSpan(6),
+                                    ->label('Document Category')
+                                    ->options(function () {
+                                        $companyId = \App\Models\Company::where('user_id', \Illuminate\Support\Facades\Auth::id())->value('id');
+
+                                        return \App\Models\DocumentCategory::query()
+                                            ->where('company_id', $companyId)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+                                    })
+                                    ->default(fn ($record) => $record?->document_category_id)
+                                    ->columnSpan(6),
+
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')

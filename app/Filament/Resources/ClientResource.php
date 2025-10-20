@@ -35,6 +35,7 @@ use Filament\Infolists\Components\View as InfolistView;
 use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\ViewField;
 use App\Models\Team;
+use App\Models\ClientType;
 
 
 class ClientResource extends Resource
@@ -272,16 +273,21 @@ class ClientResource extends Resource
                                         Forms\Components\TextInput::make('reference_number')->placeholder('Enter Reference Number')->columnSpan(1),
                                         Forms\Components\TextInput::make('custom_field')->placeholder('Enter Custom Field')->columnSpan(1),
                                         Forms\Components\TextInput::make('PO_number')->placeholder('Enter PO Number')->columnSpan(1),
-                                        Forms\Components\Select::make('client_type')->options([
-                                            'Self Managed' => 'Self Managed',
-                                            'Plan Managed' => 'Plan Managed',
-                                            'Ndis Managed' => 'Ndis Managed',
-                                            'Level 1 Aged Care' => 'Level 1 Aged Care',
-                                            'Level 2 Aged Care' => 'Level 2 Aged Care',
-                                            'Level 3 Aged Care' => 'Level 3 Aged Care',
-                                            'Level 4 Aged Care' => 'Level 4 Aged Care',
-                                            'Sil' => 'Sil',
-                                        ])->columnSpan(1),
+                                        Forms\Components\Select::make('client_type_id')
+                                            ->label('Client Type')
+                                            ->placeholder('Select Client Type')
+                                            ->options(function () {
+                                                $user = Auth::user();
+                                                $companyId = Company::where('user_id', $user->id)->value('id');
+
+                                                return ClientType::where('company_id', $companyId)
+                                                    ->where('status', 'Active')
+                                                    ->pluck('name', 'id') // 👈 shows name, saves id
+                                                    ->toArray();
+                                            })
+                                            ->searchable()
+                                            ->preload()
+                                            ->columnSpan(1),
                                      
                                     ]),
                             ]),

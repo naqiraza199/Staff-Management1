@@ -528,21 +528,41 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                     ->multiple()
                                     ->options(Language::pluck('name', 'id'))
                                     ->default($this->data['language_id'] ?? []),
-                                Select::make('compilance_id')
-                                    ->label('Compliance')
-                                    ->multiple()
-                                    ->options(DocumentCategory::where('is_staff_doc', 1)->where('is_compliance', 1)->pluck('name', 'id'))
-                                    ->default($this->data['compilance_id'] ?? []),
-                                Select::make('competencies_id')
-                                    ->label('Competencies')
-                                    ->multiple()
-                                    ->options(DocumentCategory::where('is_staff_doc', 1)->where('is_competencies', 1)->pluck('name', 'id'))
-                                    ->default($this->data['competencies_id'] ?? []),
-                                Select::make('kpi_id')
-                                    ->label('KPIs')
-                                    ->multiple()
-                                    ->options(DocumentCategory::where('is_staff_doc', 1)->where('is_kpi', 1)->pluck('name', 'id'))
-                                    ->default($this->data['kpi_id'] ?? []),
+                               Select::make('compilance_id')
+                                            ->label('Compliance')
+                                            ->multiple()
+                                            ->options(function () {
+                                                $companyId = Company::where('user_id', Auth::id())->value('id');
+                                                return DocumentCategory::where('is_staff_doc', 1)
+                                                    ->where('is_compliance', 1)
+                                                    ->where('company_id', $companyId)
+                                                    ->pluck('name', 'id');
+                                            })
+                                            ->default($this->data['compilance_id'] ?? []),
+
+                                        Select::make('competencies_id')
+                                            ->label('Competencies')
+                                            ->multiple()
+                                            ->options(function () {
+                                                $companyId = Company::where('user_id', Auth::id())->value('id');
+                                                return DocumentCategory::where('is_staff_doc', 1)
+                                                    ->where('is_competencies', 1)
+                                                    ->where('company_id', $companyId)
+                                                    ->pluck('name', 'id');
+                                            })
+                                            ->default($this->data['competencies_id'] ?? []),
+
+                                        Select::make('kpi_id')
+                                            ->label('KPIs')
+                                            ->multiple()
+                                            ->options(function () {
+                                                $companyId = Company::where('user_id', Auth::id())->value('id');
+                                                return DocumentCategory::where('is_staff_doc', 1)
+                                                    ->where('is_kpi', 1)
+                                                    ->where('company_id', $companyId)
+                                                    ->pluck('name', 'id');
+                                            })
+                                            ->default($this->data['kpi_id'] ?? []),
                                 Select::make('distance_shift')
                                     ->label('Distance from Shift Location')
                                     ->options([

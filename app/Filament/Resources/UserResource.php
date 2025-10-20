@@ -26,11 +26,12 @@ use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\Actions\Action as InfolistAction;
 use Carbon\Carbon;
+use Filament\Infolists\Components\View as InfolistView;
 use Illuminate\Support\Facades\Cache;
-
-
-
-
+use App\Models\StaffContact;
+use App\Models\JobTitle;
+use App\Models\PayGroup;
+use App\Models\StaffPayrollSetting;
 
 class UserResource extends Resource
 {
@@ -169,7 +170,7 @@ public static function getEloquentQuery(): Builder
 
                                       Forms\Components\Fieldset::make('Other Info')
                                     ->schema([
-    Forms\Components\Grid::make(['default' => 3])
+    Forms\Components\Grid::make(['default' => 2])
                             ->schema([
   Forms\Components\Select::make('gender')->options([
                                     'Male' => 'Male',
@@ -187,6 +188,22 @@ public static function getEloquentQuery(): Builder
                             'Contractor' => 'Contractor',
                             'Ohters' => 'Ohters',
                                                         ]),
+                                Forms\Components\Select::make('job_title_id')
+                                            ->label('Job Title')
+                                            ->placeholder('Select Job Title')
+                                            ->options(function () {
+                                                $user = Auth::user();
+                                                $companyId = Company::where('user_id', $user->id)->value('id');
+
+                                                return JobTitle::where('company_id', $companyId)
+                                                    ->where('status', 'Active')
+                                                    ->pluck('name', 'id') // 👈 shows name, saves id
+                                                    ->toArray();
+                                            })
+                                            ->searchable()
+                                            ->preload()
+                                            ->columnSpan(1),
+
                             ]),
                             ]),
 
@@ -288,7 +305,14 @@ public static function getEloquentQuery(): Builder
                 Tables\Actions\ViewAction::make()->button()->color('warning')->label('')->iconbutton()->tooltip('View Staff'),
                 Tables\Actions\EditAction::make()->button()->color('stripe')->label('')->iconbutton()->tooltip('Edit Staff'),
                 // Tables\Actions\DeleteAction::make()->button()->color('danger'),
-                  Action::make('Archive')->button()->color('darkk')->icon('heroicon-s-archive-box')->label('')->iconbutton()->tooltip('Goes To Archive')
+               Action::make('Archive')
+                    ->button()
+                    ->color('darkk')
+                    ->icon('heroicon-s-archive-box')
+                    ->label('')
+                    ->iconButton()
+                    ->tooltip('Goes To Archive')
+                    ->visible(fn ($record) => $record->id !== Auth::id())
                ->action(function ($record) {
                          $staffProfile = StaffProfile::where('user_id', $record->id)->first();
 
@@ -299,13 +323,13 @@ public static function getEloquentQuery(): Builder
                         Notification::make()
                         ->success()
                         ->title('Success')
-                        ->body('Staff Deleted Successfully')
+                        ->body('Staff Archived Successfully')
                         ->send();
                         }
 
                         else{
                             Notification::make()
-                            ->error()
+                            ->danger()
                             ->title('Error')
                             ->body(' Staff Not Found')
                             ->send();
@@ -441,6 +465,20 @@ public static function infolist(Infolist $infolist): Infolist
 
                                         
                         ]),
+                        Section::make('Compliance')
+                            ->schema([
+                                InfolistView::make('filament.infolists.staff-compilance')
+                                    ->columnSpanFull(),
+                            ])
+                            ->headerActions([
+
+                            InfolistAction::make('manage_all')
+                                ->label('MANAGE ALL')
+                                ->size('sm')
+                                ->url(fn ($record) => route('filament.admin.pages.staff-own-docs', ['user_id' => $record->id]))
+                                ->openUrlInNewTab(),
+
+                        ])
                         ])
                         ->columnSpan(2)
                     ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
@@ -466,70 +504,283 @@ public static function infolist(Infolist $infolist): Infolist
                         ])->columns(2),
 
                         Section::make('Settings')
-                        ->schema([
-                
-                             TextEntry::make('dstatus')
-                                        ->label('Status')
-                                        ->weight('bold')
-                                        ->icon('heroicon-m-user')
-                                        ->size('lg'),
-                            TextEntry::make('status')
-                                ->label('')
-                                ->badge()
-                                ->color(fn (string $state): string => match ($state) {
-                                    'Active' => 'info',
-                                    'Awaiting Response', 'Pending Review' => 'warning',
-                                    'No access' => 'danger',
-                                    default => 'gray',
-                                }),
+                            ->schema([
+                                InfolistView::make('filament.infolists.staff-setting')
+                                    ->columnSpanFull(),
+                            ])
+                            ->headerActions([
 
-                            TextEntry::make('drole')
-                                        ->label('Role')
-                                        ->weight('bold')
-                                        ->icon('heroicon-m-user')
-                                        ->size('lg'),
-                            TextEntry::make('role')
-                                ->label('')
-                                ->badge()
-                                ->default(fn ($record) => $record->getRoleNames()->first() ?? 'No role'),
+                            InfolistAction::make('edit_setting')
+                                ->label('EDIT')
+                                ->size('sm')
+                                ->url(fn ($record) => UserResource::getUrl('edit', ['record' => $record]))
+                                ->openUrlInNewTab(),
 
-                            TextEntry::make('dteam')
-                                        ->label('Teams')
-                                        ->weight('bold')
-                                        ->icon('heroicon-m-user')
-                                        ->size('lg'),
+                            ]),
 
-                                    
-                                        RepeatableEntry::make('teams')
-                                        ->label('')
+                           Section::make('Next of Kin')
                                         ->schema([
-                                            TextEntry::make('name')
-                                                ->badge()
-                                                ->label('')
-                                                ->color('info'),
+                                            InfolistView::make('filament.infolists.staff-contacts')
+                                                ->columnSpanFull(),
                                         ])
-                                        ->visible(fn ($record) => $record->teams->count() > 0)
-                                        ->default(fn ($record) => $record->teams->map(fn ($team) => ['name' => $team->name])->toArray()),
+                                        ->headerActions([
+                                            InfolistAction::make('edit_next_of_kin')
+                                                ->label('EDIT')
+                                                ->size('sm')
+                                                    ->modalHeading('Next of Kin Details')
+                                                ->icon('heroicon-s-user')
+                                                ->form(function (Forms\Form $form) {
+                                                    return $form
+                                                        ->schema([
+                                                            Forms\Components\Section::make('Next of Kin')
+                                                                ->schema([
+                                                                    Forms\Components\TextInput::make('kin_name')
+                                                                        ->label('Name')
+                                                                        ->maxLength(255),
 
-                                TextEntry::make('djtype')
-                                        ->label('Job Title')
-                                        ->weight('bold')
-                                        ->icon('heroicon-m-user')
-                                        ->size('lg'),
+                                                                    Forms\Components\TextInput::make('kin_relation')
+                                                                        ->label('Relation')
+                                                                        ->maxLength(255),
 
-                            TextEntry::make('job_type')
-                                ->label('')
-                                ->badge()
-                                ->default(fn ($record) => $record->job_type ?? '-')
+                                                                    Forms\Components\TextInput::make('kin_contact')
+                                                                        ->label('Contact'),
 
-                           
-                        ])->columns(2)
+                                                                    Forms\Components\TextInput::make('kin_email')
+                                                                        ->label('Email')
+                                                                        ->email()
+                                                                        ->maxLength(255),
+                                                                ])
+                                                                ->columns(2),
+
+                                                            Forms\Components\Checkbox::make('same_as_kin')
+                                                                ->label('Same as Next of Kin')
+                                                                ->default(false)
+                                                                ->dehydrated(true) // ✅ forces the field to save even if false
+                                                                ->reactive(),
+
+
+                                                            Forms\Components\Section::make('Emergency Contact')
+                                                                ->schema([
+                                                                    Forms\Components\TextInput::make('emergency_contact_name')
+                                                                        ->label('Name')
+                                                                        ->maxLength(255),
+                                                                    Forms\Components\TextInput::make('emergency_contact_relation')
+                                                                        ->label('Relation')
+                                                                        ->maxLength(255),
+                                                                    Forms\Components\TextInput::make('emergency_contact_contact')
+                                                                        ->label('Number'),
+                                                                    Forms\Components\TextInput::make('emergency_contact_email')
+                                                                        ->label('Email')
+                                                                        ->email()
+                                                                        ->maxLength(255),
+                                                                ])
+                                                                ->columns(2)
+                                                                ->visible(fn ($get) => ! $get('same_as_kin'))
+                                                                ->reactive(),
+                                                        ]);
+                                                })
+                                                ->action(function (array $data, $record) {
+                                                    $user = Auth::user();
+
+                                                    // Auto-fill emergency fields if "same_as_kin" is checked
+                                                    if (!empty($data['same_as_kin'])) {
+                                                        $data['emergency_contact_name'] = $data['kin_name'];
+                                                        $data['emergency_contact_relation'] = $data['kin_relation'];
+                                                        $data['emergency_contact_contact'] = $data['kin_contact'];
+                                                        $data['emergency_contact_email'] = $data['kin_email'];
+                                                    }
+
+                                                    // Create or Update record for this user
+                                                    StaffContact::updateOrCreate(
+                                                        ['user_id' => $record->id],
+                                                        $data
+                                                    );
+
+                                                    Notification::make()
+                                                        ->title('Next of Kin details saved successfully!')
+                                                        ->success()
+                                                        ->send();
+                                                })
+                                                ->mountUsing(function (Forms\Form $form, $record) {
+                                                    $contact = StaffContact::where('user_id', $record->id)->first();
+
+                                                    if ($contact) {
+                                                        $form->fill($contact->toArray());
+                                                    }
+                                                }),
+                                            ]),
+
+                                             Section::make('Payroll Settings')
+                                                    ->schema([
+                                                        InfolistView::make('filament.infolists.staff-payroll')
+                                                            ->columnSpanFull(),
+                                                    ])
+                                                    ->headerActions([
+                                                        InfolistAction::make('payroll_setting')
+                                                            ->label('EDIT')
+                                                            ->size('sm')
+                                                            ->icon('heroicon-s-cog')
+                                                            ->form(function (Forms\Form $form) {
+                                                                $auth = Auth::id(); // logged-in user to fetch pay groups
+
+                                                                $options = PayGroup::where('user_id', $auth)
+                                                                    ->where('is_archive', 0)
+                                                                    ->pluck('name', 'id')
+                                                                    ->toArray();
+                                                                return $form
+                                                                    ->schema([
+                                                                         Forms\Components\Select::make('pay_group_id')
+                                                                            ->label('Pay Group')
+                                                                            ->options($options)
+                                                                            ->searchable()
+                                                                            ->preload()
+                                                                            ->nullable()
+                                                                            ->default(null),
+                                                                        Forms\Components\TextInput::make('allowances')
+                                                                            ->label('Allowances')
+                                                                            ->maxLength(255),
+
+                                                                        Forms\Components\TextInput::make('daily_hours')
+                                                                            ->label('Daily Hours')
+                                                                            ->numeric()
+                                                                            ->maxLength(255),
+
+                                                                        Forms\Components\TextInput::make('weekly_hours')
+                                                                            ->label('Weekly Hours')
+                                                                            ->numeric()
+                                                                            ->maxLength(255),
+
+                                                                        Forms\Components\TextInput::make('external_system_identifier')
+                                                                            ->label('External System ID')
+                                                                            ->maxLength(255),
+                                                                    ])
+                                                                    ->columns(2);
+                                                            })
+                                                            ->action(function (array $data, $record) {
+                                                                    if (! $record) {
+                                                                        Notification::make()
+                                                                            ->title('Error: User not found')
+                                                                            ->danger()
+                                                                            ->send();
+                                                                        return;
+                                                                    }
+
+                                                                    // ✅ Make sure pay_group_id key always exists
+                                                                    $data['pay_group_id'] = $data['pay_group_id'] ?? null;
+
+                                                                    StaffPayrollSetting::updateOrCreate(
+                                                                        ['user_id' => $record->id],
+                                                                        $data
+                                                                    );
+
+                                                                    Notification::make()
+                                                                        ->title('Payroll settings saved successfully!')
+                                                                        ->success()
+                                                                        ->send();
+                                                                })
+                                                            ->mountUsing(function (Forms\Form $form, $record) {
+                                                                if (! $record) return;
+
+                                                                $existing = StaffPayrollSetting::where('user_id', $record->id)->first();
+
+                                                                if ($existing) {
+                                                                    $form->fill($existing->toArray());
+                                                                }
+                                                            }),
+                                                        ]),
+
+                                                         Section::make('Notes')
+                                                                    ->schema([
+                                                                         InfolistView::make('filament.infolists.staff-private-notes')
+                                                                            ->columnSpanFull(),
+                                                                    ])
+                                                                    ->headerActions([
+                                                                        InfolistAction::make('edit_notes')
+                                                                            ->label('EDIT')
+                                                                            ->size('sm')
+                                                                            ->icon('heroicon-s-pencil-square')
+                                                                            ->form(function (Forms\Form $form, $record) {
+                                                                                return $form
+                                                                                    ->schema([
+                                                                                        Forms\Components\Textarea::make('private_note')
+                                                                                            ->label('Private Notes')
+                                                                                            ->rows(6)
+                                                                                            ->placeholder('Write private notes about this user...')
+                                                                                            ->maxLength(1000)
+                                                                                    ]);
+                                                                            })
+                                                                            ->mountUsing(function (Forms\Form $form, $record) {
+                                                                                // Pre-fill textarea with existing data
+                                                                                if ($record) {
+                                                                                    $form->fill([
+                                                                                        'private_note' => $record->private_note,
+                                                                                    ]);
+                                                                                }
+                                                                            })
+                                                                            ->action(function (array $data, $record) {
+                                                                                if (! $record) {
+                                                                                    Notification::make()
+                                                                                        ->title('Error: User not found.')
+                                                                                        ->danger()
+                                                                                        ->send();
+                                                                                    return;
+                                                                                }
+
+                                                                                // Update the user's private_note
+                                                                                $record->update([
+                                                                                    'private_note' => $data['private_note'],
+                                                                                ]);
+
+                                                                                Notification::make()
+                                                                                    ->title('Private info updated successfully!')
+                                                                                    ->success()
+                                                                                    ->send();
+                                                                            }),
+                                                                        ]),
+                                            
                         ])
                         ->columnSpan(1)
                     ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
+                                                    Section::make('Archive Staff')
+                                                    ->description('This will archive the staff and you will not able to see staff in your list. If you do wish to access the staff, please go to  Archived menu.')
+                                                                ->schema([
+                                                                ])
+                                                                  ->visible(fn ($record) => $record->id !== Auth::id())
+                                                                ->footerActions([
+                                                                     InfolistAction::make('user_archive')
+                                                                            ->label('Archive')
+                                                                            ->color('darkk')
+                                                                            ->icon('heroicon-s-archive-box')
+                                                                                ->requiresConfirmation() 
+                                                                                ->modalHeading('Archive User?') 
+                                                                                ->modalDescription('Are you sure you want to archive this user?')
+                                                                                ->modalSubmitActionLabel('Yes, Archive') 
+                                                                                ->modalCancelActionLabel('Cancel')
+                                                                            ->action(function ($record) {
+                                                                                    $staffProfile = StaffProfile::where('user_id', $record->id)->first();
 
+                                                                                    if ($staffProfile) {
+                                                                                        $staffProfile->is_archive = 'Archive';
+                                                                                        $staffProfile->save();
 
+                                                                                    Notification::make()
+                                                                                    ->success()
+                                                                                    ->title('Success')
+                                                                                    ->body('Staff Archived Successfully')
+                                                                                    ->send();
+                                                                                    }
 
+                                                                                    else{
+                                                                                        Notification::make()
+                                                                                        ->danger()
+                                                                                        ->title('Error')
+                                                                                        ->body(' Staff Not Found')
+                                                                                        ->send();
+                                                                                    }
+
+                                                                                        return redirect()->route('filament.admin.resources.users.index');
+                                                                                }),
+                                                            ]),
                 ]),
 
 

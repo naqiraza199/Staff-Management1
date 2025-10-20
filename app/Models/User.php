@@ -33,7 +33,9 @@ class User extends Authenticatable
         'image',
         'country',
         'last_login_at',
-        'status'
+        'status',
+        'job_title_id',
+        'private_note',
     ];
 
     /**
@@ -64,6 +66,11 @@ class User extends Authenticatable
         return $this->hasOne(StaffProfile::class);
     }
 
+    public function jobTitle()
+    {
+        return $this->belongsTo(JobTitle::class);
+    }
+
     public function company()
 {
     return $this->hasOne(Company::class);
@@ -85,4 +92,4 @@ class User extends Authenticatable
         }
 
 }
- 
+    

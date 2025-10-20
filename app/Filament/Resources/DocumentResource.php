@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
 use Filament\Tables\Actions\ActionGroup;
-
+use App\Models\Company;
 
 
 class DocumentResource extends Resource
@@ -200,45 +200,51 @@ class DocumentResource extends Resource
                                     ->columnSpan(6)
                                     ->searchable()
                                     ->options(function () {
-                                        $grouped = [];
+                                            $companyId = Company::where('user_id', Auth::id())->value('id');
+                                            $grouped = [];
 
-                                        // Competencies
-                                        $grouped['Competencies'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_competencies', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Competencies
+                                            $grouped['Competencies'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_competencies', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // Qualifications
-                                        $grouped['Qualifications'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_qualifications', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Qualifications
+                                            $grouped['Qualifications'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_qualifications', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // Compliance
-                                        $grouped['Compliance'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_compliance', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Compliance
+                                            $grouped['Compliance'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_compliance', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // KPI
-                                        $grouped['KPI'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_kpi', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // KPI
+                                            $grouped['KPI'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_kpi', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // Other
-                                        $grouped['Other'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_other', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Other
+                                            $grouped['Other'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_other', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        return $grouped;
-                                    }),
+                                            return $grouped;
+                                        }),
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
@@ -403,45 +409,51 @@ class DocumentResource extends Resource
                                     ->searchable()
                                     ->default($record->document_category_id)
                                     ->options(function () {
-                                        $grouped = [];
+                                            $companyId = Company::where('user_id', Auth::id())->value('id');
+                                            $grouped = [];
 
-                                        // Competencies
-                                        $grouped['Competencies'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_competencies', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Competencies
+                                            $grouped['Competencies'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_competencies', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // Qualifications
-                                        $grouped['Qualifications'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_qualifications', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Qualifications
+                                            $grouped['Qualifications'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_qualifications', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // Compliance
-                                        $grouped['Compliance'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_compliance', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Compliance
+                                            $grouped['Compliance'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_compliance', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // KPI
-                                        $grouped['KPI'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_kpi', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // KPI
+                                            $grouped['KPI'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_kpi', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        // Other
-                                        $grouped['Other'] = DocumentCategory::query()
-                                            ->where('is_staff_doc', 1)
-                                            ->where('is_other', 1)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
+                                            // Other
+                                            $grouped['Other'] = \App\Models\DocumentCategory::query()
+                                                ->where('is_staff_doc', 1)
+                                                ->where('is_other', 1)
+                                                ->where('company_id', $companyId)
+                                                ->pluck('name', 'id')
+                                                ->toArray();
 
-                                        return $grouped;
-                                    }),
+                                            return $grouped;
+                                        }),
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')

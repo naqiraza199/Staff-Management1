@@ -41,7 +41,7 @@ class Client extends Model
         'reference_number',
         'custom_field',
         'PO_number',
-        'client_type',
+        'client_type_id',
         'need_to_know_information',
         'useful_information',
         'private_info',
@@ -131,5 +131,9 @@ public function additionalContacts()
     return $this->hasMany(\App\Models\AdditionalContact::class, 'client_id');
 }
 
+    public function clientType()
+    {
+        return $this->belongsTo(ClientType::class);
+    }
 
 }

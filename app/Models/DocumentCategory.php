@@ -15,5 +15,6 @@ class DocumentCategory extends Model
         'is_compliance',
         'is_kpi',
         'is_other',
+        'company_id',
     ];
 }       

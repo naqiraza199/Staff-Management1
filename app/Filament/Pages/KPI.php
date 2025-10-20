@@ -47,6 +47,7 @@ class KPI extends Page implements Tables\Contracts\HasTable
         }
 
           $categories = DocumentCategory::query()
+         ->where('company_id', $companyId)
         ->where('is_staff_doc', 1)
         ->where('is_kpi', 1)
         ->get();

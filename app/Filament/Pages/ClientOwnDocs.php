@@ -23,6 +23,7 @@ use App\Models\DocumentCategory;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
+use App\Models\Company;
 
 class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 {
@@ -118,11 +119,21 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                                             ->reactive() // 👈 important so Filament listens for changes
                                             ->columnSpan(12),
 
-                            Select::make('document_category_id')
-                                ->relationship('documentCategory', 'name')
-                                ->label('Document Category')
-                                ->required()
-                                ->columnSpan(6),
+                            Forms\Components\Select::make('document_category_id')
+                            ->label('Document Category')
+                            ->options(function () {
+                                $user = Auth::user();
+                                $companyId = Company::where('user_id', $user->id)->value('id');
+
+                                return DocumentCategory::where('is_staff_doc', '!=', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->columnSpan(6),
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
@@ -261,12 +272,16 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                                         ->default(fn ($record) => $record?->document_category_id)
                                         ->columnSpan(6)
                                         ->searchable()
-                                        ->options(
-                                            \App\Models\DocumentCategory::query()
-                                                ->where('is_staff_doc', '!=', 1) // ✅ exclude staff docs
-                                                ->pluck('name', 'id')
-                                                ->toArray()
-                                        ),
+                                          ->options(function () {
+                                                $user = Auth::user();
+                                                $companyId = Company::where('user_id', $user->id)->value('id');
+
+                                                return DocumentCategory::query()
+                                                    ->where('is_staff_doc', '!=', 1) // ✅ exclude staff docs
+                                                    ->where('company_id', $companyId)
+                                                    ->pluck('name', 'id')
+                                                    ->toArray();
+                                            }),
 
 
 

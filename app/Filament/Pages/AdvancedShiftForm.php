@@ -889,12 +889,16 @@ public function mount(): void
                                                 ->multiple()
                                                 ->preload()
                                                 ->searchable()
-                                                ->options(function () {
-                                                    return DocumentCategory::where('is_staff_doc', 1)
-                                                        ->where('is_compliance', 1)
-                                                        ->pluck('name', 'id')
-                                                        ->toArray();
-                                                })
+                                                 ->options(function () {
+                                                        $user = Auth::user();
+                                                        $companyId = Company::where('user_id', $user->id)->value('id');
+
+                                                        return DocumentCategory::where('is_staff_doc', 1)
+                                                            ->where('company_id', $companyId)
+                                                            ->where('is_compliance', 1)
+                                                            ->pluck('name', 'id')
+                                                            ->toArray();
+                                                    })
                                                 ->columnSpan(2),
 
                                                            Placeholder::make('competencies_lab')
@@ -906,7 +910,11 @@ public function mount(): void
                                                 ->preload()
                                                 ->searchable()
                                                 ->options(function () {
+                                                        $user = Auth::user();
+                                                        $companyId = Company::where('user_id', $user->id)->value('id');
+
                                                     return DocumentCategory::where('is_staff_doc', 1)
+                                                        ->where('company_id',$companyId)
                                                         ->where('is_competencies', 1)
                                                         ->pluck('name', 'id')
                                                         ->toArray();
@@ -924,7 +932,11 @@ public function mount(): void
                                                 ->preload()
                                                 ->searchable()
                                                 ->options(function () {
+                                                    $user = Auth::user();
+                                                        $companyId = Company::where('user_id', $user->id)->value('id');
+
                                                     return DocumentCategory::where('is_staff_doc', 1)
+                                                        ->where('company_id',$companyId)
                                                         ->where('is_kpi', 1)
                                                         ->pluck('name', 'id')
                                                         ->toArray();

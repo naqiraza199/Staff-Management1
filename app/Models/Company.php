@@ -18,7 +18,12 @@ class Company extends Model
         'staff_invitation_link',
         'company_logo',
         'is_subscribed',
-        'subscription_plan_id'
+        'subscription_plan_id',
+        'quote_title',
+        'quote_terms',
+        'timezone',
+        'minute_interval',
+        'pay_run',
     ];
 
     public function user()

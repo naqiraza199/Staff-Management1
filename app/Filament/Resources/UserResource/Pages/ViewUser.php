@@ -21,13 +21,13 @@ class ViewUser extends ViewRecord
 {
     return [
         ActionGroup::make([
-            Action::make('add_shift')
-                ->label('Add Shift')
-                ->icon('heroicon-s-plus'),
+            // Action::make('add_shift')
+            //     ->label('Add Shift')
+            //     ->icon('heroicon-s-plus'),
 
-            Action::make('communications')
-                ->label('Communications')
-                ->icon('heroicon-s-chat-bubble-left-right'),
+            // Action::make('communications')
+            //     ->label('Communications')
+            //     ->icon('heroicon-s-chat-bubble-left-right'),
 
             Action::make('timesheet')
                 ->label('Timesheet')

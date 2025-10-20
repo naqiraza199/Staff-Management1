@@ -25,7 +25,8 @@ use App\Models\Client;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
-
+use App\Models\Company;
+use App\Models\DocumentCategory;
 
 class ClientDocumentResource extends Resource
 {
@@ -152,11 +153,19 @@ class ClientDocumentResource extends Resource
                                             ->reactive() // 👈 important so Filament listens for changes
                                             ->columnSpan(6),
 
-                            Select::make('document_category_id')
-                                ->relationship('documentCategory', 'name')
-                                ->label('Document Category')
-                                ->required()
-                                ->columnSpan(6),
+                           Select::make('document_category_id')
+                            ->label('Document Category')
+                            ->options(function () {
+                                $companyId = Company::where('user_id', Auth::id())->value('id');
+
+                                return DocumentCategory::where('company_id', $companyId)
+                                                    ->where('is_staff_doc', '!=', 1) // ✅ exclude staff docs
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->columnSpan(6),
 
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
@@ -302,12 +311,16 @@ class ClientDocumentResource extends Resource
                                         ->default(fn ($record) => $record?->document_category_id)
                                         ->columnSpan(6)
                                         ->searchable()
-                                        ->options(
-                                            \App\Models\DocumentCategory::query()
+                                        ->options(function () {
+                                            $companyId = Company::where('user_id', Auth::id())->value('id');
+
+                                            return DocumentCategory::query()
                                                 ->where('is_staff_doc', '!=', 1) // ✅ exclude staff docs
+                                                ->where('company_id', $companyId)
                                                 ->pluck('name', 'id')
-                                                ->toArray()
-                                        ),
+                                                ->toArray();
+                                        }),
+
 
 
 
