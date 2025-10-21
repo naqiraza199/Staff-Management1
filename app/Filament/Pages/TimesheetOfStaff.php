@@ -503,7 +503,11 @@ $formatClientsForExport = function ($clientsData, $includePriceBookLookup = true
                     $recordIds = $this->getTable()->getRecords()->pluck('id')->implode(',');
 
                     if (empty($recordIds)) {
-                        $this->notify('warning', 'No records found to print.');
+                        Notification::make()
+                        ->warning()
+                        ->title('Warning')
+                        ->body('No records found to print.')
+                        ->send();
                         return '#';
                     }
 

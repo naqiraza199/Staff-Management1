@@ -594,7 +594,10 @@ public function mount(): void
                                         ->label('Shift Types')
                                         ->columnSpan(1),
                                     Select::make('shift_type_id')
-                                        ->options(ShiftType::pluck('name', 'id'))
+                                           ->options(
+                                            ShiftType::where('user_id', Auth::id())
+                                                ->pluck('name', 'id')
+                                        )
                                         ->searchable()
                                         ->preload()
                                         ->label('')

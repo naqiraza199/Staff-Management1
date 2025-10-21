@@ -116,6 +116,7 @@ if (!$companyId) {
 $categories = DocumentCategory::query()
     ->where('is_staff_doc', 1)
     ->where('is_compliance', 1)
+    ->where('company_id',$companyId)
     ->get();
 @endphp
 @php

@@ -30,7 +30,6 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: 180px repeat(7, 1fr);
-            gap: 10px;
             border-radius: 12px;
         }
             .calendar-day {
@@ -40,7 +39,6 @@
                 cursor: pointer;
                 background: rgba(255, 255, 255, 0.05);
                 transition: transform 0.3s ease, background 0.3s ease;
-                border-radius: 8px;
             }
         .calendar-day:hover {
             transform: scale(1.02);
@@ -54,16 +52,9 @@
             background: linear-gradient(45deg, #2c91ea, #0b89c7);
             color: white;
             font-size: 0.95rem;
-            border-radius: 8px;
         }
         .staff-cell {
-            font-weight: 600;
-            padding: 16px;
             border: 1px solid rgba(4, 168, 248, 0.65);
-            background: rgba(255, 255, 255, 0.1);
-            color: #0a0a0a;
-            font-size: 1.1rem;
-            border-radius: 8px;
         }
         .add-staff-cell {
             padding: 16px;
@@ -485,7 +476,7 @@
         .calendar-day {
             min-height: 130px;
             border: 1px solid #ddd;
-            padding: 5px;
+            padding-bottom: 30px;
         }
         .staff-cell {
             font-weight: bold;
@@ -671,7 +662,7 @@
         .calendar-day {
             min-height: 130px;
             border: 1px solid #ddd;
-            padding: 5px;
+            padding-bottom: 30px;
         }
         .staff-cell {
             font-weight: bold;

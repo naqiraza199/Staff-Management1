@@ -355,7 +355,10 @@ public function form(Form $form): Form
                     //         ->columnSpan(2),
 
                                 Select::make('shift_type_id')
-                                    ->options(ShiftType::pluck('name', 'id'))
+                                        ->options(
+                                            ShiftType::where('user_id', Auth::id())
+                                                ->pluck('name', 'id')
+                                        )
                                     ->required()
                                     ->searchable()
                                     ->preload()
