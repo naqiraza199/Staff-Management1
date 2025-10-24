@@ -23,6 +23,7 @@ use Filament\Enums\ThemeMode;
 use App\Filament\Pages\StaffOwnDocs;
 use App\Filament\Pages\DashboardView;
 use App\Filament\Pages\AdminRegistration;
+use CmsMulti\FilamentClearCache\FilamentClearCachePlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -52,6 +53,9 @@ class AdminPanelProvider extends PanelProvider
             ->defaultThemeMode(ThemeMode::Light)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->plugins([
+                    FilamentClearCachePlugin::make(),
+                ])
             ->pages([
                 DashboardView::class,
             ])

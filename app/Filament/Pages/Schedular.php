@@ -37,6 +37,7 @@ use Carbon\Carbon;
 use App\Models\PriceBookDetail;
 use App\Models\TimesheetReport;
 use App\Models\Timesheet;
+use Filament\Facades\Filament;
 
 use Carbon\CarbonInterval;
 
@@ -46,6 +47,14 @@ class Schedular extends Page
     protected static ?string $navigationIcon = 'heroicon-s-calendar';
     protected static string $view = 'filament.pages.schedular';
     protected static ?string $title = 'Schedular';
+
+
+        public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-schedulers');
+        }
 
     public ?array $data = [
         'add_to_job_board' => null,
@@ -96,18 +105,46 @@ public function mount()
 
         $usersQuery = User::whereIn('id', $staffUserIds)->role('staff');
 
-        // Fetch users as a key-value array [user_id => name]
-        $allUsers = $usersQuery->get()->pluck('name', 'id')->toArray();
-        if (!array_key_exists($authUser->id, $allUsers)) {
-            $allUsers[$authUser->id] = $authUser->name;
+        // Determine users based on permissions
+        if ($authUser->hasPermissionTo('all-schedulers')) {
+            // Fetch all staff users for 'all-schedulers' permission
+            $allUsers = $usersQuery->get()->pluck('name', 'id')->toArray();
+            if (!array_key_exists($authUser->id, $allUsers)) {
+                $allUsers[$authUser->id] = $authUser->name;
+            }
+            $this->users = $allUsers;
+        } elseif ($authUser->hasPermissionTo('my-schedulers')) {
+            // Only include authenticated user for 'my-schedulers' permission
+            $this->users = [$authUser->id => $authUser->name];
+        } else {
+            // No relevant permissions, set empty users array
+            $this->users = [];
         }
-
-        $this->users = $allUsers;
     }
 
-    // Fetch shifts filtered by company_id
-    $this->shifts = Shift::where('company_id', $companyId)
-        ->get()
+    // Fetch shifts filtered by company_id and permissions
+    $shiftsQuery = Shift::where('company_id', $companyId);
+
+    // Check permissions
+    if ($authUser->hasPermissionTo('all-schedulers')) {
+        // User has 'all-schedulers' permission, fetch all company shifts
+        $this->shifts = $shiftsQuery->get();
+    } elseif ($authUser->hasPermissionTo('my-schedulers')) {
+        // User has 'my-schedulers' permission, fetch only their shifts
+        $this->shifts = $shiftsQuery
+            ->where(function ($query) use ($authUser) {
+                // Handle simple shifts: check carer_section->user_id
+                $query->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$authUser->id])
+                      // Handle advanced shifts: check if user_id array contains auth user ID
+                      ->orWhereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($authUser->id)]);
+            })
+            ->get();
+    } else {
+        // No relevant permissions, return empty shifts
+        $this->shifts = collect([]);
+    }
+
+    $this->shifts = $this->shifts
         ->map(function ($shift) {
             $timeAndLocation = is_string($shift->time_and_location)
                 ? json_decode($shift->time_and_location, true)
@@ -219,7 +256,6 @@ public function mount()
     // Map shift_type_id to name
     $this->shiftTypeNames = $this->shiftTypes->pluck('name', 'id')->toArray();
 }
-
 
     public function getUsersProperty()
     {

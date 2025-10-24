@@ -182,3 +182,11 @@ Route::post('/admin/clients/{client}/archive', function (Client $client) {
 
     return redirect()->route('filament.admin.resources.clients.index');
 })->name('filament.admin.resources.clients.archive');
+
+
+Route::get('/refresh-roles', function () {
+    $user = Auth::user();
+    Auth::logout();
+    Auth::login($user);
+    return back();
+})->middleware('auth');

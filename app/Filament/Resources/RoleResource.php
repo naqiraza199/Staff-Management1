@@ -72,7 +72,7 @@ public static function canViewAny(): bool
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()->button()->color('warning')->label('')->iconbutton()->tooltip('View Role'),
-                Tables\Actions\EditAction::make()->button()->color('stripe')->label('')->iconbutton()->tooltip('Edit Role'),
+                Tables\Actions\EditAction::make()->button()->color('stripe')->label('')->iconbutton()->tooltip('Edit Role')->slideOver(),
                 Tables\Actions\DeleteAction::make()->button()->color('darkk')->label('')->iconbutton()->tooltip('Delete Role'),
             ])
             ->bulkActions([
@@ -94,7 +94,7 @@ public static function canViewAny(): bool
         return [
             'index' => Pages\ListRoles::route('/'),
             'create' => Pages\CreateRole::route('/create'),
-            'edit' => Pages\EditRole::route('/{record}/edit'),
+            // 'edit' => Pages\EditRole::route('/{record}/edit'),
         ];
     }
 }
