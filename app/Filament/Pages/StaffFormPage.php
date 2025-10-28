@@ -14,6 +14,7 @@ use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
+use Filament\Forms\Components\Textarea;
 
 class StaffFormPage extends Page implements HasForms
 {
@@ -141,7 +142,7 @@ class StaffFormPage extends Page implements HasForms
 
                 Forms\Components\Grid::make(1)
                     ->schema([
-                        Forms\Components\Textarea::make('address')
+                        Textarea::make('address')
                             ->placeholder('Enter Address')
                             ->columnSpanFull(),
                     ]),

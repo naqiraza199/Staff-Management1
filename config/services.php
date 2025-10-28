@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+        'pdfco' => [
+            'key' => env('PDF_CO_API_KEY'),
+        ],
+
+
 ];

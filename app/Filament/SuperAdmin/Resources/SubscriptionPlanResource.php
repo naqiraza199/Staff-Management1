@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\Textarea;
+
 
 class SubscriptionPlanResource extends Resource
 {
@@ -52,7 +54,7 @@ class SubscriptionPlanResource extends Resource
                     'Yearly' => 'Yearly',
                 ])
                 ->required(),
-                Forms\Components\Textarea::make('description')
+               Textarea::make('description')
                     ->columnSpanFull(),
             ])->columns(3),
             ]);

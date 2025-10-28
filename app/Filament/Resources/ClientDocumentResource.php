@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
 use App\Models\Company;
 use App\Models\DocumentCategory;
+use Filament\Forms\Components\Textarea;
 
 class ClientDocumentResource extends Resource
 {
@@ -183,7 +184,7 @@ class ClientDocumentResource extends Resource
                         ->disk('public')
                         ->maxSize(2048),
 
-                        Forms\Components\TextArea::make('details')
+                        Textarea::make('details')
                                 ->label('Content')
                                 ->rows(5)
                                 ->placeholder('Enter Content Here'),
@@ -342,7 +343,7 @@ class ClientDocumentResource extends Resource
                             ->default($record->name)
                             ->required(),
 
-                             Forms\Components\TextArea::make('details')
+                            Textarea::make('details')
                                 ->label('Content')
                                 ->rows(5)
                                 ->default($record->details)

@@ -28,7 +28,7 @@ use Filament\Forms\Form;
 use App\Models\Shift;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextArea;
+use Filament\Forms\Components\Textarea;
 use App\Models\Language;
 use App\Models\DocumentCategory;
 use App\Models\Event;
@@ -582,7 +582,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                         Repeater::make('tasks')
                             ->label('Tasks')
                             ->schema([
-                                TextArea::make('task_description')
+                                Textarea::make('task_description')
                                     ->label('Task Description')
                                     ->default(fn ($get) => $get('task_description')),
                                 Checkbox::make('mandatory')

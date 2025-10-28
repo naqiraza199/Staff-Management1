@@ -28,6 +28,7 @@ class SuperAdminPanelProvider extends PanelProvider
             ->id('superAdmin')
             ->path('superAdmin')
             ->login()
+            ->navigation(true)
              ->colors([
                 'primary' => Color::hex('#6860FF'),
                 'brown' => Color::hex('#8f6232'),

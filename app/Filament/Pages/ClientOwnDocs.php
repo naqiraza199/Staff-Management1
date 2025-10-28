@@ -24,6 +24,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
 use App\Models\Company;
+use Filament\Forms\Components\Textarea;
+
 
 class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 {
@@ -151,7 +153,7 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                         ->disk('public')
                         ->maxSize(2048),
 
-                        Forms\Components\TextArea::make('details')
+                        Textarea::make('details')
                                 ->label('Content')
                                 ->rows(5)
                                 ->placeholder('Enter Content Here'),
@@ -303,7 +305,7 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->default($record->name)
                             ->required(),
 
-                             Forms\Components\TextArea::make('details')
+                            Textarea::make('details')
                                 ->label('Content')
                                 ->rows(5)
                                 ->default($record->details)

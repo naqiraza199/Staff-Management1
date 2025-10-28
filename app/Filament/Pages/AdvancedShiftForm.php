@@ -34,7 +34,7 @@ use App\Models\Shift;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\TextArea;
+use Filament\Forms\Components\Textarea;
 use Filament\Actions\Action;
 use App\Models\Language;
 use App\Models\DocumentCategory;
@@ -1006,7 +1006,7 @@ public function mount(): void
                                     ->schema([
                                         Grid::make(10)
                                         ->schema([
-                                        TextArea::make('task_description')
+                                        Textarea::make('task_description')
                                         ->label('')
                                         ->placeholder('Task Description')
                                         ->columnSpan(8),

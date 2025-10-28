@@ -32,6 +32,7 @@ use Illuminate\Support\Arr;
 use App\Models\ClientType;
 use App\Models\PublicHoliday;
 use App\Models\JobTitle;
+use Filament\Forms\Components\Textarea;
 
 class Setting extends Page
 {
@@ -288,7 +289,7 @@ class Setting extends Page
                                                         ->label('Quote Title')
                                                         ->maxLength(255),
 
-                                                    Forms\Components\Textarea::make('quote_terms')
+                                                   Textarea::make('quote_terms')
                                                         ->label('Quote Terms')
                                                         ->rows(6),
                                                 ]);

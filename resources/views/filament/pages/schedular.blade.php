@@ -13,7 +13,6 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             width: 100%;
             max-width: 1900px;
-            margin: 20px;
         }
         .calendar-header {
             display: flex;
@@ -745,15 +744,6 @@
     <input type="date" id="customDatePicker">
   </div>
 
-   <select  style="margin-left: 222px;" class="custom-select large">
-            <option value="Daily-f">Daily</option>
-            <option value="Weekly-f">Weekly</option>
-            <option value="Fortnightly-f">Fortnightly</option>
-            <option value="Tabular-f">Tabular</option>
-            <option value="Basic-f">Basic</option>
-            <option value="Compact view-f">Compact view</option>
-            <option value="Expand-f">Expand</option>
-        </select>
         
             <x-filament::button 
             color="primary" 
@@ -763,50 +753,6 @@
             Shift
         </x-filament::button>
 
-      <x-filament::dropdown>
-            <x-slot name="trigger">
-                <x-filament::icon-button
-                    style="        margin-left: -2px;
-                                margin-top: -10px;
-                                border: 1px #cfc7c7 groove;
-                                height: 40px;
-                                width: 42px;
-                                background: white;"
-                    icon="heroicon-m-ellipsis-vertical"
-                    color="gray"
-                />
-            </x-slot>
-
-            <x-filament::dropdown.list>
-
-            <x-filament::dropdown.list.item 
-                    icon="heroicon-m-document-duplicate" 
-                    wire:click="approveTimesheet"
-                    color="gray">
-                    Copy Schedule
-                </x-filament::dropdown.list.item>
-
-                <x-filament::dropdown.list.item
-                    icon="heroicon-m-x-mark"
-                    color="gray">
-                    Cancel Schedule
-                </x-filament::dropdown.list.item>
-
-                <x-filament::dropdown.list.item
-                    icon="heroicon-m-arrow-down-tray"
-                    color="gray">
-                    Export
-                </x-filament::dropdown.list.item>
-
-                <x-filament::dropdown.list.item 
-                    icon="heroicon-m-calendar-days" 
-                    color="gray">
-                    Manage Availability
-                </x-filament::dropdown.list.item>
-
-             
-            </x-filament::dropdown.list>
-        </x-filament::dropdown>
 
 
     </div>

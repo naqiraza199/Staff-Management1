@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
 use Filament\Tables\Actions\ActionGroup;
 use App\Models\Company;
-
+use Filament\Forms\Components\Textarea;
 
 class DocumentResource extends Resource
 {
@@ -262,7 +262,7 @@ class DocumentResource extends Resource
                         ->disk('public')
                         ->maxSize(2048),
 
-                        Forms\Components\TextArea::make('details')
+                        Textarea::make('details')
                                 ->label('Content')
                                 ->rows(5)
                                 ->placeholder('Enter Content Here'),
@@ -474,7 +474,7 @@ class DocumentResource extends Resource
                             ->required(),
 
                             
-                             Forms\Components\TextArea::make('details')
+                             Textarea::make('details')
                                 ->label('Content')
                                 ->rows(5)
                                 ->default($record->details)

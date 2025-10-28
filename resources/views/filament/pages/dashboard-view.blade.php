@@ -93,9 +93,11 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
         text-align: center;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: linear-gradient(135deg, #F3F5F9 0%, #c9c9c9 100%);
+        background: linear-gradient(135deg, #ffffffff 0%, #ffffffff 100%);
         width: 19%;
         height: 120px;
+        border: 1px #c1c1c1 groove;
+
     }
     .summary-card:hover {
         transform: translateY(-5px);
@@ -120,12 +122,13 @@
     }
         .chart-card
         {
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background: linear-gradient(135deg, #F3F5F9 0%, #c9c9c9 100%);
-            width: 99% !important;
+     padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: linear-gradient(135deg, #FFF 0%, #fff 100%);
+        width: 99% !important;
+        border: 1px #c1c1c1 groove;
         }
     .chart-card:hover {
         transform: translateY(-5px);

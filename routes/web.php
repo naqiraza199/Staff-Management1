@@ -21,6 +21,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use App\Models\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
+use App\Http\Controllers\PdfController;
 
 Route::get('/', [RedirectController::class, 'home']);
 
@@ -190,3 +193,21 @@ Route::get('/refresh-roles', function () {
     Auth::login($user);
     return back();
 })->middleware('auth');
+
+
+Route::get('/ssl-test', function () {
+    return Http::get('https://www.google.com')->status();
+});
+// Route::get('/pdf/edit', [PdfController::class, 'editAndAnnotate']);
+// Route::get('/pdf/fill', [PdfController::class, 'fillForm']);
+// Route::get('/pdf/search', [PdfController::class, 'searchText']);
+// Route::get('/pdf-editor', [PdfController::class, 'showForm'])->name('pdf.editor');
+// Route::post('/pdf-editor/process', [PdfController::class, 'process'])->name('pdf.editor.process');
+
+
+// Route::get('/pdf-editor/upload', [PdfController::class, 'uploadPdf'])
+//     ->name('pdf.editor.upload');
+
+
+Route::get('/pdfco/test-edit', [PdfController::class, 'testEdit']);     
+Route::post('/pdfco/edit-custom', [PdfController::class, 'editCustom']);

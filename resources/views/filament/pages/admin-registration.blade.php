@@ -11,9 +11,12 @@
                         background-color: #EAEAEA !important;
                     }
                     .fi-main, 
-                    .fi-page {
-                        max-width: 100% !important;
-                    }
+          .fi-page {
+            max-width: 100% !important;
+            position: inherit !important;
+            left: 0px !important;
+            padding-right: 0px !important;
+        }
                     @media (min-width: 640px) {
                     .sm\:flex-row {
                         flex-direction: column-reverse !important;
@@ -77,6 +80,7 @@
                         transform: translateY(-3px);
                         background: linear-gradient(90deg, #0b54aeff, #0fa6d0ff);
                         }
+                        
 
                       
         </style>

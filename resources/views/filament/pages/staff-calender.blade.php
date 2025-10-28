@@ -8,7 +8,6 @@
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             width: 100%;
-            margin: 20px;
         }
         .calendar-header {
             display: flex;

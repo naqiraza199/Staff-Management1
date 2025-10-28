@@ -36,6 +36,7 @@ use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\ViewField;
 use App\Models\Team;
 use App\Models\ClientType;
+use Filament\Forms\Components\Textarea;
 
 
 class ClientResource extends Resource
@@ -257,7 +258,7 @@ class ClientResource extends Resource
                             ]),
                         Forms\Components\Fieldset::make('Address')
                             ->schema([
-                                Forms\Components\Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
+                                Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
                             ]),
                         Forms\Components\Fieldset::make('Profile Picture')
                             ->schema([
@@ -557,13 +558,13 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                         ->modalSubmitActionLabel('Create')
                                         ->modalWidth('xl')
                                         ->form([
-                                            Forms\Components\Textarea::make('need_to_know_information')
+                                            Textarea::make('need_to_know_information')
                                                 ->label('Need to Know Information')
                                                 ->rows(5)
                                                 ->placeholder('Enter need to know details...')
                                                 ->required(),
 
-                                            Forms\Components\Textarea::make('useful_information')
+                                            Textarea::make('useful_information')
                                                 ->label('Useful Information')
                                                 ->rows(5)
                                                 ->placeholder('Enter useful information...')
@@ -595,13 +596,13 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                         ->modalSubmitActionLabel('Update')
                                         ->modalWidth('xl')
                                         ->form([
-                                            Forms\Components\Textarea::make('need_to_know_information')
+                                            Textarea::make('need_to_know_information')
                                                 ->label('Need to Know Information')
                                                 ->rows(5)
                                                 ->default(fn ($record) => $record?->need_to_know_information)
                                                 ->placeholder('Enter need to know details...'),
 
-                                            Forms\Components\Textarea::make('useful_information')
+                                            Textarea::make('useful_information')
                                                 ->label('Useful Information')
                                                 ->rows(5)
                                                 ->default(fn ($record) => $record?->useful_information)
@@ -638,7 +639,7 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                                 ->modalSubmitActionLabel('Create')
                                                 ->modalWidth('xl')
                                                 ->form([
-                                                    Forms\Components\Textarea::make('private_info')
+                                                    Textarea::make('private_info')
                                                         ->label('Private Info')
                                                         ->rows(5)
                                                         ->placeholder('Enter private client information...')
@@ -673,7 +674,7 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                                 ->modalSubmitActionLabel('Update')
                                                 ->modalWidth('xl')
                                                 ->form([
-                                                    Forms\Components\Textarea::make('private_info')
+                                                    Textarea::make('private_info')
                                                         ->label('Private Info')
                                                         ->rows(5)
                                                         ->default(fn ($record) => $record?->private_info)
@@ -807,7 +808,7 @@ Section::make('Additional Information')
                     ]),
                 Forms\Components\Fieldset::make('Address')
                     ->schema([
-                        Forms\Components\Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
+                        Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
                     ]),
                 Forms\Components\Fieldset::make('Additional Information')
                     ->schema([
@@ -919,7 +920,7 @@ Section::make('Additional Information')
                     ]),
                 Forms\Components\Fieldset::make('Address')
                     ->schema([
-                        Forms\Components\Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
+                        Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
                     ]),
                 Forms\Components\Fieldset::make('Additional Information')
                     ->schema([

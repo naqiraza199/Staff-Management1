@@ -32,6 +32,7 @@ use App\Models\StaffContact;
 use App\Models\JobTitle;
 use App\Models\PayGroup;
 use App\Models\StaffPayrollSetting;
+use Filament\Forms\Components\Textarea;
 
 class UserResource extends Resource
 {
@@ -209,7 +210,7 @@ public static function getEloquentQuery(): Builder
 
                                     Forms\Components\Fieldset::make('Address')
                                     ->schema([
-                        Forms\Components\Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
+                       Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
                             
                                     ]),
 
@@ -438,7 +439,7 @@ public static function infolist(Infolist $infolist): Infolist
                                     ->icon('heroicon-s-pencil-square')
                                     ->color('primary')
                                    ->form([
-                                            Forms\Components\TextArea::make('about')
+                                           Textarea::make('about')
                                                 ->label('About me')
                                                 ->rows(5)
                                                 ->default(fn ($record) => StaffProfile::where('user_id', $record->id)->value('about'))
@@ -702,7 +703,7 @@ public static function infolist(Infolist $infolist): Infolist
                                                                             ->form(function (Forms\Form $form, $record) {
                                                                                 return $form
                                                                                     ->schema([
-                                                                                        Forms\Components\Textarea::make('private_note')
+                                                                                        Textarea::make('private_note')
                                                                                             ->label('Private Notes')
                                                                                             ->rows(6)
                                                                                             ->placeholder('Write private notes about this user...')

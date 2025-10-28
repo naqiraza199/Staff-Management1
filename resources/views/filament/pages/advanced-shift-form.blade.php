@@ -23,8 +23,11 @@
             z-index: 50;
         }
         .fi-main, 
-        .fi-page {
+          .fi-page {
             max-width: 100% !important;
+            position: inherit !important;
+            left: 0px !important;
+            padding-right: 0px !important;
         }
     </style>
 
