@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use App\Models\Price;
 use App\Models\User;
 use App\Models\Company;
+use Filament\Facades\Filament;
 
 class PriceSetting extends Page
 {
@@ -23,7 +24,12 @@ class PriceSetting extends Page
     protected static string $view = 'filament.pages.price-setting';
     protected static ?string $navigationGroup = 'Account';
     
+   public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
 
+            return $user && $user->hasPermissionTo('manage-price-items');
+        }
      public $showEditModal = false;
     public $editForm = [];
     public function getPriceBooksProperty(): Collection

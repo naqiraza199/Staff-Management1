@@ -20,6 +20,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
+use Filament\Facades\Filament;
 
 class MediaManagerResource extends Resource
 {
@@ -28,6 +29,13 @@ class MediaManagerResource extends Resource
   protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-check';
 
       protected static ?string $navigationGroup = 'Documents Management';
+
+             public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-media-manager');
+        }
 
           public static function getModelLabel(): string
     {

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Section;
+use Filament\Facades\Filament;
 
 class PermissionResource extends Resource
 {
@@ -28,10 +29,13 @@ class PermissionResource extends Resource
     protected static ?int $navigationSort = 9;
 
 
-public static function canViewAny(): bool
-{
-    return hasPermission('permissions-access');
-}
+       public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('permissions-access');
+        }
+
 
 
 
@@ -64,8 +68,8 @@ public static function canViewAny(): bool
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()->button()->color('warning')->label('')->iconbutton()->tooltip('View Permission'),
-                Tables\Actions\EditAction::make()->button()->color('stripe')->label('')->iconbutton()->tooltip('Edit Permission'),
-                Tables\Actions\DeleteAction::make()->button()->color('darkk')->label('')->iconbutton()->tooltip('Delete Permission'),
+                // Tables\Actions\EditAction::make()->button()->color('stripe')->label('')->iconbutton()->tooltip('Edit Permission'),
+                // Tables\Actions\DeleteAction::make()->button()->color('darkk')->label('')->iconbutton()->tooltip('Delete Permission'),
                 
             ])
             ->bulkActions([

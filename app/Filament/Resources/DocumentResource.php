@@ -27,6 +27,7 @@ use App\Mail\DocumentSignatureRequest;
 use Filament\Tables\Actions\ActionGroup;
 use App\Models\Company;
 use Filament\Forms\Components\Textarea;
+use Filament\Facades\Filament;
 
 class DocumentResource extends Resource
 {
@@ -35,6 +36,13 @@ class DocumentResource extends Resource
   protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-check';
 
       protected static ?string $navigationGroup = 'Staff Management';
+
+             public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('see-staff-documents');
+        }
 
           public static function getModelLabel(): string
     {

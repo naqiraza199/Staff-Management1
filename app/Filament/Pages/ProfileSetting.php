@@ -16,6 +16,7 @@ use Filament\Forms\Components\Section;
 use Filament\Actions\Action;
 use App\Models\SubscriptionPlan;
 use Laravel\Cashier\Checkout;
+use Filament\Facades\Filament;
 
 
 class ProfileSetting extends Page implements Forms\Contracts\HasForms
@@ -27,7 +28,12 @@ class ProfileSetting extends Page implements Forms\Contracts\HasForms
     protected static string $view = 'filament.pages.profile-setting';
     protected static ?string $navigationGroup = 'Account';
 
+             public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
 
+            return $user && $user->hasPermissionTo('manage-profile-setting');
+        }
     public ?array $data = [];
 
     public function mount(): void

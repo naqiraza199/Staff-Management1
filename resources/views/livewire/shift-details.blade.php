@@ -18,7 +18,15 @@
 
             <x-filament::dropdown.list>
 
-                @if($shift && $shift->is_approved == 0 && !$shift->add_to_job_board && !$shift->is_vacant)
+
+
+
+
+     @php
+                      $user = auth()->user();
+                  @endphp
+                @if ($user && $user->hasPermissionTo('all-schedulers'))
+                                @if($shift && $shift->is_approved == 0 && !$shift->add_to_job_board && !$shift->is_vacant)
                     <x-filament::dropdown.list.item 
                         icon="heroicon-m-hand-thumb-up" 
                         color="success"
@@ -37,11 +45,10 @@
                     </x-filament::dropdown.list.item>
                 @endif
 
-
-
-
                 @if($shift && $shift->is_cancelled == 0)
-                <x-filament::dropdown.list.item
+               
+
+ <x-filament::dropdown.list.item
                     icon="heroicon-m-x-circle"
                     color="warning"
                     x-data
@@ -77,6 +84,17 @@
                     x-on:click="$dispatch('open-modal', { id: 'confirm-shift-deletion' })">
                     Delete
                 </x-filament::dropdown.list.item>
+@else
+               <x-filament::dropdown.list.item 
+                icon="heroicon-m-document-text" 
+                color="success"
+                x-data
+                @click="$dispatch('open-add-notes-modal')"
+            >
+                Add Notes
+            </x-filament::dropdown.list.item>
+@endif
+
 
             </x-filament::dropdown.list>
         </x-filament::dropdown>
@@ -160,7 +178,11 @@
             <div class="mt-4 gap-2">
             @if($shift && $shift->is_cancelled == 0)
                @if($shift->is_approved == 0)
-                     @if($shift->is_advanced_shift == 0)
+              
+              
+
+@if ($user && $user->hasPermissionTo('all-schedulers'))
+@if($shift->is_advanced_shift == 0)
                     <x-filament::button color="primary" wire:click="startEditing" style="padding: 10px 15px;">
                         Edit Shift
                     </x-filament::button>
@@ -172,7 +194,15 @@
                 >
                     Advanced Edit
                 </x-filament::button>
+              
                @endif
+@else
+
+@endif
+
+
+
+              
 
             </div>
                 @endif

@@ -17,11 +17,19 @@ use App\Models\Company;
 use App\Models\StaffProfile;
 use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
+use Filament\Facades\Filament;
 
 
 class ArchiveResource extends Resource
 {
     protected static ?string $model = User::class;
+
+       public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-archive-staffs');
+        }
 
     protected static ?string $navigationIcon = 'heroicon-s-archive-box-arrow-down';
 

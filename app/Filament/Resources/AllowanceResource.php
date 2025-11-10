@@ -13,11 +13,19 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 
 class AllowanceResource extends Resource
 {
     protected static ?string $model = Allowance::class;
+
+       public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-allowances');
+        }
 
     protected static ?string $navigationIcon = 'heroicon-s-adjustments-horizontal';
 

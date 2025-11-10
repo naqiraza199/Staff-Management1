@@ -12,8 +12,11 @@ class ListTeams extends ListRecords
 
     protected function getHeaderActions(): array
     {
+        $user = auth()->user();
+
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->visible(fn () => $user && $user->hasPermissionTo('can-create-teams')),
         ];
     }
 }

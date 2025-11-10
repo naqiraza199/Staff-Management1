@@ -10,6 +10,7 @@ use App\Models\Shift;
 use App\Models\BillingReport;
 use App\Models\StaffProfile;
 use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 class Billing extends Page
 {
@@ -21,6 +22,13 @@ class Billing extends Page
 
     public $clients = [];
     public $staff = [];
+
+                          public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('see-billings');
+        }
 
    public function mount()
 {

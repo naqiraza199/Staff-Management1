@@ -99,131 +99,155 @@ class StaffCalender extends Page
         ]);
     }
 
-    public function mount(Request $request)
-    {
-        $this->userId = $request->query('user_id', null); // Default to null if not present
-        $authUser = Auth::user();
-        $companyId = Company::where('user_id', $authUser->id)->value('id');
+  public function mount(Request $request)
+{
+    // Get user_id from query parameter
+    $this->userId = $request->query('user_id', null);
 
-        if (!$companyId) {
-            $this->users = [];
-        } else {
-            $staffUserIds = StaffProfile::where('company_id', $companyId)
-                ->where('is_archive', 'Unarchive')
-                ->pluck('user_id');
+    // Step 1: Find the staff profile for this user_id
+    $staffProfile = StaffProfile::where('user_id', $this->userId)->first();
 
-            $usersQuery = User::whereIn('id', $staffUserIds)->role('staff');
+    if (!$staffProfile) {
+        // If no staff profile found, set empty defaults
+        $this->users = [];
+        $this->shifts = [];
+        $this->clients = [];
+        $this->clientNames = [];
+        $this->shiftTypes = [];
+        $this->shiftTypeNames = [];
+        return;
+    }
 
-            $allUsers = $usersQuery->get()->pluck('name', 'id')->toArray();
-            if (!array_key_exists($authUser->id, $allUsers)) {
-                $allUsers[$authUser->id] = $authUser->name;
+    // Step 2: Get company_id from staff profile
+    $companyId = $staffProfile->company_id;
+
+    // Step 3: Get company record to find the company owner user_id (actual login user)
+    $authUserId = Company::where('id', $companyId)->value('user_id');
+
+    // Step 4: Build user list (all active staff under this company)
+    $staffUserIds = StaffProfile::where('company_id', $companyId)
+        ->where('is_archive', 'Unarchive')
+        ->pluck('user_id');
+
+    $usersQuery = User::whereIn('id', $staffUserIds)->role('staff');
+    $allUsers = $usersQuery->get()->pluck('name', 'id')->toArray();
+
+    // Add company owner if not already in the list
+    if (!array_key_exists($authUserId, $allUsers)) {
+        $authUser = User::find($authUserId);
+        if ($authUser) {
+            $allUsers[$authUser->id] = $authUser->name;
+        }
+    }
+
+    $this->users = $allUsers;
+
+    // Step 5: Fetch shifts for this company
+    $this->shifts = Shift::where('company_id', $companyId)
+        ->get()
+        ->map(function ($shift) {
+            $timeAndLocation = is_string($shift->time_and_location)
+                ? json_decode($shift->time_and_location, true)
+                : ($shift->time_and_location ?? []);
+
+            $clientSection = is_string($shift->client_section)
+                ? json_decode($shift->client_section, true)
+                : ($shift->client_section ?? []);
+
+            $shiftSection = is_string($shift->shift_section)
+                ? json_decode($shift->shift_section, true)
+                : ($shift->shift_section ?? []);
+
+            $carerSection = is_string($shift->carer_section)
+                ? json_decode($shift->carer_section, true)
+                : ($shift->carer_section ?? []);
+
+            $base = [
+                'id' => $shift->id,
+                'start_date' => $timeAndLocation['start_date'] ?? null,
+                'end_date' => $timeAndLocation['end_date'] ?? null,
+                'start_time' => $timeAndLocation['start_time'] ?? null,
+                'end_time' => $timeAndLocation['end_time'] ?? null,
+                'repeat' => $timeAndLocation['repeat'] ?? false,
+                'recurrance' => $timeAndLocation['recurrance'] ?? 'None',
+                'repeat_every_daily' => $timeAndLocation['repeat_every_daily'] ?? null,
+                'repeat_every_weekly' => $timeAndLocation['repeat_every_weekly'] ?? null,
+                'repeat_every_monthly' => $timeAndLocation['repeat_every_monthly'] ?? null,
+                'occurs_on_monthly' => $timeAndLocation['occurs_on_monthly'] ?? null,
+                'occurs_on_weekly' => $timeAndLocation['occurs_on_weekly'] ?? [],
+                'shift_type_id' => $shiftSection['shift_type_id'] ?? null,
+                'add_to_job_board' => (bool) $shift->add_to_job_board,
+                'is_advanced_shift' => (bool) $shift->is_advanced_shift,
+                'is_vacant' => (int) $shift->is_vacant,
+                'is_cancelled' => (bool) $shift->is_cancelled,
+                'is_approved' => (int) $shift->is_approved,
+                'status' => $shift->status ?? 'Unknown',
+            ];
+
+            // Handle simple shift
+            if (!$shift->is_advanced_shift) {
+                $base['client_id'] = $clientSection['client_id'] ?? null;
+                $base['user_id'] = $carerSection['user_id'] ?? null;
+                return [$base];
             }
 
-            $this->users = $allUsers;
-        }
+            // Handle advanced shift (multiple clients/users)
+            $clientIds = $clientSection['client_id'] ?? [];
+            $clientIds = is_array($clientIds) ? $clientIds : [$clientIds];
+            $userIds = $carerSection['user_id'] ?? [];
+            $userIds = is_array($userIds) ? $userIds : [$userIds];
 
-        $this->shifts = Shift::where('company_id', $companyId)
-            ->get()
-            ->map(function ($shift) {
-                $timeAndLocation = is_string($shift->time_and_location)
-                    ? json_decode($shift->time_and_location, true)
-                    : ($shift->time_and_location ?? []);
-
-                $clientSection = is_string($shift->client_section)
-                    ? json_decode($shift->client_section, true)
-                    : ($shift->client_section ?? []);
-
-                $shiftSection = is_string($shift->shift_section)
-                    ? json_decode($shift->shift_section, true)
-                    : ($shift->shift_section ?? []);
-
-                $carerSection = is_string($shift->carer_section)
-                    ? json_decode($shift->carer_section, true)
-                    : ($shift->carer_section ?? []);
-
-                $base = [
-                    'id' => $shift->id,
-                    'start_date' => $timeAndLocation['start_date'] ?? null,
-                    'end_date' => $timeAndLocation['end_date'] ?? null,
-                    'start_time' => $timeAndLocation['start_time'] ?? null,
-                    'end_time' => $timeAndLocation['end_time'] ?? null,
-                    'repeat' => $timeAndLocation['repeat'] ?? false,
-                    'recurrance' => $timeAndLocation['recurrance'] ?? 'None',
-                    'repeat_every_daily' => $timeAndLocation['repeat_every_daily'] ?? null,
-                    'repeat_every_weekly' => $timeAndLocation['repeat_every_weekly'] ?? null,
-                    'repeat_every_monthly' => $timeAndLocation['repeat_every_monthly'] ?? null,
-                    'occurs_on_monthly' => $timeAndLocation['occurs_on_monthly'] ?? null,
-                    'occurs_on_weekly' => $timeAndLocation['occurs_on_weekly'] ?? [],
-                    'shift_type_id' => $shiftSection['shift_type_id'] ?? null,
-                    'add_to_job_board' => (bool) $shift->add_to_job_board,
-                    'is_advanced_shift' => (bool) $shift->is_advanced_shift,
-                    'is_vacant' => (int) $shift->is_vacant,
-                    'is_cancelled' => (bool) $shift->is_cancelled,
-                    'is_approved' => (int) $shift->is_approved,
-                    'status' => $shift->status ?? 'Unknown',
+            $records = [];
+            if (empty($clientIds)) {
+                $records[] = [
+                    ...$base,
+                    'clientIds' => [],
+                    'user_id' => $userIds[0] ?? null,
                 ];
-
-                if (!$shift->is_advanced_shift) {
-                    $base['client_id'] = $clientSection['client_id'] ?? null;
-                    $base['user_id'] = $carerSection['user_id'] ?? null;
-                    return [$base];
-                }
-
-                $clientIds = $clientSection['client_id'] ?? [];
-                $clientIds = is_array($clientIds) ? $clientIds : [$clientIds];
-                $userIds = $carerSection['user_id'] ?? [];
-                $userIds = is_array($userIds) ? $userIds : [$userIds];
-
-                $records = [];
-                if (empty($clientIds)) {
+            } elseif ($shift->is_vacant) {
+                $records[] = [
+                    ...$base,
+                    'clientIds' => $clientIds,
+                    'user_id' => null,
+                ];
+            } else {
+                foreach ($userIds as $userId) {
                     $records[] = [
                         ...$base,
-                        'clientIds' => [],
-                        'user_id' => $userIds[0] ?? null,
+                        'clientIds' => $clientIds,
+                        'user_id' => $userId,
                     ];
-                } elseif ($shift->is_vacant) {
+                }
+                if (empty($userIds)) {
                     $records[] = [
                         ...$base,
                         'clientIds' => $clientIds,
                         'user_id' => null,
                     ];
-                } else {
-                    foreach ($userIds as $userId) {
-                        $records[] = [
-                            ...$base,
-                            'clientIds' => $clientIds,
-                            'user_id' => $userId,
-                        ];
-                    }
-                    if (empty($userIds)) {
-                        $records[] = [
-                            ...$base,
-                            'clientIds' => $clientIds,
-                            'user_id' => null,
-                        ];
-                    }
                 }
+            }
 
-                return $records;
-            })
-            ->flatten(1)
-            ->values()
-            ->toArray();
+            return $records;
+        })
+        ->flatten(1)
+        ->values()
+        ->toArray();
 
-        $this->clients = Client::where('user_id', $authUser->id)
-            ->where('is_archive', 'Unarchive')
-            ->get();
+    // Step 6: Fetch clients and shift types for the company owner
+    $this->clients = Client::where('user_id', $authUserId)
+        ->where('is_archive', 'Unarchive')
+        ->get();
 
-        $this->clientNames = $this->clients->pluck('display_name', 'id')->toArray();
+    $this->clientNames = $this->clients->pluck('display_name', 'id')->toArray();
 
-        $this->shiftTypes = ShiftType::where('user_id', $authUser->id)->get();
-        $this->shiftTypeNames = $this->shiftTypes->pluck('name', 'id')->toArray();
-    }
+    $this->shiftTypes = ShiftType::where('user_id', $authUserId)->get();
+    $this->shiftTypeNames = $this->shiftTypes->pluck('name', 'id')->toArray();
+}
 
-    public function getUsersProperty()
-    {
-        return $this->users ?? [];
-    }
+public function getUsersProperty()
+{
+    return $this->users ?? [];
+}
 
 
 

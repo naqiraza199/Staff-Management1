@@ -1306,6 +1306,12 @@ public function createShift()
         $shiftStart  = Carbon::createFromFormat('H:i:s', $clientDetail['client_start_time']);
         $shiftEnd    = Carbon::createFromFormat('H:i:s', $clientDetail['client_end_time']);
 
+        // ✅ Handle overnight shift (e.g., 11PM → 3AM)
+        if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+            $shiftEnd = $shiftEnd->addDay();
+        }
+
+        // ✅ Always positive duration
         $hours = $shiftStart->floatDiffInHours($shiftEnd);
 
         $dayOfWeek = $shiftDate->format('l');

@@ -44,6 +44,11 @@ class ViewUser extends ViewRecord
                 ->label('Documents')
                 ->url(fn ($record) => route('filament.admin.pages.staff-own-docs', ['user_id' => $record->id]))
                 ->icon('heroicon-s-document'),
+
+            Action::make('communications')
+                ->label('Communications')
+                ->icon('heroicon-s-chat-bubble-left-right')
+                ->url(fn ($record) => route('filament.admin.pages.staff-communication', ['staff_id' => $record->id])),
         ])
             ->button()                     
             ->label('Manage')        

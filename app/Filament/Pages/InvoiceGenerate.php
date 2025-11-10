@@ -54,6 +54,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use App\Models\Shift;
+use Filament\Facades\Filament;
 
 
 class InvoiceGenerate extends Page implements HasForms
@@ -70,6 +71,12 @@ class InvoiceGenerate extends Page implements HasForms
     public array $selectedClients = [];
 
 
+                       public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('generate-invoices');
+        }
     protected static ?int $navigationSort = 3;
 
     public function getTitle(): string

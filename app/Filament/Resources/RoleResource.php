@@ -17,6 +17,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Section;
+use Filament\Facades\Filament;
 
 class RoleResource extends Resource
 {
@@ -28,11 +29,12 @@ class RoleResource extends Resource
     protected static ?int $navigationSort = 8;
 
 
-public static function canViewAny(): bool
-{
-    return hasPermission('roles-access');
-}
+       public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
 
+            return $user && $user->hasPermissionTo('roles-access');
+        }
 
     public static function form(Form $form): Form
     {

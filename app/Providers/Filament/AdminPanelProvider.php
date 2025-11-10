@@ -36,6 +36,8 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->registration(AdminRegistration::class)
             ->navigation(false)
+            ->favicon(asset('fav.png'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->topNavigation()
             ->colors([
                 'primary' => Color::Blue,

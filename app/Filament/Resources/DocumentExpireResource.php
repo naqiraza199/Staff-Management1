@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 
 class DocumentExpireResource extends Resource
@@ -23,6 +24,13 @@ class DocumentExpireResource extends Resource
   protected static ?string $navigationIcon = 'heroicon-s-clipboard-document';
 
       protected static ?string $navigationGroup = 'Staff Management';
+      
+             public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('see-staff-expire-documents');
+        }
 
           public static function getModelLabel(): string
     {

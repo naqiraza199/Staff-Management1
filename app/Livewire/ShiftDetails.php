@@ -405,6 +405,7 @@ public function cancelShift($reason, $type = null, $notes = null, $notifyCarer =
 
     $shiftNote = ShiftNote::create([
         'shift_id' => $this->shift->id,
+        'user_id' => auth()->id(),
         'note_type' => $noteType,
         'note_body' => $noteBody,
         'keep_private' => $keepPrivate,
@@ -422,7 +423,13 @@ public function cancelShift($reason, $type = null, $notes = null, $notifyCarer =
 
     Notification::make()->title('Note added successfully!')->success()->send();
     $this->dispatch('note-added', message: 'Note added successfully!');
+
+if ($authUser->hasPermissionTo('all-schedulers')) {
     $this->redirect('/admin/schedular');
+} else {
+    $this->redirect('/admin/own-staff-scheduler?user_id=' . $authUser->id);
+}
+
 }
 
 
@@ -1422,7 +1429,13 @@ if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
     $priceBookId = data_get($data, 'client_section.price_book_id');
     $clientId    = data_get($data, 'client_section.client_id');
 
-    $hours = $shiftStart->floatDiffInHours($shiftEnd);
+    // ✅ Handle overnight shift (e.g., 11PM → 3AM)
+        if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+            $shiftEnd = $shiftEnd->addDay();
+        }
+
+        $hours = $shiftStart->floatDiffInHours($shiftEnd);
+
 
     $dayOfWeek = $shiftDate->format('l');
     $dayType = match ($dayOfWeek) {

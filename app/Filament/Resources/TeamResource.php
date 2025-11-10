@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Company;
 use App\Models\StaffProfile;
 use App\Models\User;
+use Filament\Facades\Filament;
 
 class TeamResource extends Resource
 {
@@ -26,6 +27,14 @@ class TeamResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-s-user-group';
 
     protected static ?int $navigationSort = 3;
+
+    
+                public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-teams');
+        }
 
 public static function getEloquentQuery(): Builder
 {

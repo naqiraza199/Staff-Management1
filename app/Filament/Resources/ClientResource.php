@@ -37,6 +37,7 @@ use Filament\Forms\Components\ViewField;
 use App\Models\Team;
 use App\Models\ClientType;
 use Filament\Forms\Components\Textarea;
+use Filament\Facades\Filament;
 
 
 class ClientResource extends Resource
@@ -46,6 +47,13 @@ class ClientResource extends Resource
     protected static ?string $navigationGroup = 'Client Management';
 
     protected static ?string $navigationIcon = 'heroicon-s-user-group';
+
+                 public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-clients');
+        }
 
     protected static ?int $navigationSort = 2;
 
@@ -395,7 +403,7 @@ class ClientResource extends Resource
                                     ->size(200)
                                     ->visible(fn ($state) => $state !== null),
                                     ]),
-                                Grid::make(2)
+                                Grid::make(3)
                                     ->schema([
                                         TextEntry::make('mobile_number')
                                             ->label('Mobile Number')
@@ -621,7 +629,7 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                                 ->send();
                                         }),
                                 ]),
-                                Section::make('Additional Information')
+                                Section::make('Private Info Client')
                                         ->schema([
                                             InfolistView::make('filament.infolists.client-private')
                                                 ->columnSpanFull(),

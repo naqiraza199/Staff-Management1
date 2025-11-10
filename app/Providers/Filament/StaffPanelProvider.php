@@ -27,6 +27,8 @@ class StaffPanelProvider extends PanelProvider
             ->id('staff')
             ->path('staff')
             ->login()
+            ->favicon(asset('fav.png'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->registration(Register::class) 
             ->colors([
                 'primary' => Color::Green,

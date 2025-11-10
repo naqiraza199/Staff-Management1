@@ -48,7 +48,8 @@ protected function getHeaderActions(): array
 
             Action::make('communications')
                 ->label('Communications')
-                ->icon('heroicon-o-chat-bubble-left-right'),
+                ->icon('heroicon-s-chat-bubble-left-right')
+                ->url(fn ($record) => route('filament.admin.pages.client-communication', ['client_id' => $record->id])),
                 
             Action::make('billing_report')
                 ->label('Billing Report')

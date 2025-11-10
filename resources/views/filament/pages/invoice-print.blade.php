@@ -47,16 +47,18 @@
             @endif
         </div>
         <hr>
-
+  @php 
+                        $invoiceSetting = \App\Models\InvoiceSetting::where('company_id',$company->id)->first();
+                @endphp
         <div class="cols">
             <div class="col">
                 <div class="label">From</div>
                 <div class="muted">{{ $company->name ?? '' }}</div>
-                <div class="muted">6 Ebony Link</div>
+                <div class="muted">{{ $invoiceSetting->address }}</div>
                 <br>
-                <div class="muted">+351 2323 123</div>
-                <div class="muted">info@empoweringss.com.au</div>
-                <div class="muted">+65 6521 959</div>
+                <div class="muted">{{ $invoiceSetting->phone }}</div>
+                <div class="muted">{{ $invoiceSetting->contact_email }}</div>
+                <div class="muted">{{ $invoiceSetting->abn }}</div>
             </div>
             <div class="col">
                 <div class="label">To</div>
@@ -153,7 +155,7 @@
         <div class="summary">
             <div>
                 <div style="font-size:18px;color:#6b7280;">Payment Methods:</div>
-                <input class="pill-input" type="text" disabled value="BSB: 062-585 ACC: 11037954">
+                <input class="pill-input" type="text" disabled value="{{ $invoiceSetting->payment_terms }}">
             </div>
             <div style="font-size:18px;color:#6b7280; align-self:center;">Amount Due {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d/m/Y') }}</div>
             <div>

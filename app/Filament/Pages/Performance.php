@@ -7,6 +7,7 @@ use App\Models\Company;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Filament\Facades\Filament;
 
 class Performance extends Page
 {
@@ -21,6 +22,13 @@ class Performance extends Page
     public $selectedStatus;
     public $startDate;
     public $endDate;
+
+                         public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('see-performances');
+        }
 
     public function mount()
     {

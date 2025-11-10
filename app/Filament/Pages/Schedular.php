@@ -76,6 +76,8 @@ public $shifts;
 public $clientNames;
 public $shiftTypeNames;
 public $display_name;
+public $shiftTypes;
+
 
 public bool $showTaskModal = false;
 public ?int $shiftId = null;
@@ -1021,7 +1023,7 @@ public function form(Form $form): Form
 public function createShift()
 {
      $data = $this->form->getState();
-     $authUser = Auth::user();
+     $authUser = Auth::user();  
      $shiftCompanyID = Company::where('user_id', $authUser->id)->value('id');
   
 
@@ -1105,7 +1107,13 @@ $newShift = Shift::create([
     $shiftEnd    = Carbon::parse(data_get($data, 'time_and_location.end_time'));
     $priceBookId = data_get($data, 'client_section.price_book_id');
 
-    $hours = $shiftStart->floatDiffInHours($shiftEnd);
+    if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+            // Shift ends next day (e.g., 11PM → 3AM)
+            $shiftEnd = $shiftEnd->addDay();
+        }
+
+        $hours = $shiftStart->floatDiffInHours($shiftEnd);
+
 
     $dayOfWeek = $shiftDate->format('l');
     $dayType = match ($dayOfWeek) {

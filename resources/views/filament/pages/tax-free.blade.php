@@ -161,10 +161,7 @@
     .text-gray-700 {
         color: #4a5568;
     }
-    .px-4 {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
+
     .py-2 {
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
@@ -256,15 +253,17 @@
 
                         </div>
                     <hr>
-
+   @php 
+                        $invoiceSetting = \App\Models\InvoiceSetting::where('company_id',$this->company->id)->first();
+                @endphp
                  <div style="display: flex;justify-content: space-between;">
-                       <div style="padding:30px">
+                          <div style="padding:30px">
                         <label class="block text-sm font-medium text-gray-700">From</label>
                         <p class="mt-1 text-sm text-gray-900">{{ $this->company->name }}</p>
-                        <p class="text-sm text-gray-600">6 Ebony Link</p><br>
-                        <p class="text-sm text-gray-600">+351 2323 123</p>
-                        <p class="text-sm text-gray-600">info@empoweringss.com.au</p>
-                        <p class="text-sm text-gray-600">+65 6521 959</p>
+                        <p class="text-sm text-gray-600">{{ $invoiceSetting->address }}</p><br>
+                        <p class="text-sm text-gray-600">{{ $invoiceSetting->phone }}</p>
+                        <p class="text-sm text-gray-600">{{ $invoiceSetting->contact_email }}</p>
+                        <p class="text-sm text-gray-600">{{ $invoiceSetting->abn }}</p>
                     </div>
                     
                 <div class="mt-4 grid newgri gap-4">
@@ -559,7 +558,7 @@
                         <img class="pay-img" src="https://appassets02.shiftcare.com/assets/american-express-6080b0ab7050c8133f4ce6fcc95b9cdce1f28fa53dfe81c9b9dd3ec4dc5a1c96.png" alt="American Express" class="h-6">
                         <img class="pay-img" src="https://appassets02.shiftcare.com/assets/paypal2-ad0bdd2a8cf5817e75572c50a4c2f83b7385bdd9395588e80ad5f77edb441d16.png" alt="PayPal" class="h-6">
                     </div>
-                        <input style="background: #F5F5F5;width: 100%;font-size: 13px;" type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" disabled value="BSB: 062-585 ACC: 11037954">
+                        <input style="background: #F5F5F5;width: 100%;font-size: 13px;" type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" disabled value="{{ $invoiceSetting->payment_terms }}">
                 </div>
 
                   <div class="mt-4 flex">

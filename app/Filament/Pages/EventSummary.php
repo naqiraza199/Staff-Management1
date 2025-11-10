@@ -11,6 +11,7 @@ use App\Models\StaffProfile;
 use App\Models\User;
 use App\Models\Shift;
 use App\Models\ShiftNote;
+use Filament\Facades\Filament;
 
 class EventSummary extends Page
 {
@@ -20,6 +21,12 @@ class EventSummary extends Page
     protected static ?string $navigationLabel = 'Event Summary';
     protected static ?string $navigationGroup = 'Reports';
 
+                                 public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-event-summary');
+        }
 
 
     public $clients = [];
@@ -134,44 +141,49 @@ class EventSummary extends Page
     /**
      * 🧮 Count notes for a client
      */
-    protected function getNoteCountsForClient($clientId): array
-    {
-        $shiftIds = $this->getShiftIdsForClient($clientId);
+protected function getNoteCountsForClient($clientId): array
+{
+    $shiftIds = $this->getShiftIdsForClient($clientId);
 
-        if (empty($shiftIds)) {
-            return $this->emptyCounts();
-        }
+    // Fetch notes that belong either to related shifts OR directly to this client
+    $counts = ShiftNote::query()
+        ->where(function ($q) use ($shiftIds, $clientId) {
+            if (!empty($shiftIds)) {
+                $q->whereIn('shift_id', $shiftIds);
+            }
+            $q->orWhere('client_id', $clientId);
+        })
+        ->selectRaw('note_type, COUNT(*) as total')
+        ->groupBy('note_type')
+        ->pluck('total', 'note_type')
+        ->toArray();
 
-        $counts = ShiftNote::query()
-            ->whereIn('shift_id', $shiftIds)
-            ->selectRaw('note_type, COUNT(*) as total')
-            ->groupBy('note_type')
-            ->pluck('total', 'note_type')
-            ->toArray();
+    // If no notes found, return zeros for all types
+    return $this->buildCountsArray($counts ?: []);
+}
 
-        return $this->buildCountsArray($counts);
-    }
 
     /**
      * 🧮 Count notes for a staff user
      */
-    protected function getNoteCountsForStaff($userId): array
-    {
-        $shiftIds = $this->getShiftIdsForStaff($userId);
+protected function getNoteCountsForStaff($userId): array
+{
+    // $shiftIds = $this->getShiftIdsForStaff($userId);
 
-        if (empty($shiftIds)) {
-            return $this->emptyCounts();
-        }
+    // Fetch notes that belong either to related shifts OR directly to this staff
+$counts = ShiftNote::query()
+    ->whereNull('client_id')
+    ->where('user_id', $userId)
+    ->where('staff_note', true)
+    ->selectRaw('note_type, COUNT(*) as total')
+    ->groupBy('note_type')
+    ->pluck('total', 'note_type')
+    ->toArray();
 
-        $counts = ShiftNote::query()
-            ->whereIn('shift_id', $shiftIds)
-            ->selectRaw('note_type, COUNT(*) as total')
-            ->groupBy('note_type')
-            ->pluck('total', 'note_type')
-            ->toArray();
 
-        return $this->buildCountsArray($counts);
-    }
+    return $this->buildCountsArray($counts ?: []);
+}
+
 
     /**
      * Helpers

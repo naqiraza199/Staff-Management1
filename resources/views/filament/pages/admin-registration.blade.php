@@ -54,7 +54,8 @@
 
                         
                         .center {
-                        text-align: center;
+                       text-align: -webkit-center;
+                       margin-top: 45px;
                         }
 
                         /* Button Style */
@@ -80,12 +81,18 @@
                         transform: translateY(-3px);
                         background: linear-gradient(90deg, #0b54aeff, #0fa6d0ff);
                         }
+                        .logimg{
+                           height: auto;
+                            width: 145px;
+                            margin-top: 10px;
+                        }
                         
 
                       
         </style>
           <div class="center">
-            <a href="{{ route('filament.admin.auth.login') }}" class="awesome-btn">I have an already account?</a>
+              <img class="logimg" src="{{ asset('logo2.png') }}" alt="">
+              <a href="{{ route('filament.admin.auth.login') }}" class="awesome-btn">I have an already account?</a>
         </div>
            <form wire:submit.prevent="submit">
         {{ $this->form }}

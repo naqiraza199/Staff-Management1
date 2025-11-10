@@ -33,12 +33,20 @@ use App\Models\ClientType;
 use App\Models\PublicHoliday;
 use App\Models\JobTitle;
 use Filament\Forms\Components\Textarea;
+use Filament\Facades\Filament;
 
 class Setting extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-s-cog-6-tooth';
     protected static string $view = 'filament.pages.setting';
     protected static ?string $navigationGroup = 'Account';
+
+                              public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-settings');
+        }
 
     public function infolist(Infolist $infolist): Infolist
     {

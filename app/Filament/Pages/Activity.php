@@ -10,12 +10,21 @@ use App\Models\Shift;
 use App\Models\BillingReport;
 use App\Models\StaffProfile;
 use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 class Activity extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-s-chart-bar';
     protected static string $view = 'filament.pages.activity';
     protected static ?string $navigationGroup = 'Reports';
+
+    
+                       public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('see-activities');
+        }
 
     public $clients = [];
     public $staff = [];

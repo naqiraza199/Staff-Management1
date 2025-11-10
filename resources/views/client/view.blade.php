@@ -14,12 +14,6 @@
             --border-radius: 0.5rem;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
 
 
         /* --- Layout --- */
@@ -271,18 +265,18 @@
             font-size: 1.1em;
         }
 
-        /* Sidebar Specific */
-        .sidebar .card {
+        /* Sidebar-view Specific */
+        .sidebar-view .card {
             padding: 15px;
         }
         
-        .sidebar .card-header {
+        .sidebar-view .card-header {
             border-bottom: none;
             padding-bottom: 0;
             margin-bottom: 10px;
         }
         
-        .sidebar .info-row {
+        .sidebar-view .info-row {
             margin-bottom: 8px;
         }
         
@@ -305,7 +299,7 @@
                 grid-template-columns: 1fr;
             }
         }
-        .sidebar {
+        .sidebar-view {
   width: 100%;
 }
 

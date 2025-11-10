@@ -28,6 +28,8 @@ class SuperAdminPanelProvider extends PanelProvider
             ->id('superAdmin')
             ->path('superAdmin')
             ->login()
+            ->favicon(asset('fav.png'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->navigation(true)
              ->colors([
                 'primary' => Color::hex('#6860FF'),

@@ -105,15 +105,15 @@ Route::get('/subscription/cancel/admin', [SubscriptionController::class, 'cancel
 
 Route::get('/make-superadmin', function () {
 
-    $user = User::where('email', 'superadmin@gmail.com')->first();
+    $user = User::where('email', 'jodip@mailinator.com')->first();
 
     if (!$user) {
         return '❌ User with this email not found.';
     }
 
-    $user->assignRole('superadmin');
+    $user->assignRole('Admin');
 
-    return '✅ Superadmin role assigned successfully to ' . $user->email;
+    return '✅role assigned successfully to ' . $user->email;
 });
 
 Route::get('/remove-admin-role', function () {

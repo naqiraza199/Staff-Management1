@@ -719,7 +719,13 @@ foreach ($clientDetails as $detail) {
     $priceBookId  = $detail['price_book_id'];
     $shiftStart   = \Carbon\Carbon::parse($detail['client_start_time']);
     $shiftEnd     = \Carbon\Carbon::parse($detail['client_end_time']);
-    $hours        = $shiftStart->floatDiffInHours($shiftEnd);
+    // ✅ Handle overnight shift (e.g. 11PM → 3AM next day)
+        if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+            $shiftEnd = $shiftEnd->addDay();
+        }
+
+        $hours = $shiftStart->floatDiffInHours($shiftEnd);
+
 
         $priceDetail = \App\Models\PriceBookDetail::where('price_book_id', $priceBookId)
             ->where('day_of_week', $dayType)

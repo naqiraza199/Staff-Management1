@@ -5,19 +5,18 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
-use App\Models\Event;
-use Filament\Tables\Columns\TextColumn;
-use Carbon\Carbon;
-use App\Models\Client;
 use Filament\Tables\Actions\Action;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Response; 
+use Carbon\Carbon;
+use App\Models\Client;
+use App\Models\Shift;
+use App\Models\ShiftNote;
+use App\Models\Company;
+use Filament\Facades\Filament;
 
 class EventDetail extends Page implements Tables\Contracts\HasTable
 {
@@ -27,283 +26,280 @@ class EventDetail extends Page implements Tables\Contracts\HasTable
     protected static ?string $navigationGroup = 'Reports';
     protected static string $view = 'filament.pages.event-detail';
 
-    public function table(Table $table): Table
+    // Optional filter state (Filament Table filters will populate these via query closures)
+    public ?string $noteType = null;
+    public ?string $startDate = null;
+    public ?string $endDate = null;
+                             public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-event-details');
+        }
+    /**
+     * Helper: extract client names from a shift (client_section JSON) or from client_id
+     * Returns string: single or multiple client display_names joined by comma, or "N/A"
+     */
+    protected function resolveClientNameFromRecord($record): string
     {
-        
+        // Prefer client_id (direct on ShiftNote) if present
+        if (!empty($record->client_id)) {
+            $client = Client::find($record->client_id);
+            if ($client) {
+                return $client->display_name;
+            }
+        }
 
-            $formatClientData = function ($record, $type) {
+        // Fallback: try to read from shift->client_section JSON
+        $shift = $record->shift;
+        if ($shift && !empty($shift->client_section)) {
+            $data = is_array($shift->client_section) ? $shift->client_section : @json_decode($shift->client_section, true);
+            if (!empty($data['client_id'])) {
+                $clientIds = is_array($data['client_id']) ? $data['client_id'] : [$data['client_id']];
+                $names = Client::whereIn('id', $clientIds)->pluck('display_name')->toArray();
+                if (!empty($names)) {
+                    return implode(', ', $names);
+                }
+            }
+
+            // older code placed client info in client_details (safety)
+            if (!empty($data['client_details']) && is_array($data['client_details'])) {
+                $names = collect($data['client_details'])->pluck('client_name')->filter()->unique()->values()->toArray();
+                if (!empty($names)) {
+                    return implode(', ', $names);
+                }
+            }
+        }
+
+        return 'N/A';
+    }
+
+    /**
+     * Build Filament Table
+     */
+   public function table(Table $table): Table
+{
+    $authUser = Auth::user();
+    $companyId = Company::where('user_id', $authUser->id)->value('id');
+
+    
+    return $table
+        ->query(function () use ($authUser, $companyId) {
+    $notes = ShiftNote::query()
+        ->with('shift')
+        ->where(function ($q) use ($authUser, $companyId) {
+            $q->whereHas('shift', fn($s) => $s->where('company_id', $companyId))
+              ->orWhereIn('client_id', Client::where('user_id', $authUser->id)->pluck('id'));
+        })
+        ->latest()
+        ->get();
+
+    // Expand notes having multiple clients
+    $expanded = collect();
+
+    foreach ($notes as $note) {
+        $clients = [];
+
+        // Case 1: direct client_id
+        if (!empty($note->client_id)) {
+            $clients[] = $note->client_id;
+        }
+
+        // Case 2: shift->client_section JSON
+        $shift = $note->shift;
+        if ($shift && !empty($shift->client_section)) {
+            $data = is_array($shift->client_section)
+                ? $shift->client_section
+                : @json_decode($shift->client_section, true);
+
+            if (isset($data['client_id'])) {
+                $clientIds = is_array($data['client_id']) ? $data['client_id'] : [$data['client_id']];
+                $clients = array_merge($clients, $clientIds);
+            } elseif (is_array($data)) {
+                foreach ($data as $item) {
+                    if (!empty($item['client_id'])) {
+                        $clients[] = $item['client_id'];
+                    }
+                }
+            }
+        }
+
+        $clients = array_unique(array_filter($clients));
+
+        // Duplicate record per client
+        if (empty($clients)) {
+            $expanded->push($note);
+        } else {
+            foreach ($clients as $clientId) {
+                $clone = clone $note;
+                $clone->resolved_client_id = $clientId;
+                $expanded->push($clone);
+            }
+        }
+    }
+
+    // Convert collection back to query-like builder for Filament
+    return \App\Models\ShiftNote::query()->whereIn('id', $expanded->pluck('id')->unique());
+})
+        ->columns([
+            TextColumn::make('client')
+                ->label('Client')
+                ->getStateUsing(function ($record) {
+                    $clientNames = [];
+
+                    // If direct client_id exists
+                    if (!empty($record->client_id)) {
+                        $client = Client::find($record->client_id);
+                        if ($client) {
+                            $clientNames[] = $client->display_name ?? $client->full_name ?? 'N/A';
+                        }
+                    }
+
+                    // Otherwise, check shift->client_section JSON
                     $shift = $record->shift;
-                    $clientName = 'N/A';
-                    $clientId = null;
-                    
                     if ($shift && !empty($shift->client_section)) {
-                        $data = is_array($shift->client_section) 
-                            ? $shift->client_section 
-                            : json_decode($shift->client_section, true);
-
-                        if (!empty($data['client_id'])) {
-                            $clientId = $data['client_id'];
-                        }
-                    }
-
-                    if ($clientId) {
-                        $client = \App\Models\Client::find($clientId); 
-                        $clientName = $client?->display_name ?? 'Unknown Client';
-                    }
-
-                    if ($type === 'client_name') {
-                        return $clientName;
-                    }
-
-                    if ($type === 'title') {
-                        $start = Carbon::parse($record->created_at)->format('d/m/Y h:i a');
-                        $end = Carbon::parse($record->created_at)->addHours(6)->format('h:i a'); 
-
-                        return "{$record->title} for {$clientName} @ {$start} - {$end}";
-                    }
-
-                     if ($type === 'body') {
-
-                        return $record->body;
-
-                    }
-
-                    return '';
-                };
-            $companyId = Auth::user()->company->id;
-        return $table
-        
-            ->query(
-                 Event::query()
-                ->where('from', 'Note')
-                ->whereHas('shift', function ($q) use ($companyId) {
-                    $q->where('company_id', $companyId);
-                })
-            )
-            ->columns([
-                
-
-
-           TextColumn::make('client_name')
-                    ->label('Client')
-                    ->formatStateUsing(fn($state) => "<span style='font-size:13px'>{$state}</span>")
-                    ->html()
-                    ->getStateUsing(function ($record) {
-                        $shift = $record->shift;
-
-                        if (!$shift || empty($shift->client_section)) {
-                            return 'N/A';
-                        }
-
                         $data = is_array($shift->client_section)
                             ? $shift->client_section
-                            : json_decode($shift->client_section, true);
+                            : @json_decode($shift->client_section, true);
 
-                        if (empty($data['client_id'])) {
-                            return 'N/A';
+                        // Normalize both array and single-client JSON formats
+                        if (isset($data['client_id'])) {
+                            $clientIds = is_array($data['client_id'])
+                                ? $data['client_id']
+                                : [$data['client_id']];
+                            $clientNames = array_merge(
+                                $clientNames,
+                                Client::whereIn('id', $clientIds)->pluck('display_name')->toArray()
+                            );
+                        } elseif (is_array($data)) {
+                            // Handle array of multiple client entries
+                            foreach ($data as $item) {
+                                if (!empty($item['client_id'])) {
+                                    $client = Client::find($item['client_id']);
+                                    if ($client) {
+                                        $clientNames[] = $client->display_name ?? $client->full_name ?? 'N/A';
+                                    }
+                                }
+                            }
                         }
+                    }
 
-                        // Handle both single and multiple client IDs
-                        $clientIds = is_array($data['client_id']) ? $data['client_id'] : [$data['client_id']];
-                        $clients = Client::whereIn('id', $clientIds)->pluck('display_name')->toArray();
+                    // ⚙️ Split clients — only show the FIRST one per row in table
+                    // For multiple clients in one shift, we'll duplicate rows below
+                    return implode(', ', array_unique($clientNames)) ?: 'N/A';
+                })
+                ->html()
+                ->sortable()
+                ->searchable(),
 
-                        return !empty($clients) ? implode(', ', $clients) : 'N/A';
-                    })
-                    ->sortable(),
+            TextColumn::make('created_at')
+                ->label('Created At')
+                ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->format('d-m-Y') : '-')
+                ->sortable()
+                ->searchable(),
 
-                    TextColumn::make('created_at')
-                        ->label('Created At')
-                        ->formatStateUsing(function ($state) {
-                            if (!$state) return '-';
-                            
-                            $formattedDate = Carbon::parse($state)->format('d-m-Y');
-                            
-                            return "<span style='font-size:13px'>{$formattedDate}</span>";
-                        })
-                        ->html() 
-                        ->sortable()
-                        ->searchable(),
+            TextColumn::make('note_type')
+                ->label('Category')
+                ->formatStateUsing(fn ($state) => "<span style='font-size:13px'>" . e($state ?? '-') . "</span>")
+                ->html()
+                ->sortable()
+                ->searchable(),
 
-                TextColumn::make('from')
-                    ->label('Category')
-                    ->searchable()
-                    ->formatStateUsing(fn($state) => "<span style='font-size:13px'>{$state}</span>")
-                    ->html()
-                    ->sortable(),
+            TextColumn::make('title')
+                ->label('Summary')
+                ->getStateUsing(function ($record) {
+                    $clientName = $this->resolveClientNameFromRecord($record);
+                    $start = $record->created_at ? Carbon::parse($record->created_at)->format('d/m/Y h:i a') : '-';
+                    return "{$record->title} for {$clientName} @ {$start}";
+                })
+                ->formatStateUsing(fn ($state) => "<span style='font-size:11px'>" . e(Str::limit(strip_tags($state), 30)) . "</span>")
+                ->tooltip(fn ($record) => strip_tags($record->title ?? ''))
+                ->html()
+                ->wrap()
+                ->sortable()
+                ->searchable(),
 
+            TextColumn::make('note_body')
+                ->label('Message')
+                ->formatStateUsing(fn ($state) => "<span style='font-size:11px'>" . e(Str::limit(strip_tags($state ?? ''), 40)) . "</span>")
+                ->tooltip(fn ($record) => strip_tags($record->note_body ?? ''))
+                ->html()
+                ->wrap()
+                ->sortable()
+                ->searchable(),
 
-
-
-                TextColumn::make('title')
-                        ->label('Summary')
-                        ->html()
-                        ->getStateUsing(function ($record) {
-                            $shift = $record->shift;
-                            $clientName = 'Unknown Client';
-
-                            if ($shift && !empty($shift->client_section)) {
-                                $data = is_array($shift->client_section)
-                                    ? $shift->client_section
-                                    : json_decode($shift->client_section, true);
-
-                                if (!empty($data['client_id'])) {
-                                    $clientIds = is_array($data['client_id'])
-                                        ? $data['client_id']
-                                        : [$data['client_id']];
-
-                                    $clients = Client::whereIn('id', $clientIds)
-                                        ->pluck('display_name')
-                                        ->toArray();
-
-                                    $clientName = implode(', ', $clients);
-                                }
-                            }
-
-                            $start = Carbon::parse($record->created_at)->format('d/m/Y h:i a');
-                            $end   = Carbon::parse($record->created_at)->addHours(6)->format('h:i a');
-
-                            return "{$record->title} for {$clientName} @ {$start} - {$end}";
-                        })
-                        ->formatStateUsing(fn ($state) =>
-                            "<span style='font-size:11px'>" . e(Str::limit(strip_tags($state), 30)) . "</span>"
-                        )
-                        ->tooltip(function ($record) {
-                            $shift = $record->shift;
-                            $clientName = 'Unknown Client';
-
-                            if ($shift && !empty($shift->client_section)) {
-                                $data = is_array($shift->client_section)
-                                    ? $shift->client_section
-                                    : json_decode($shift->client_section, true);
-
-                                if (!empty($data['client_id'])) {
-                                    $clientIds = is_array($data['client_id'])
-                                        ? $data['client_id']
-                                        : [$data['client_id']];
-
-                                    $clients = Client::whereIn('id', $clientIds)
-                                        ->pluck('display_name')
-                                        ->toArray();
-
-                                    $clientName = implode(', ', $clients);
-                                }
-                            }
-
-                            $start = Carbon::parse($record->created_at)->format('d/m/Y h:i a');
-                            $end   = Carbon::parse($record->created_at)->addHours(6)->format('h:i a');
-
-                            return strip_tags("{$record->title} for {$clientName} @ {$start} - {$end}");
-                        })
-                        ->wrap()
-                        ->sortable()
-                        ->searchable(),
-
-                     TextColumn::make('body')
-                            ->label('Message')
-                            ->formatStateUsing(fn($state) => "<span style='font-size:11px'>{$state}</span>")
-                            ->html()
-                            ->getStateUsing(fn ($record) => \Illuminate\Support\Str::limit(strip_tags($record->body), 20))
-                            ->tooltip(fn ($record) => strip_tags($record->body)) 
-                            ->wrap()
-                            ->sortable()
-                            ->searchable(),
-
-
-
-                        TextColumn::make('note_attachments')
-                            ->label('Attachments')
-                            ->tooltip('This note has attachments click it') 
-                            ->formatStateUsing(fn () => '📃') 
-                            ->extraAttributes(['class' => 'cursor-pointer text-primary-600'])
-                            ->action(
-                                Action::make('viewAttachments')
-                                    ->label('View Attachments')
-                                    ->modalHeading('Attachments')
-                                    ->modalButton('Close')
-                                    ->modalWidth('2xl')
-                                    ->modalContent(function ($record) {
-                                        $attachments = is_array($record->note_attachments)
-                                            ? $record->note_attachments
-                                            : json_decode($record->note_attachments, true);
-
-                                        if (empty($attachments)) {
-                                            return view('components.no-attachments'); 
-                                        }
-
-                                        return view('components.attachments-modal', [
-                                            'attachments' => $attachments,
-                                        ]);
-                                    })
-                            ),
-
-
-            ]) 
             
-             ->headerActions([
-                        Action::make('DownloadNotes')
-                                    ->label('') 
-                                    ->icon('heroicon-s-cloud-arrow-down')
-                                    ->color('success') 
-                                    ->tooltip('Download Event Notes Report')
-                                    ->action(function () use ($formatClientData, $table) {
-                                        $records = $table->getRecords(); 
-                                        
-                                        if ($records->isEmpty()) {
-                                            $this->notify('warning', 'No records found to export.');
-                                            return;
-                                        }
+        ])
+        ->actions([
+        Tables\Actions\Action::make('viewAttachments')
+        ->label('View Attachments')
+        ->icon('heroicon-o-paper-clip')
+        ->color('success')
+        ->visible(fn ($record) => !empty($record->attachments)) // 👈 only show if attachments exist
+        ->modalHeading('Attachments')
+        ->modalButton('Close')
+        ->modalWidth('2xl')
+        ->modalContent(function ($record) {
+            $attachments = is_string($record->attachments)
+                ? @json_decode($record->attachments, true)
+                : (is_array($record->attachments) ? $record->attachments : []);
 
-                                        $headers = [ 'Client', 'Created At', 'Category', 'Summary', 'Message', 'Has Attachments' ];
-                                        $filename = 'event_notes_report_' . now()->format('Ymd_His') . '.csv';
+            return view('components.attachments-modal', [
+                'attachments' => $attachments,
+            ]);
+        }),
 
-                                        $callback = function () use ($records, $headers, $formatClientData) {
-                                            $file = fopen('php://output', 'w');
-                                            fputcsv($file, $headers);
+    Tables\Actions\Action::make('noAttachments')
+        ->label('No Attachments')
+        ->icon('heroicon-o-x-circle')
+        ->color('gray')
+        ->visible(fn ($record) => empty($record->attachments)) // 👈 only show if empty
+        ->disabled()
+])
+ ->headerActions([ 
+               Tables\Actions\Action::make('clients')
+                    ->label('Clients')
+                    ->icon('heroicon-s-users')
+                    ->color('info')
+                    ->url(fn () => url('/admin/event-detail')),
 
-                                            foreach ($records as $record) {
-                                                
-                                                $attachments = is_string($record->note_attachments) 
-                                                    ? @json_decode($record->note_attachments, true) 
-                                                    : (is_array($record->note_attachments) ? $record->note_attachments : []);
-
-                                                $row = [
-                                                    $formatClientData($record, 'client_name'),
-                                                    
-                                                    $record->created_at ? Carbon::parse($record->created_at)->format('d-m-Y') : '-',
-                                                    
-                                                    $record->from,
-                                                    
-                                                    $formatClientData($record, 'title'),
-                                                    
-                                                    $record->body,
-                                                    
-                                                    empty($attachments) ? 'No' : 'Yes',
-                                                ];
-                                                fputcsv($file, $row);
-                                            }
-                                            fclose($file);
-                                        };
-                                         return response()->streamDownload($callback, $filename, ['Content-Type' => 'text/csv']);
-                                    }),
+                Tables\Actions\Action::make('staffs')
+                    ->label('Staffs')
+                    ->outlined()
+                    ->icon('heroicon-s-users')
+                    ->color('warning')
+                    ->url(fn () => url('/admin/event-detail-staff')),
 
 
-            ])
-            ->filters([
+                ])
+
+        ->filters([
+            Tables\Filters\SelectFilter::make('note_type')
+                ->label('Note Type')
+                ->options(
+                    ShiftNote::query()->distinct()->pluck('note_type', 'note_type')->filter()->toArray()
+                )
+                ->placeholder('All Types'),
+
             Tables\Filters\Filter::make('date_range')
                 ->form([
-                        DatePicker::make('start_date')
-                        ->label('From')
-                        ->closeOnDateSelection(),
-                        DatePicker::make('end_date')
-                        ->label('To')
-                        ->closeOnDateSelection(),
+                    DatePicker::make('start_date')->label('From')->closeOnDateSelection(),
+                    DatePicker::make('end_date')->label('To')->closeOnDateSelection(),
                 ])
                 ->query(function (Builder $query, array $data): Builder {
                     return $query->when(
                         $data['start_date'] && $data['end_date'],
-                        fn ($query) => $query->whereBetween('created_at', [$data['start_date'], $data['end_date']])
+                        fn ($query) => $query->whereBetween('created_at', [
+                            Carbon::parse($data['start_date'])->startOfDay(),
+                            Carbon::parse($data['end_date'])->endOfDay(),
+                        ])
                     );
                 }),
-            ]);
-    }
+        ])
+        ->defaultSort('created_at', 'desc')
+        ->recordUrl(fn ($record) => url("/admin/client-communication?client_id={$record->client_id}"));
+
+
+}
+
 }

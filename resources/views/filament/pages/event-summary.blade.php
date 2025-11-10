@@ -295,7 +295,7 @@ background-color: #e9f0f7;
                 <div class="table-controls">
                     <div class="search-box">
                         <label for="search">Search:</label>
-                        <input type="text" id="search">
+                        <input type="text" id="search" placeholder="Search by name...">
                     </div>
                 </div>
 
@@ -314,16 +314,19 @@ background-color: #e9f0f7;
                         <th>Total</th>
                     </tr>
                 </thead>
-                <tbody>
+               <tbody>
                     @forelse($clients as $client)
-                        <tr class="name-row">
+                        <tr 
+                            class="name-row cursor-pointer hover:bg-gray-100 transition"
+                            onclick="window.location.href='{{ url('/admin/client-communication') }}?client_id={{ $client->id }}'"
+                        >
                             <td>{{ $client->display_name }}</td>
-                            <td>{{ $client->note_counts['Injury'] }}</td>
-                            <td>{{ $client->note_counts['Feedback'] }}</td>
-                            <td>{{ $client->note_counts['Enquiry'] }}</td>
-                            <td>{{ $client->note_counts['Incident'] }}</td>
-                            <td>{{ $client->note_counts['Progress Notes'] }}</td>
-                            <td>{{ $client->note_counts['Total'] }}</td>
+                            <td>{{ $client->note_counts['Injury'] ?? 0 }}</td>
+                            <td>{{ $client->note_counts['Feedback'] ?? 0 }}</td>
+                            <td>{{ $client->note_counts['Enquiry'] ?? 0 }}</td>
+                            <td>{{ $client->note_counts['Incident'] ?? 0 }}</td>
+                            <td>{{ $client->note_counts['Progress Notes'] ?? 0 }}</td>
+                            <td>{{ $client->note_counts['Total'] ?? 0 }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="7" class="text-center">No Clients Found</td></tr>
@@ -351,7 +354,10 @@ background-color: #e9f0f7;
                 </thead>
                 <tbody>
                     @forelse($staff as $member)
-                        <tr class="name-row">
+                          <tr 
+                            class="name-row cursor-pointer hover:bg-gray-100 transition"
+                            onclick="window.location.href='{{ url('/admin/staff-communication') }}?staff_id={{ $member->id }}'"
+                        >
                             <td>{{ $member->name }}</td>
                             <td>{{ $member->note_counts['Injury'] }}</td>
                             <td>{{ $member->note_counts['Feedback'] }}</td>
@@ -397,6 +403,31 @@ background-color: #e9f0f7;
             <i class="fas fa-download"></i>
         </div>
     </div> 
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('search');
+    const clientRows = document.querySelectorAll('#client-table tbody tr');
+    const staffRows = document.querySelectorAll('#staff-table tbody tr');
+
+    searchInput.addEventListener('keyup', function () {
+        const query = this.value.toLowerCase().trim();
+
+        // Filter Client Table
+        clientRows.forEach(row => {
+            const name = row.querySelector('td:first-child')?.textContent.toLowerCase() || '';
+            row.style.display = name.includes(query) ? '' : 'none';
+        });
+
+        // Filter Staff Table
+        staffRows.forEach(row => {
+            const name = row.querySelector('td:first-child')?.textContent.toLowerCase() || '';
+            row.style.display = name.includes(query) ? '' : 'none';
+        });
+    });
+});
+</script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>

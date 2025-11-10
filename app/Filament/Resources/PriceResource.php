@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Imports\PriceImporter;
 use Filament\Tables\Actions\ImportAction;
+use Filament\Facades\Filament;
 
 class PriceResource extends Resource
 {
@@ -22,7 +23,13 @@ class PriceResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-s-banknotes';
     protected static ?string $navigationGroup = 'Account';
 
+   public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
 
+            return $user && $user->hasPermissionTo('manage-prices');
+        }
+    
     public static function canCreate(): bool
     {
         return false;

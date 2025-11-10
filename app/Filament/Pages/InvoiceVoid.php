@@ -30,6 +30,7 @@ use Filament\Tables\Actions\ExportAction;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\URL;
+use Filament\Facades\Filament;
 
 class InvoiceVoid extends Page implements Tables\Contracts\HasTable
 {
@@ -42,6 +43,14 @@ class InvoiceVoid extends Page implements Tables\Contracts\HasTable
     protected static ?string $navigationGroup = 'Invoices';
 
     protected static ?int $navigationSort = 2;
+
+                       public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-void-invoices');
+        }
+
 
 public function table(Table $table): Table
     {

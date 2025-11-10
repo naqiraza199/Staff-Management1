@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 class ClientExpireDocumentResource extends Resource
 {
@@ -21,7 +22,12 @@ class ClientExpireDocumentResource extends Resource
 
   protected static ?string $navigationIcon = 'heroicon-s-clipboard-document';
 
+                 public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
 
+            return $user && $user->hasPermissionTo('see-client-expire-documents');
+        }
       protected static ?string $navigationGroup = 'Client Management';
 
           public static function getModelLabel(): string

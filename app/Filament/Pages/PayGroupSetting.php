@@ -13,6 +13,7 @@ use App\Models\Price;
 use App\Models\User;
 use App\Models\Company;
 use App\Models\PayGroupDetail;
+use Filament\Facades\Filament;
 
 class PayGroupSetting extends Page
 {
@@ -21,7 +22,12 @@ class PayGroupSetting extends Page
     protected static string $view = 'filament.pages.pay-group-setting';
     protected static ?string $navigationGroup = 'Pay Items';
     
+   public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
 
+            return $user && $user->hasPermissionTo('manage-price-items');
+        }
      public $showEditModal = false;
     public $editForm = [];
     

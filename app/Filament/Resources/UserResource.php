@@ -33,6 +33,7 @@ use App\Models\JobTitle;
 use App\Models\PayGroup;
 use App\Models\StaffPayrollSetting;
 use Filament\Forms\Components\Textarea;
+use Filament\Facades\Filament;
 
 class UserResource extends Resource
 {
@@ -42,6 +43,13 @@ class UserResource extends Resource
         protected static ?string $navigationGroup = 'Staff Management';
 
     protected static ?string $navigationIcon = 'heroicon-s-user';
+
+                public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-staffs');
+        }
 
     public static function getModelLabel(): string
     {

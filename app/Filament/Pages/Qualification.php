@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\DocumentCategory;
 use App\Models\Document;
 use Carbon\Carbon;
+use Filament\Facades\Filament;
+
 
 class Qualification extends Page implements Tables\Contracts\HasTable
 {
@@ -23,6 +25,13 @@ class Qualification extends Page implements Tables\Contracts\HasTable
     protected static string $view = 'filament.pages.qualification';
 
     protected static ?string $navigationGroup = 'Reports';
+
+                                 public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('see-qualifications');
+        }
 
      public function table(Table $table): Table
     {

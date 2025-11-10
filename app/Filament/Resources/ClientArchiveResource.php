@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 
 class ClientArchiveResource extends Resource
@@ -24,6 +25,13 @@ class ClientArchiveResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-s-rectangle-stack';
 
      protected static ?string $navigationGroup = 'Client Management';
+
+                   public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-archive-clients');
+        }
 
     protected static ?int $navigationSort = 3;
 

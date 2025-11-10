@@ -6,6 +6,7 @@ use Filament\Pages\Page;
 use App\Models\Company;
 use App\Models\InvoiceSetting;
 use App\Models\Tax;
+use Filament\Facades\Filament;
 
 class InvoiceTaxSettings extends Page
 {
@@ -17,6 +18,14 @@ class InvoiceTaxSettings extends Page
     public $invoiceSetting;
     public $tax;
     public $taxes;
+
+    
+    public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-invoice-settings');
+        }
     
     public function mount()
     {

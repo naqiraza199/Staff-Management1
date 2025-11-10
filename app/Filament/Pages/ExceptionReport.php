@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\BillingReport;
 use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 class ExceptionReport extends Page
 {
@@ -20,6 +21,13 @@ class ExceptionReport extends Page
 
     public $clients = [];
     public $totals = [];
+
+                          public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('see-execption-reports');
+        }
 
    public function mount()
 {
