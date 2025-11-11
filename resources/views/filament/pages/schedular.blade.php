@@ -773,6 +773,19 @@ background: #151A2D;
  background-color: #4c4d51;
   color: white;
 }
+.main-content-sidebar{
+    left: 238px !important;
+    padding-right: 235px !important;
+}
+body.sidebar-collapsed .main-content-sidebar {
+  left: 52px !important;
+  padding-right: 50px !important;
+}
+@media (min-width: 640px) {
+  .sm\:text-3xl {
+    margin-left: 45px;
+  }
+}
     </style>
 
     <div wire:ignore.self x-data="{ calendarType: 'staff', viewType: 'Weekly' }">
@@ -1843,8 +1856,8 @@ function sortClientsBy(viewType, filteredShifts) {
                 const customPopup = document.getElementById('customCalendarPopup');
                 customPopup.style.display = customPopup.style.display === 'block' ? 'none' : 'block';
                 const rect = document.getElementById('customCalendarToggle').getBoundingClientRect();
-                customPopup.style.left = rect.left + 'px';
-                customPopup.style.top = rect.bottom + 'px';
+                customPopup.style.left = '759.35px';
+                customPopup.style.top = '140px';
             });
 
             document.addEventListener('click', (e) => {
