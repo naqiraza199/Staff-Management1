@@ -28,6 +28,7 @@ use App\Mail\DocumentSignatureRequest;
 use App\Models\Company;
 use App\Models\DocumentCategory;
 use Filament\Forms\Components\Textarea;
+use Filament\Facades\Filament;
 
 class ClientDocumentResource extends Resource
 {
@@ -38,6 +39,13 @@ class ClientDocumentResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-check';
 
     protected static ?int $navigationSort = 4;
+
+                     public static function canAccess(): bool
+        {
+            $user = Filament::auth()->user();
+
+            return $user && $user->hasPermissionTo('manage-clients');
+        }
 
                   public static function canCreate(): bool
     {

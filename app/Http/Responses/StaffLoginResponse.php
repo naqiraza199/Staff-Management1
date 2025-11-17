@@ -16,19 +16,29 @@ class StaffLoginResponse extends BaseLoginResponse
         $user = Auth::user();
 
         if ($user) {
-            // ❌ Check if user has no access
+            // ❌ Check if user has no access flag
             if ($user->no_access) {
-                // Logout user immediately
                 Auth::logout();
 
-                // Send Filament notification
                 Notification::make()
                     ->title('No Access')
-                    ->body('You have not access to login. Please contact the administrator.')
+                    ->body('You do not have access to login. Please contact the administrator.')
                     ->danger()
                     ->send();
 
-                // Redirect back to login
+                return redirect()->route('filament.admin.auth.login');
+            }
+
+            // ❌ Check if user has NO role (Spatie permission)
+            if ($user->roles()->count() === 0) {
+                Auth::logout();
+
+                Notification::make()
+                    ->title('No Role Assigned')
+                    ->body('You cannot login because no role is assigned to your account. Please contact the administrator.')
+                    ->danger()
+                    ->send();
+
                 return redirect()->route('filament.admin.auth.login');
             }
 

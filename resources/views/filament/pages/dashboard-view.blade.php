@@ -1,5 +1,6 @@
 <x-filament-panels::page>
 
+<livewire:filament.widgets.account-widget />
 
 
          @php
