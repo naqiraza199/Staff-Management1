@@ -36,6 +36,8 @@ class User extends Authenticatable
         'status',
         'job_title_id',
         'private_note',
+        'languages',
+        'no_access'
     ];
 
     /**
@@ -47,6 +49,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+    
 
     /**
      * Get the attributes that should be cast.
@@ -58,6 +61,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
+            'languages' => 'array',
         ];
     }
 

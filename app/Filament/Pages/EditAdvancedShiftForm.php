@@ -32,6 +32,7 @@ use Filament\Forms\Components\Textarea;
 use App\Models\Language;
 use App\Models\DocumentCategory;
 use App\Models\Event;
+use Filament\Forms\Components\View;
 
 class EditAdvancedShiftForm extends Page implements HasForms
 {
@@ -325,6 +326,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                     ->schema([
                         DatePicker::make('start_date')
                             ->label('Start Date')
+                            ->extraInputAttributes(['id' => 'start-date-input-advanced-edit']) // <-- UNIQUE ID
                             ->default($this->data['start_date'] ?? null),
                         Checkbox::make('shift_finishes_next_day')
                             ->label('Shift Finishes Next Day')
@@ -382,6 +384,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ->visible(fn ($get) => $get('repeat') && $get('recurrance') === 'Monthly'),
                         DatePicker::make('end_date')
                             ->label('End Date')
+                            ->extraInputAttributes(['id' => 'end-date-input-advanced-edit']) // <-- UNIQUE ID
                             ->default($this->data['end_date'] ?? null)
                             ->visible(fn ($get) => $get('repeat')),
                         TextInput::make('address')
@@ -404,7 +407,17 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ->visible(fn ($get) => $get('drop_off_address')),
                     ])
                     ->collapsible(),
+                                     View::make('start-date-initializer')
+                                            ->view('filament.forms.components.js-initializer')
+                                            ->viewData([
+                                                'fieldId' => 'start-date-input-advanced-edit'
+                                            ]),
 
+                                            View::make('end-date-initializer')
+                                            ->view('filament.forms.components.js-initializer')
+                                            ->viewData([
+                                                'fieldId' => 'end-date-input-advanced-edit'
+                                            ]),
                 Section::make('Shift')
                     ->schema([
                         Select::make('shift_type_id')

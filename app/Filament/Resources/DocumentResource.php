@@ -138,7 +138,7 @@ class DocumentResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('expired_at')
-                    ->label('Expired At')
+                    ->label('Expired')
                     ->date('d/m/Y')
                     ->searchable(),
 

@@ -6,6 +6,7 @@ use App\Models\StaffProfile;
 use App\Filament\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Notifications\SetPasswordNotification;
 
 class EditUser extends EditRecord
 {
@@ -59,6 +60,11 @@ class EditUser extends EditRecord
             ['user_id' => $updatedUser->id],
             $profileData
         );
+
+            if (!empty($data['send_onboarding_email'])) {
+        $updatedUser->notify(new SetPasswordNotification($updatedUser));
+    }
+        
 
         return $updatedUser;
     }

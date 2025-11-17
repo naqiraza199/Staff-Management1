@@ -22,6 +22,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\SetPasswordController;
+use App\Notifications\SetPasswordNotification;
 
 use App\Http\Controllers\PdfController;
 
@@ -211,3 +213,30 @@ Route::get('/ssl-test', function () {
 
 Route::get('/pdfco/test-edit', [PdfController::class, 'testEdit']);     
 Route::post('/pdfco/edit-custom', [PdfController::class, 'editCustom']);
+
+
+
+Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])
+    ->name('user.set-password');
+
+Route::post('/set-password/{user}', [SetPasswordController::class, 'update'])
+    ->name('user.set-password.update');
+
+
+
+
+Route::post('/admin/send-set-password-email/{id}', function ($id) {
+    $user = User::findOrFail($id);
+
+    $user->notify(new SetPasswordNotification($user));
+
+    if (class_exists(Notification::class)) {
+        Notification::make()
+            ->title('Email Sent')
+            ->body('Set password email sent to ' . $user->email)
+            ->success()
+            ->send();
+    }
+
+    return back();
+})->name('admin.send-set-password-email');

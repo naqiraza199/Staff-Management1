@@ -8,6 +8,7 @@ use App\Filament\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\SetPasswordNotification;
 
 class CreateUser extends CreateRecord
 {
@@ -23,6 +24,7 @@ class CreateUser extends CreateRecord
 
         $staffProfileFields = [
             'salutation', 'mobile_number', 'phone_number',
+            'first_name', 'middle_name', 'last_name',
             'role_type', 'role_id', 'gender', 'dob', 'employment_type', 'address', 'profile_pic'
         ];
 
@@ -32,6 +34,10 @@ class CreateUser extends CreateRecord
 
         if (array_filter($profileData)) {
             StaffProfile::create($profileData);
+        }
+
+        if (!empty($data['send_onboarding_email'])) {
+            $user->notify(new SetPasswordNotification($user));
         }
 
         return $user;

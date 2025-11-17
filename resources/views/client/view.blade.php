@@ -30,23 +30,19 @@
             font-weight: 700;
         }
 
-        .page-content {
-           margin-top: -25px;
-        }
+
 
         .main-content {
            display: flex;
             flex-direction: column;
             gap: 20px;
            width: 100%;
-            margin-left: 21px;
         }
 
         /* --- Reusable Card Component --- */
         .card {
             background-color: var(--surface-color);
             padding: 20px;
-            border-radius: var(--border-radius);
             box-shadow: var(--shadow-light);
             transition: box-shadow 0.3s ease;
         }
@@ -244,7 +240,6 @@
             background-color: #fff7ed; /* Light warning color */
             border: 1px solid #fed7aa;
             box-shadow: var(--shadow-light);
-            margin-left: 21px;
             margin-top: 25px;
             width: 100%;
         }

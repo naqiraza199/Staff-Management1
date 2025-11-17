@@ -45,6 +45,7 @@ use Carbon\Carbon;
 use App\Models\ApprovedShift;
 use App\Models\BillingReport;
 use App\Models\PriceBookDetail;
+use Filament\Forms\Components\View;
 
 
 class ShiftDetails extends Component implements Forms\Contracts\HasForms
@@ -833,9 +834,18 @@ public function viewAllEvents()
                         Placeholder::make('date_lab')
                             ->label('Date')
                             ->columnSpan(1),
-                    DatePicker::make('start_date')
-                    ->label('')
-                    ->columnSpan(2),
+                   DatePicker::make('start_date')
+                        ->label('')
+                        ->extraInputAttributes(['id' => 'start-date-input-edit']) // <-- UNIQUE ID
+                        ->columnSpan(2),
+
+
+                    // Add initializer for START DATE
+                    View::make('start-date-initializer')
+                        ->view('filament.forms.components.js-initializer')
+                        ->viewData([
+                            'fieldId' => 'start-date-input-edit'
+                        ]),
                     ]),
 
                 Grid::make(5)
@@ -1080,14 +1090,21 @@ public function viewAllEvents()
                             ->label('End Date')
                             ->columnSpan(1),
 
-                        DatePicker::make('end_date')
+                             DatePicker::make('end_date')
                             ->label('')
+                            ->extraInputAttributes(['id' => 'end-date-input-edit']) // <-- UNIQUE ID
                             ->columnSpan(2),
                     ])
                     ->extraAttributes([
                         'x-show' => 'repeatChecked',
                         'x-cloak' => true,
                     ]),
+
+                       View::make('end-date-initializer')
+                            ->view('filament.forms.components.js-initializer')
+                            ->viewData([
+                                'fieldId' => 'end-date-input-edit'
+                            ]),
 
                 Grid::make(3)
                     ->schema([

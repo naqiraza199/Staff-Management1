@@ -38,13 +38,7 @@ protected function getHeaderActions(): array
 {
     return [
         ActionGroup::make([
-            Action::make('add_shift')
-                ->label('Add Shift')
-                ->icon('heroicon-o-plus'),
 
-            Action::make('add_expense')
-                ->label('Add Expense')
-                ->icon('heroicon-o-banknotes'),
 
             Action::make('communications')
                 ->label('Communications')
@@ -53,24 +47,15 @@ protected function getHeaderActions(): array
                 
             Action::make('billing_report')
                 ->label('Billing Report')
-                ->icon('heroicon-o-chart-bar'),
+                ->icon('heroicon-o-chart-bar')
+                ->url(fn ($record) => route('filament.admin.pages.billing-reports-client', ['client_id' => $record->id])),
 
-            Action::make('timesheet')
-                ->label('Timesheet')
-                ->icon('heroicon-o-clock'),
-
-            Action::make('calendar')
-                ->label('Calendar')
-                ->icon('heroicon-o-calendar'),
 
             Action::make('documents')
                 ->label('Documents')
                 ->url(fn ($record) => route('filament.admin.pages.client-own-docs', ['client_id' => $record->id]))
                 ->icon('heroicon-o-document'),
 
-            Action::make('print_roster')
-                ->label('Print Roster')
-                ->icon('heroicon-o-printer'),
         ])
             ->button()
             ->label('MANAGE')

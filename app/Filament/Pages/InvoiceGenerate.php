@@ -55,7 +55,7 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use App\Models\Shift;
 use Filament\Facades\Filament;
-
+use Filament\Forms\Components\View;
 
 class InvoiceGenerate extends Page implements HasForms
 {
@@ -239,7 +239,17 @@ public function generateInvoices(array $selectedClients): void
                                 DatePicker::make('shift_start')
                                     ->label('SHIFT DATE')
                                     ->displayFormat('d-m-Y')
-                                    ->default('18-09-2025'),
+                                    ->default('18-09-2025')
+                                    // CRITICAL: Give it a unique ID for the JS calendar
+                                    ->extraInputAttributes(['id' => 'shift-start-input']) 
+                                    ->closeOnDateSelection(),
+
+                                // CRITICAL: Add the JavaScript initializer for the 'shift-start-input'
+                                View::make('shift-date-initializer')
+                                    ->view('filament.forms.components.js-initializer') // Path to your Blade view
+                                    ->viewData([
+                                        'fieldId' => 'shift-start-input' // Pass the unique ID
+                                    ]),
                             ])
                             ->extraAttributes(['class' => 'mb-4 border-b border-gray-200 pb-4']),
                     ])
@@ -254,14 +264,36 @@ public function generateInvoices(array $selectedClients): void
                     ->schema([
                         \Filament\Forms\Components\Grid::make(2)
                             ->schema([
-                                DatePicker::make('due_at')
-                                    ->label('DUE AT')
-                                    ->displayFormat('d-m-Y')
-                                    ->default('08-10-2025'),
-                                DatePicker::make('issued_at')
-                                    ->label('ISSUED AT')
-                                    ->displayFormat('d-m-Y')
-                                    ->default('24-09-2025'),
+                               DatePicker::make('due_at')
+                                        ->label('DUE AT')
+                                        ->displayFormat('d-m-Y')
+                                        ->default('08-10-2025')
+                                        // CRITICAL: Give it a unique ID for the JS calendar
+                                        ->extraInputAttributes(['id' => 'due-at-input'])
+                                        ->closeOnDateSelection(),
+
+                                    // CRITICAL: Add the JavaScript initializer for 'due-at-input'
+                                    View::make('due-at-initializer')
+                                        ->view('filament.forms.components.js-initializer')
+                                        ->viewData([
+                                            'fieldId' => 'due-at-input' // Pass the unique ID
+                                        ]),
+
+                                    // 2. ISSUED AT Picker (NEW)
+                                    DatePicker::make('issued_at')
+                                        ->label('ISSUED AT')
+                                        ->displayFormat('d-m-Y')
+                                        ->default('24-09-2025')
+                                        // CRITICAL: Give it a unique ID for the JS calendar
+                                        ->extraInputAttributes(['id' => 'issued-at-input'])
+                                        ->closeOnDateSelection(),
+
+                                    // CRITICAL: Add the JavaScript initializer for 'issued-at-input'
+                                    View::make('issued-at-initializer')
+                                        ->view('filament.forms.components.js-initializer')
+                                        ->viewData([
+                                            'fieldId' => 'issued-at-input' // Pass the unique ID
+                                        ]),
                             ])
                             ->extraAttributes(['class' => 'gap-4']),
                     ])

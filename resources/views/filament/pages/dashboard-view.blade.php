@@ -1,6 +1,5 @@
 <x-filament-panels::page>
 
-<livewire:filament.widgets.account-widget />
 
 
          @php
@@ -58,14 +57,20 @@
                 <canvas id="shiftCancellationsChart"></canvas>
             </div>
         </div>
+        <div class="chart-card">
+            <h3 class="chart-title">Late Clock In Times <a href="#" class="view-report">View Report</a></h3>
+            <div class="chart-wrapper">
+                <canvas id="lateClockInChart"></canvas>
+            </div>
+        </div>
      <div class="chart-card wide mt-8">
     <h3 class="chart-title text-lg font-bold mb-2">
         Rostered vs Actual Shift Time Variance
         <a href="#" class="text-blue-600 text-sm hover:underline float-right">View Report</a>
     </h3>
-    <div class="chart-wrapper flex flex-wrap gap-4">
+    <div class="chart-wrapper-hehe flex flex-wrap gap-4">
         <div class="chart-half flex-1 min-w-[300px]">
-            <canvas id="shiftVarianceChart"></canvas>
+            <canvas id="shiftVarianceChart" height="500"></canvas>
         </div>
         <div class="chart-half flex-1 min-w-[300px]">
             <table class="variance-table w-full text-sm border-collapse">
@@ -82,12 +87,7 @@
     </div>
 </div>
 
-        <div class="chart-card">
-            <h3 class="chart-title">Late Clock In Times <a href="#" class="view-report">View Report</a></h3>
-            <div class="chart-wrapper">
-                <canvas id="lateClockInChart"></canvas>
-            </div>
-        </div>
+        
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -101,7 +101,7 @@
     }
     .dashboard-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 25px;
         margin-top: 50px;
     }
@@ -178,6 +178,7 @@
         justify-content: space-between;
         height: 300px;
     }
+
     .chart-half {
         width: 48%;
         height:100%;

@@ -34,7 +34,8 @@ use App\Models\PayGroup;
 use App\Models\StaffPayrollSetting;
 use Filament\Forms\Components\Textarea;
 use Filament\Facades\Filament;
-
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\View;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -43,6 +44,7 @@ class UserResource extends Resource
         protected static ?string $navigationGroup = 'Staff Management';
 
     protected static ?string $navigationIcon = 'heroicon-s-user';
+
 
                 public static function canAccess(): bool
         {
@@ -84,17 +86,11 @@ public static function getEloquentQuery(): Builder
         $staffUserIds[] = $authUser->id;
     }
 
-    // ✅ Return the query including the logged-in user
+    // ✅ Return the query including the logged-in user (no staff role filter now)
     return User::with(['staffProfile'])
-        ->select(['id', 'name', 'email', 'created_at', 'updated_at'])
-        ->whereIn('id', $staffUserIds)
-        ->where(function ($query) {
-            $query->role('staff')
-                  ->orWhereHas('roles', function ($q) {
-                      $q->where('name', '!=', 'staff'); // ensures logged-in non-staff users are also included
-                  });
-        });
+        ->whereIn('id', $staffUserIds);
 }
+
 
 
     public static function form(Form $form): Form
@@ -103,6 +99,11 @@ public static function getEloquentQuery(): Builder
             ->schema([
                 Forms\Components\Section::make('Staff Detail')
                     ->schema([
+                         Forms\Components\Checkbox::make('no_access')
+                                            ->label('No Access')
+                                            ->inline()
+                                            ->default(false)
+                                            ->columnSpanFull(),
                         Forms\Components\Grid::make(['default' => 5])
                             ->schema([
                                 Forms\Components\Fieldset::make('Salutation')
@@ -130,11 +131,44 @@ public static function getEloquentQuery(): Builder
                                     ->columnSpan(2),
                                 Forms\Components\Fieldset::make('Staff Info')
                                     ->schema([
-                                        Forms\Components\TextInput::make('first_name')->label('First name')->placeholder('Enter First Name'),
-                                        Forms\Components\TextInput::make('middle_name')->label('Middle name')->placeholder('Enter Middle Name'),
-                                        Forms\Components\TextInput::make('last_name')->label('Last name')->placeholder('Enter Last/Family Name'),
-                                        Forms\Components\TextInput::make('password')->label('Password')->password()->required()->maxLength(255)->placeholder('Enter Password')
-                              ->hidden(fn () => request()->routeIs('filament.admin.resources.users.edit')),
+                                        Forms\Components\TextInput::make('first_name')
+                                            ->label('First Name')
+                                            ->placeholder('Enter First Name')
+                                            ->required()
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                                $set('name', trim(implode(' ', array_filter([
+                                                    $state,
+                                                    $get('middle_name'),
+                                                    $get('last_name'),
+                                                ]))));
+                                            }),
+
+                                        Forms\Components\TextInput::make('middle_name')
+                                            ->label('Middle Name')
+                                            ->placeholder('Enter Middle Name')
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                                $set('name', trim(implode(' ', array_filter([
+                                                    $get('first_name'),
+                                                    $state,
+                                                    $get('last_name'),
+                                                ]))));
+                                            }),
+
+                                        Forms\Components\TextInput::make('last_name')
+                                            ->label('Last Name')
+                                            ->placeholder('Enter Last/Family Name')
+                                            ->required()
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                                $set('name', trim(implode(' ', array_filter([
+                                                    $get('first_name'),
+                                                    $get('middle_name'),
+                                                    $state,
+                                                ]))));
+                                            }),
+                                        
                                     ])
                                     ->columnSpan(3)
                                     ->columns(2),
@@ -170,10 +204,14 @@ public static function getEloquentQuery(): Builder
                                     ->reactive()
                                     ->columnSpan(1),
                                 Forms\Components\Select::make('role_id')
-                                    ->label('Role')
-                                         ->relationship('roles', 'name')
-                                    ->visible(fn($get) => $get('role_type') === 'Office User')
-                                    ->columnSpan(1),
+                                        ->label('Role')
+                                        ->relationship(
+                                            name: 'roles',      
+                                            titleAttribute: 'name',
+                                            modifyQueryUsing: fn ($query) => $query->whereNotIn('name', ['Admin', 'superadmin']),
+                                        )
+                                        ->visible(fn ($get) => $get('role_type') === 'Office User')
+                                        ->columnSpan(1),
                             ]),
                             ]),
 
@@ -189,7 +227,19 @@ public static function getEloquentQuery(): Builder
                                     'Unspecified' => 'Unspecified',
                                     'Prefer not to say' => 'Prefer not to say',
                                 ])->columnSpan(1),
-                                Forms\Components\DatePicker::make('dob')->label('Date Of Birth')->columnSpan(1),
+                                // In your Filament Resource or Page Schema
+
+
+
+
+                                DatePicker::make('dob')
+                                    ->label('Date Of Birth')
+                                    ->columnSpan(1)
+                                    ->extraInputAttributes(['id' => 'dob-input']), // <-- Unique ID is required!
+
+
+
+       
                                                         Forms\Components\Select::make('employment_type')->options([
                             'Casual' => 'Casual',
                             'Part-Time' => 'Part-Time',
@@ -215,6 +265,30 @@ public static function getEloquentQuery(): Builder
 
                             ]),
                             ]),
+                                                            // Add the initializer *without* the hidden function
+                                View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'dob-input'
+                                    ]),
+
+                               Forms\Components\Fieldset::make('Languages')
+                                    ->schema([
+                     Forms\Components\TagsInput::make('languages')
+                                ->label('')
+                                ->placeholder('Add languages...')
+                                ->columnSpanFull()
+                                ->suggestions(['English', 'Urdu', 'Arabic', 'French', 'Spanish'])
+                                ->afterStateHydrated(function ($component, $state) {
+                                    // If state exists, keep it. Otherwise, set empty array.
+                                    $component->state(is_array($state) ? $state : []);
+                                })
+                                ->dehydrateStateUsing(fn ($state) => $state ?: []),
+
+
+
+                            
+                                    ]),
 
                                     Forms\Components\Fieldset::make('Address')
                                     ->schema([
@@ -224,9 +298,28 @@ public static function getEloquentQuery(): Builder
 
                                         Forms\Components\Fieldset::make('Profile Picture')
                                     ->schema([
-                        Forms\Components\FileUpload::make('profile_pic')->label('')->placeholder('Profile Picture')->columnSpanFull(),
+                        Forms\Components\FileUpload::make('profile_pic')
+                                        ->label('')
+                                        ->image()
+                                        ->disk('public')       
+                                        ->directory('/')        
+                                        ->visibility('public') 
+                                        ->columnSpanFull(),
+
                                     ]),
 
+                           Forms\Components\Checkbox::make('send_onboarding_email')
+                                ->label('Send Onboarding Email')
+                                ->inline()
+                                ->default(false)
+                                ->columnSpanFull()
+                                ->visible(function ($get, $record) {
+                                    if (!$record) {
+                                        return true;
+                                    }
+
+                                    return is_null($record->password) && is_null($record->last_login_at);
+                                }),
 
 
 
@@ -244,6 +337,7 @@ public static function getEloquentQuery(): Builder
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
+                    ->label('Display Name')
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
@@ -271,6 +365,14 @@ public static function getEloquentQuery(): Builder
                 Tables\Columns\TextColumn::make('staffProfile.phone_number')
                     ->label('Phone Number')
                     ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\TextColumn::make('role')
+                    ->label('Role')
+                    ->getStateUsing(function ($record) {
+                        return $record->roles->first()?->name ?? '-';
+                    })
+                    ->badge()
+                    ->color('stripe') 
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('staffProfile.role_type')
                     ->label('Role Type')
@@ -362,69 +464,12 @@ public static function infolist(Infolist $infolist): Infolist
                     // Main Staff Information Section (2/3 width)
                                Section::make('')
                         ->schema([
-                    Section::make('Staff Information')
+                    Section::make('Demographic Detail')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
                         ->schema([
-                            Grid::make(2)
-                                ->schema([
-                            
-                                    
-                                    TextEntry::make('name')
-                                        ->label('Name')
-                                        ->weight('bold')
-                                        ->icon('heroicon-m-user')
-                                        ->size('lg'),
-
-                                        ImageEntry::make('staffProfile.profile_pic')
-                                            ->label('')
-                                            ->circular()
-                                            ->size(200)
-                                            ->visible(fn ($state) => $state !== null),
-                                ]),
-                            
-                            Grid::make(3)
-                                ->schema([
-                                     TextEntry::make('email')
-                                        ->label('Email Address')
-                                        ->icon('heroicon-m-envelope'),
-                                  TextEntry::make('staffProfile.phone_number')
-                                        ->label('Phone Number')
-                                        ->icon('heroicon-m-phone'),
-                            TextEntry::make('email')
-                                ->label('Email Address')
-                                ->icon('heroicon-m-envelope'),
-                                ]),
-                                 TextEntry::make('staffProfile.address')
-                                        ->label('Address')
-                                        ->icon('heroicon-m-map-pin'),
-                            
-                            Grid::make(2)
-                                ->schema([
-                                   
-                            TextEntry::make('staffProfile.gender')
-                                ->label('Gender')
-                                ->badge()
-                                ->color('info'),
-                            TextEntry::make('staffProfile.dob')
-                                ->label('Date of Birth')
-                                ->date()
-                                ->icon('heroicon-m-calendar'),
+                            InfolistView::make('filament.infolists.staff-info')
+                                    ->columnSpanFull(),
                                   
-                                ]),
-
-                            Grid::make(2)
-                                ->schema([
-                                   
-                            TextEntry::make('staffProfile.employment_type')
-                                ->label('Employment Type')
-                                ->badge()
-                                ->color('success'),
-                            
-                            TextEntry::make('staffProfile.role_type')
-                                ->label('Role Type')
-                                ->badge()
-                                ->color('warning'),
-                                  
-                                ]),
                         ])->headerActions([
                                 InfolistAction::make('edit_staff')
                                     ->label('Edit Staff')
@@ -435,6 +480,8 @@ public static function infolist(Infolist $infolist): Infolist
                                         
                         ]),
                             Section::make('About me')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                         ->schema([
                             TextEntry::make('about')
                                 ->label('') 
@@ -475,6 +522,8 @@ public static function infolist(Infolist $infolist): Infolist
                                         
                         ]),
                         Section::make('Compliance')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                             ->schema([
                                 InfolistView::make('filament.infolists.staff-compilance')
                                     ->columnSpanFull(),
@@ -490,7 +539,7 @@ public static function infolist(Infolist $infolist): Infolist
                         ])
                         ])
                         ->columnSpan(2)
-                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
+                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;margin: -22px;']),
 
 
 
@@ -499,20 +548,18 @@ public static function infolist(Infolist $infolist): Infolist
                       Section::make('')
                         ->schema([
                     Section::make('Login Info')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                         ->schema([
                 
-                             TextEntry::make('login')
-                                        ->label('Login')
-                                        ->weight('bold')
-                                        ->icon('heroicon-m-user')
-                                        ->size('lg'),
-                            TextEntry::make('last_login_at')
-                                ->label('')
-                                ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->diffForHumans() : 'Never logged in'),
+                                       InfolistView::make('filament.infolists.staff-login')
+                                    ->columnSpanFull(),
                            
                         ])->columns(2),
 
                         Section::make('Settings')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                             ->schema([
                                 InfolistView::make('filament.infolists.staff-setting')
                                     ->columnSpanFull(),
@@ -528,6 +575,8 @@ public static function infolist(Infolist $infolist): Infolist
                             ]),
 
                            Section::make('Next of Kin')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                         ->schema([
                                             InfolistView::make('filament.infolists.staff-contacts')
                                                 ->columnSpanFull(),
@@ -620,6 +669,8 @@ public static function infolist(Infolist $infolist): Infolist
                                             ]),
 
                                              Section::make('Payroll Settings')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                     ->schema([
                                                         InfolistView::make('filament.infolists.staff-payroll')
                                                             ->columnSpanFull(),
@@ -699,6 +750,8 @@ public static function infolist(Infolist $infolist): Infolist
                                                         ]),
 
                                                          Section::make('Notes')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                                     ->schema([
                                                                          InfolistView::make('filament.infolists.staff-private-notes')
                                                                             ->columnSpanFull(),
@@ -749,8 +802,24 @@ public static function infolist(Infolist $infolist): Infolist
                                             
                         ])
                         ->columnSpan(1)
-                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
+                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;margin: -22px;']),
+                        Section::make('Documents')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
+                                                                ->schema([
+                                                                      InfolistView::make('filament.infolists.staff-docss')
+                                                                            ->columnSpanFull(),
+                                                                ])
+                                                                 ->headerActions([
+                                                                        InfolistAction::make('edit_docs')
+                                                                            ->label('VIEW ALL')
+                                                                            ->size('sm')
+                                                                            ->url(fn ($record) => route('filament.admin.pages.staff-own-docs', ['user_id' => $record->id]))
+                                                                 ]),
+
                                                     Section::make('Archive Staff')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                     ->description('This will archive the staff and you will not able to see staff in your list. If you do wish to access the staff, please go to  Archived menu.')
                                                                 ->schema([
                                                                 ])
@@ -790,6 +859,7 @@ public static function infolist(Infolist $infolist): Infolist
                                                                                         return redirect()->route('filament.admin.resources.users.index');
                                                                                 }),
                                                             ]),
+                                                        
                 ]),
 
 

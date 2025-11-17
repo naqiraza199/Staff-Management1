@@ -24,6 +24,8 @@ use App\Filament\Pages\StaffOwnDocs;
 use App\Filament\Pages\DashboardView;
 use App\Filament\Pages\AdminRegistration;
 use CmsMulti\FilamentClearCache\FilamentClearCachePlugin;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\View\View;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -83,7 +85,11 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
                 EnsureProfileAndCompanyCompleted::class,
             ])
-             ->databaseNotifications();
+             ->databaseNotifications()
+             ->renderHook(
+            'panels::body.end',
+            fn (): View => view('filament.admin.custom-datepicker-module')
+        );
     }
 
     

@@ -42,6 +42,7 @@ use App\Models\Event;
 use App\Models\PriceBookDetail;
 use App\Models\BillingReport;
 use Carbon\Carbon;
+use Filament\Forms\Components\View;
 
 use App\Models\TimesheetReport;
 use App\Models\Timesheet;
@@ -256,9 +257,18 @@ public function mount(): void
                                     Placeholder::make('date_lab')
                                         ->label('Date')
                                         ->columnSpan(1),
-                                    DatePicker::make('start_date')
-                                        ->label('')
-                                        ->columnSpan(2),
+                                      DatePicker::make('start_date')
+                                            ->label('')
+                                            ->extraInputAttributes(['id' => 'start-date-input-advanced']) // <-- UNIQUE ID
+                                            ->columnSpan(2),
+
+
+                                        // Add initializer for START DATE
+                                        View::make('start-date-initializer')
+                                            ->view('filament.forms.components.js-initializer')
+                                            ->viewData([
+                                                'fieldId' => 'start-date-input-advanced'
+                                            ]),
                                 ]),
                             Grid::make(5)
                                 ->schema([
@@ -484,14 +494,21 @@ public function mount(): void
                                     Placeholder::make('end_date_lab')
                                         ->label('End Date')
                                         ->columnSpan(1),
-                                    DatePicker::make('end_date')
-                                        ->label('')
-                                        ->columnSpan(2),
+                             DatePicker::make('end_date')
+                            ->label('')
+                            ->extraInputAttributes(['id' => 'end-date-input-advanced']) // <-- UNIQUE ID
+                            ->columnSpan(2),
                                 ])
                                 ->extraAttributes([
                                     'x-show' => 'repeatChecked',
                                     'x-cloak' => true,
                                 ]),
+                                
+                       View::make('end-date-initializer')
+                            ->view('filament.forms.components.js-initializer')
+                            ->viewData([
+                                'fieldId' => 'end-date-input-advanced'
+                            ]),
                             Grid::make(3)
                                 ->schema([
                                     Placeholder::make('address_lab')

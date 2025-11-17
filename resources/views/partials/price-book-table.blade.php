@@ -1,6 +1,6 @@
 
 
-<div class="rounded-lg border border-gray-200 overflow-hidden">
+<div class="border border-gray-200 overflow-hidden">
     <table class="w-full text-sm">
         <thead class="bg-gray-100">
             <tr>

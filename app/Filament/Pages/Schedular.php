@@ -38,6 +38,7 @@ use App\Models\PriceBookDetail;
 use App\Models\TimesheetReport;
 use App\Models\Timesheet;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\View;
 
 use Carbon\CarbonInterval;
 
@@ -473,10 +474,18 @@ public function form(Form $form): Form
                             ->label('Date')
                             ->columnSpan(1),
                     DatePicker::make('start_date')
-                    ->label('')
-                    ->columnSpan(2),
-                    ]),
+                        ->label('')
+                        ->extraInputAttributes(['id' => 'start-date-input']) // <-- UNIQUE ID
+                        ->columnSpan(2),
 
+
+                    ]),
+                    // Add initializer for START DATE
+                    View::make('start-date-initializer')
+                        ->view('filament.forms.components.js-initializer')
+                        ->viewData([
+                            'fieldId' => 'start-date-input'
+                        ]),
                 Grid::make(5)
                     ->schema([
                         Placeholder::make('')
@@ -725,13 +734,21 @@ public function form(Form $form): Form
 
                         DatePicker::make('end_date')
                             ->label('')
+                            ->extraInputAttributes(['id' => 'end-date-input']) // <-- UNIQUE ID
                             ->columnSpan(2),
+
+                    
                     ])
                     ->extraAttributes([
                         'x-show' => 'repeatChecked',
                         'x-cloak' => true,
                     ]),
-
+                           // Add initializer for END DATE
+                        View::make('end-date-initializer')
+                            ->view('filament.forms.components.js-initializer')
+                            ->viewData([
+                                'fieldId' => 'end-date-input'
+                            ]),
                 Grid::make(3)
                     ->schema([
                         Placeholder::make('address_lab')

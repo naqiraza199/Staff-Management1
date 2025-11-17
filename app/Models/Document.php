@@ -13,6 +13,10 @@ class Document extends Model
     {
         return $this->belongsTo(DocumentCategory::class);
     }
+    public function category()
+    {
+        return $this->belongsTo(DocumentCategory::class, 'document_category_id');
+    }
 
         public function user()
     {

@@ -75,7 +75,7 @@ class Setting extends Page
                             ->extraAttributes(['class' => 'mx-auto']),
                     ])
                     ->columnSpan(2)
-                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
+                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;margin: -22px;']),
 
                 // 🟦 Company details + Shift Types
                 Section::make('')
@@ -104,6 +104,8 @@ class Setting extends Page
                                         'class' => 'ml-auto block w-fit text-sm font-medium text-white bg-primary-600 px-4 py-1.5 rounded-md hover:bg-primary-700 transition text-right',
                                     ]),
                             ])
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                             ->headerActions([
                                 InfolistAction::make('edit')
                                     ->label('Edit')
@@ -114,6 +116,8 @@ class Setting extends Page
 
                         // 🟨 Shift Types Section
                    Section::make('Shift types')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                         ->schema([
                             \Filament\Infolists\Components\ViewEntry::make('shift_types')
                                 ->view('infolists.components.shift-types-badges')
@@ -281,6 +285,8 @@ class Setting extends Page
                                     }),
                             ]),
                              Section::make('Quotes')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                     ->schema([
                                         InfolistView::make('filament.infolists.setting-quotes')
                                             ->columnSpanFull(),
@@ -339,6 +345,8 @@ class Setting extends Page
                                         ]),
 
                                          Section::make('Scheduler')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                             ->schema([
                                                                 InfolistView::make('filament.infolists.setting-schedular')
                                                                     ->columnSpanFull(),
@@ -597,6 +605,8 @@ class Setting extends Page
                                                                 ]),
 
                                                         Section::make('Public holidays')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                                     ->schema([
                                                                         InfolistView::make('filament.infolists.public-holidays')
                                                                             ->columnSpanFull(),
@@ -666,6 +676,8 @@ class Setting extends Page
                                                                         ]),
 
                                                                     Section::make('Job Titles')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                                                 ->schema([
                                                                                     InfolistView::make('filament.infolists.setting-job-titles')
                                                                                         ->columnSpanFull(),
@@ -746,7 +758,7 @@ class Setting extends Page
 
 
                     ])
-                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;'])
+                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;margin: -22px;'])
                     ->columns(1)
                     ->columnSpan(5),
 
@@ -758,6 +770,8 @@ class Setting extends Page
 
 
                                             Section::make('Client Document Categories')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                 ->schema([
                                                     InfolistView::make('filament.infolists.setting-client-docs')
                                                         ->columnSpanFull(),
@@ -836,6 +850,8 @@ class Setting extends Page
 
 
                                         Section::make('Staff Competency & Qualification Categories')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                             ->schema([
                                                 InfolistView::make('filament.infolists.staff-comp-qualif-docs')
                                                     ->columnSpanFull(),
@@ -951,6 +967,8 @@ class Setting extends Page
                                                 ]),
 
                                            Section::make('Report Headings')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                                             ->schema([
                                                                 InfolistView::make('filament.infolists.staff-other-docs-category')
                                                                     ->columnSpanFull(),
@@ -1076,7 +1094,7 @@ class Setting extends Page
                                                                     }),
                                                                 ]),
                     ])
-                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;'])
+                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;margin: -22px;'])
                     ->columns(1)
                     ->columnSpan(5),
             ])

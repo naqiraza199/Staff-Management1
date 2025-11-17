@@ -66,8 +66,7 @@ use App\Models\User;
                 <table class="data-table w-full text-sm border-collapse">
                     <thead>
                         <tr>
-                            <th>Team Name</th>
-                            <th>Created At</th>
+                            <th>Teams Name</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,7 +77,6 @@ use App\Models\User;
                                 style="font-size: 13px;"
                             >
                                 <td data-label="Team Name">{{ $team->name }}</td>
-                                <td data-label="Created At">{{ Carbon::parse($team->created_at)->format('d/m/Y') }}</td>
                             </tr>
                         @empty
                             <tr 

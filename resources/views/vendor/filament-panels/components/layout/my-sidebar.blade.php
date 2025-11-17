@@ -16,7 +16,7 @@
    top: 0;
    left: 0;
    z-index: 10;
-   width: 270px;
+   width: 230px;
    height: 100vh;
    background: #151A2D;
    transition: all 0.4s ease;
@@ -32,9 +32,10 @@
    justify-content: space-between;
    }
    .sidebar-header .header-logo img {
-   width: 170px;
-   display: block;
-   object-fit: contain;
+    width: 130px;
+    display: block;
+    object-fit: contain;
+    margin-left: 23px;
    }
    .sidebar-header .sidebar-toggler,
    .sidebar-menu-button {
@@ -106,7 +107,7 @@
    }
    .sidebar .nav-link .nav-label {
    transition: opacity 0.3s ease;
-   font-size: 14px;
+   font-size: 11px;
    }
    .sidebar.collapsed .nav-link :where(.nav-label, .dropdown-icon) {
    opacity: 0;
@@ -210,14 +211,14 @@
    .main-content-sidebar {
    background: #ECF0F5;
    position: relative;
-   left: 270px;
-   padding-right: 295px;
+    left: 230px;
+    padding-right: 260px;
    transition: all 0.3s ease-in-out;
    }
    .extra-content {
    position: relative;
-   left: 270px;
-   padding-right: 265px;
+    left: 230px;
+    padding-right: 230px;
    transition: all 0.3s ease-in-out;
    }
    /* When sidebar is collapsed */
@@ -270,7 +271,7 @@
    <header class="sidebar-header">
       <a href="#" class="header-logo" style="color:white">
       <img src="{{ asset('logo.png') }}" alt="LARA" class="logo-full" />
-      <img src="{{ asset('fav.png') }}" alt="LARA" class="logo-mini" style="display:none;" />
+      <img src="{{ asset('fav.png') }}" alt="LARA" class="logo-mini" style="display:none;margin-left: 3px;margin-top: -15px;" />
       </a>
       <button class="sidebar-toggler">
       <span class="material-symbols-rounded">chevron_left</span>

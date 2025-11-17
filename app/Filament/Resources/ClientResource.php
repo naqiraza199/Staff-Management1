@@ -40,6 +40,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Facades\Filament;
 
 
+
 class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
@@ -108,9 +109,43 @@ class ClientResource extends Resource
                                     ->columnSpan(2),
                                 Forms\Components\Fieldset::make('Client Info')
                                     ->schema([
-                                        Forms\Components\TextInput::make('first_name')->label('First name')->placeholder('Enter First Name')->required(),
-                                        Forms\Components\TextInput::make('middle_name')->label('Middle name')->placeholder('Enter Middle Name'),
-                                        Forms\Components\TextInput::make('last_name')->label('Last name')->placeholder('Enter Last/Family Name')->required(),
+                                  Forms\Components\TextInput::make('first_name')
+                                        ->label('First Name')
+                                        ->placeholder('Enter First Name')
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            $set('display_name', trim(collect([
+                                                $state,
+                                                $get('middle_name'),
+                                                $get('last_name'),
+                                            ])->filter()->join(' ')));
+                                        }),
+
+                                    Forms\Components\TextInput::make('middle_name')
+                                        ->label('Middle Name')
+                                        ->placeholder('Enter Middle Name')
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            $set('display_name', trim(collect([
+                                                $get('first_name'),
+                                                $state,
+                                                $get('last_name'),
+                                            ])->filter()->join(' ')));
+                                        }),
+
+                                    Forms\Components\TextInput::make('last_name')
+                                        ->label('Last Name')
+                                        ->placeholder('Enter Last/Family Name')
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            $set('display_name', trim(collect([
+                                                $get('first_name'),
+                                                $get('middle_name'),
+                                                $state,
+                                            ])->filter()->join(' ')));
+                                        }),
                                         Forms\Components\TextInput::make('email')->email()->label('Email Address')->placeholder('Enter Email')->required(),
                                     ])
                                     ->columnSpan(3)
@@ -137,7 +172,9 @@ class ClientResource extends Resource
                                             'Female' => 'Female',
                                             'Other' => 'Other',
                                         ])->columnSpan(1),
-                                        Forms\Components\DatePicker::make('dob')->label('Date Of Birth')->columnSpan(1),
+                                        Forms\Components\DatePicker::make('dob')->label('Date Of Birth')->columnSpan(1)
+                                    ->extraInputAttributes(['id' => 'dob-input-client']), // <-- Unique ID is required!
+
                                         Forms\Components\Select::make('marital_status')->options([
                                             'Single' => 'Single',
                                             'Married' => 'Married',
@@ -148,6 +185,11 @@ class ClientResource extends Resource
                                         ])->columnSpan(1),
                                     ]),
                             ]),
+                             View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'dob-input-client'
+                                    ]),
                         Forms\Components\Fieldset::make('Additional Contacts')
                             ->schema([
                                 Forms\Components\Grid::make(['default' => 3])
@@ -383,66 +425,15 @@ class ClientResource extends Resource
     {
         return $infolist
             ->schema([
-                Grid::make(5)
+                Grid::make(3)
                     ->schema([
                         // Main Client Information Section (2/3 width)
                              Section::make('')
                             ->schema([
-                        Section::make('Client Information')
+                        Section::make('Demographic Detail')
                             ->schema([
-                                Grid::make(2)
-                                    ->schema([
-                                        TextEntry::make('display_name')
-                                            ->label('Display Name')
-                                            ->weight('bold')
-                                            ->icon('heroicon-m-user')
-                                            ->size('lg'),
-                                       ImageEntry::make('pic')
-                                    ->label('')
-                                    ->circular()
-                                    ->size(200)
-                                    ->visible(fn ($state) => $state !== null),
-                                    ]),
-                                Grid::make(3)
-                                    ->schema([
-                                        TextEntry::make('mobile_number')
-                                            ->label('Mobile Number')
-                                            ->icon('heroicon-m-device-phone-mobile'),
-                                        TextEntry::make('email')
-                                            ->label('Email Address')
-                                            ->icon('heroicon-m-envelope'),
-                                             TextEntry::make('phone_number')
-                                            ->label('Phone Number')
-                                            ->icon('heroicon-m-phone'),
-                                    ]),
-                                TextEntry::make('address')
-                                    ->label('Address')
-                                    ->icon('heroicon-m-map-pin'),
-                                Grid::make(2)
-                                    ->schema([
-                                        TextEntry::make('gender')
-                                            ->label('Gender')
-                                            ->badge()
-                                            ->color('info'),
-                                        TextEntry::make('dob')
-                                            ->label('Date of Birth')
-                                            ->date()
-                                            ->icon('heroicon-m-calendar'),
-                                    ]),
-                                Grid::make(2)
-                                    ->schema([
-                                        TextEntry::make('marital_status')
-                                            ->label('Marital Status')
-                                            ->badge()
-                                            ->color('success'),
-                                        TextEntry::make('nationality')
-                                            ->label('Nationality')
-                                            ->badge()
-                                            ->color('warning'),
-                                    ]),
-                                TextEntry::make('languages')
-                                    ->label('Languages')
-                                    ->icon('heroicon-m-language'),
+                                  InfolistView::make('filament.infolists.client-info')
+                                    ->columnSpanFull(),
                             ])->headerActions([
                                 InfolistAction::make('edit_client')
                                     ->label('EDIT CLIENT')
@@ -451,13 +442,16 @@ class ClientResource extends Resource
                                     ->url(fn ($record) => ClientResource::getUrl('edit', ['record' => $record]))
                                     ->openUrlInNewTab(false)
                                         
-                            ]),
+                            ])
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+                            ,
 
                         Section::make('My Price Books')
                             ->schema([
                                 InfolistView::make('partials.price-book-table')
                                     ->columnSpanFull(),
                             ])
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
                             ->headerActions([
 
 
@@ -552,6 +546,7 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                     InfolistView::make('filament.infolists.client-general')
                                         ->columnSpanFull(),
                                 ])
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
                                 ->headerActions([
                                     // ✅ Add Action (Visible only if empty)
                                     InfolistAction::make('addGeneralInfo')
@@ -634,6 +629,8 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                             InfolistView::make('filament.infolists.client-private')
                                                 ->columnSpanFull(),
                                         ])
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
+
                                         ->headerActions([
                                             // ✅ Add Action (when no data exists)
                                             InfolistAction::make('addPrivateInfo')
@@ -656,7 +653,14 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                                     Forms\Components\DatePicker::make('review_date')
                                                         ->label('Replace Date')
                                                         ->displayFormat('d M Y')
+                                                        ->extraInputAttributes(['id' => 'review-date-input']) // <-- Unique ID is required!
                                                         ->required(),
+
+                                                         View::make('review-date-input-create')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'review-date-input'
+                                    ]),
                                                 ])
                                                 ->action(function (array $data, $record): void {
                                                     $record->update([
@@ -691,7 +695,14 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                                     Forms\Components\DatePicker::make('review_date')
                                                         ->label('Replace Date')
                                                         ->displayFormat('d M Y')
+                                                        ->extraInputAttributes(['id' => 'review-date-input-edit']) // <-- Unique ID is required!
                                                         ->default(fn ($record) => $record?->review_date),
+                          View::make('review-date-input-edit-e')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'review-date-input-edit'
+                                    ]),
+                                                        
                                                 ])
                                                 ->action(function (array $data, $record): void {
                                                     $record->update([
@@ -706,12 +717,13 @@ $fields[] = Forms\Components\Section::make('Price Books')
                                                 }),
                                         ]),
                             ])
-                            ->columnSpan(3)
+                            ->columnSpan(2)
 
-                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;']),
+                    ->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;margin: -22px;']),
 Section::make('')
 ->schema([
 Section::make('Additional Information')
+                            ->extraAttributes(['style' => 'border-radius: 0px;'])
     ->schema(fn ($record) =>
         $record->additionalContacts()
             ->get()
@@ -724,7 +736,9 @@ Section::make('Additional Information')
                 }
 
                 return Section::make("{$headingPrefix} #" . ($index + 1))
+                            ->extraAttributes(['style' => 'border-radius: 0px;font-size:12px'])
                     ->schema([
+                        
                         Grid::make(2)->schema([
                             TextEntry::make("full_name_$index")
                                 ->label('Full Name')
@@ -743,18 +757,13 @@ Section::make('Additional Information')
                                 ->state($contact->relation),
                         ]),
 
-                        TextEntry::make("contact_$index")
-                            ->label('Contact')
-                            ->state(function () use ($contact) {
-                                $contactInfo = [];
-                                if ($contact->mobile_number) {
-                                    $contactInfo[] = "📱 {$contact->mobile_number}";
-                                }
-                                if ($contact->phone_number) {
-                                    $contactInfo[] = "-- 📞 {$contact->phone_number}";
-                                }
-                                return implode(' ', $contactInfo);
-                            }),
+                TextEntry::make("contact_$index")
+                    ->label('Contact')
+                    ->state(function () use ($contact) {
+                        // Prefer mobile number if it exists, otherwise use phone number
+                        return $contact->mobile_number ?? $contact->phone_number ?? '-';
+                    }),
+
 
                         TextEntry::make("email_$index")
                             ->label('Email')
@@ -1004,6 +1013,8 @@ Section::make('Additional Information')
                             InfolistView::make('filament.infolists.client-teams')
                                                         ->columnSpanFull(),
                         ])
+                            ->extraAttributes(['style' => 'border-radius: 0px;width: 107%;'])
+
                         ->headerActions([
                                 InfolistAction::make('Add_Team')
                                     ->label('Add')
@@ -1017,6 +1028,8 @@ Section::make('Additional Information')
                                     InfolistView::make('filament.infolists.client-setting')
                                                                 ->columnSpanFull(),
                                 ])
+                            ->extraAttributes(['style' => 'border-radius: 0px;width: 107%;'])
+
                                 ->headerActions([
                                 InfolistAction::make('Edit_Setting')
                                     ->label('Edit')
@@ -1025,8 +1038,8 @@ Section::make('Additional Information')
                                      ->url(fn ($record) => ClientResource::getUrl('edit', ['record' => $record]))
                                     ->openUrlInNewTab(false) 
                             ]),
-])->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;'])
-->columnSpan(2),
+])->extraAttributes(['style' => 'background: transparent; border: none; box-shadow: none;margin: -22px;'])
+->columnSpan(1),
                         // Primary Contact Section
 
 
