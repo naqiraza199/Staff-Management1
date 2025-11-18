@@ -267,7 +267,12 @@ display: inline-flex;
 
                 <!-- DOB --><div class="detail-item">
                     <p class="detail-label">DOB:</p>
-                    <p class="detail-value"> {{ $staffData->dob ? \Carbon\Carbon::parse($staffData->dob)->format('d F Y') : '-' }}</p>
+              <p class="detail-value">
+                            {{ $staffData && $staffData->dob
+                                ? \Carbon\Carbon::parse($staffData->dob)->format('d F Y')
+                                : '-' }}
+                        </p>
+
                 </div>
 
                 <!-- Language Spoken --><div class="detail-item">

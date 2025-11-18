@@ -253,7 +253,11 @@ display: inline-flex;
                 </div>
                                 <!-- DOB --><div class="detail-item">
                     <p class="detail-label">DOB:</p>
-                    <p class="detail-value">  {{ $client->dob ? \Carbon\Carbon::parse($client->dob)->format('d F Y') : '-' }}</p>
+        <p class="detail-value">
+                            {{ $client && $client->dob
+                                ? \Carbon\Carbon::parse($client->dob)->format('d F Y')
+                                : '-' }}
+                        </p>
                 </div>
 
                 <!-- Marital Status --><div class="detail-item">

@@ -49,7 +49,7 @@ class ArchiveResource extends Resource
 
             $staffUserIds = StaffProfile::where('company_id', $companyId)->where('is_archive','Archive')->pluck('user_id');
 
-            return User::whereIn('id', $staffUserIds)->role('staff');
+            return User::whereIn('id', $staffUserIds);
         }
  
             public static function canCreate(): bool

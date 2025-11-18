@@ -110,42 +110,36 @@ class ClientResource extends Resource
                                 Forms\Components\Fieldset::make('Client Info')
                                     ->schema([
                                   Forms\Components\TextInput::make('first_name')
-                                        ->label('First Name')
-                                        ->placeholder('Enter First Name')
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                            $set('display_name', trim(collect([
-                                                $state,
-                                                $get('middle_name'),
-                                                $get('last_name'),
-                                            ])->filter()->join(' ')));
-                                        }),
+                                            ->label('First Name')
+                                            ->placeholder('Enter First Name')
+                                            ->required()
+                                            ->reactive()
+                                            ->lazy(false)
+                                            ->afterStateUpdated(fn ($state, callable $set, callable $get) => $set(
+                                                'display_name',
+                                                trim(implode(' ', array_filter([$state, $get('middle_name'), $get('last_name')])))
+                                            )),
 
-                                    Forms\Components\TextInput::make('middle_name')
-                                        ->label('Middle Name')
-                                        ->placeholder('Enter Middle Name')
-                                        ->reactive()
-                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                            $set('display_name', trim(collect([
-                                                $get('first_name'),
-                                                $state,
-                                                $get('last_name'),
-                                            ])->filter()->join(' ')));
-                                        }),
+                                        Forms\Components\TextInput::make('middle_name')
+                                            ->label('Middle Name')
+                                            ->placeholder('Enter Middle Name')
+                                            ->reactive()
+                                            ->lazy(false)
+                                            ->afterStateUpdated(fn ($state, callable $set, callable $get) => $set(
+                                                'display_name',
+                                                trim(implode(' ', array_filter([$get('first_name'), $state, $get('last_name')])))
+                                            )),
 
-                                    Forms\Components\TextInput::make('last_name')
-                                        ->label('Last Name')
-                                        ->placeholder('Enter Last/Family Name')
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                            $set('display_name', trim(collect([
-                                                $get('first_name'),
-                                                $get('middle_name'),
-                                                $state,
-                                            ])->filter()->join(' ')));
-                                        }),
+                                        Forms\Components\TextInput::make('last_name')
+                                            ->label('Last Name')
+                                            ->placeholder('Enter Last/Family Name')
+                                            ->required()
+                                            ->reactive()
+                                            ->lazy(false)
+                                            ->afterStateUpdated(fn ($state, callable $set, callable $get) => $set(
+                                                'display_name',
+                                                trim(implode(' ', array_filter([$get('first_name'), $get('middle_name'), $state])))
+                                            )),
                                         Forms\Components\TextInput::make('email')->email()->label('Email Address')->placeholder('Enter Email')->required(),
                                     ])
                                     ->columnSpan(3)
@@ -153,7 +147,13 @@ class ClientResource extends Resource
                             ]),
                         Forms\Components\Fieldset::make('Display Name')
                             ->schema([
-                                Forms\Components\TextInput::make('display_name')->label('')->placeholder('Enter Display Name')->columnSpanFull(),
+                                  Forms\Components\TextInput::make('display_name')
+                                                ->label('')
+                                                ->placeholder('Enter Display Name')
+                                                ->columnSpanFull()
+                                                ->reactive()
+                                                ->lazy(false)
+                                                ->dehydrated()
                             ]),
                         Forms\Components\Fieldset::make('Contact')
                             ->schema([

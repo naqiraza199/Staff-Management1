@@ -12,6 +12,8 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    
+
     protected function getHeaderActions(): array
     {
         return [
@@ -53,13 +55,19 @@ class EditUser extends EditRecord
             'role_type', 'role_id', 'gender', 'dob', 'employment_type', 'address', 'profile_pic'
         ];
 
-        $profileData = array_intersect_key($data, array_flip($staffProfileFields));
+       $profileData = array_intersect_key($data, array_flip($staffProfileFields));
+
+        if (isset($profileData['role_id']) && is_array($profileData['role_id'])) {
+            $profileData['role_id'] = $profileData['role_id'][0] ?? null;
+        }
+
         $profileData['user_id'] = $updatedUser->id;
 
         $updatedUser->staffProfile()->updateOrCreate(
             ['user_id' => $updatedUser->id],
             $profileData
         );
+
 
             if (!empty($data['send_onboarding_email'])) {
         $updatedUser->notify(new SetPasswordNotification($updatedUser));

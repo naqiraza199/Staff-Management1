@@ -131,43 +131,38 @@ public static function getEloquentQuery(): Builder
                                     ->columnSpan(2),
                                 Forms\Components\Fieldset::make('Staff Info')
                                     ->schema([
-                                        Forms\Components\TextInput::make('first_name')
+                                       Forms\Components\TextInput::make('first_name')
                                             ->label('First Name')
                                             ->placeholder('Enter First Name')
                                             ->required()
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                $set('name', trim(implode(' ', array_filter([
-                                                    $state,
-                                                    $get('middle_name'),
-                                                    $get('last_name'),
-                                                ]))));
-                                            }),
+                                            ->lazy(false)
+                                            ->afterStateUpdated(fn ($state, callable $set, callable $get) => $set(
+                                                'name',
+                                                trim(implode(' ', array_filter([$state, $get('middle_name'), $get('last_name')])))
+                                            )),
 
                                         Forms\Components\TextInput::make('middle_name')
                                             ->label('Middle Name')
                                             ->placeholder('Enter Middle Name')
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                $set('name', trim(implode(' ', array_filter([
-                                                    $get('first_name'),
-                                                    $state,
-                                                    $get('last_name'),
-                                                ]))));
-                                            }),
+                                            ->lazy(false)
+                                            ->afterStateUpdated(fn ($state, callable $set, callable $get) => $set(
+                                                'name',
+                                                trim(implode(' ', array_filter([$get('first_name'), $state, $get('last_name')])))
+                                            )),
 
                                         Forms\Components\TextInput::make('last_name')
                                             ->label('Last Name')
                                             ->placeholder('Enter Last/Family Name')
                                             ->required()
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                $set('name', trim(implode(' ', array_filter([
-                                                    $get('first_name'),
-                                                    $get('middle_name'),
-                                                    $state,
-                                                ]))));
-                                            }),
+                                            ->lazy(false)
+                                            ->afterStateUpdated(fn ($state, callable $set, callable $get) => $set(
+                                                'name',
+                                                trim(implode(' ', array_filter([$get('first_name'), $get('middle_name'), $state])))
+                                            )),
+
                                         
                                     ])
                                     ->columnSpan(3)
@@ -175,7 +170,13 @@ public static function getEloquentQuery(): Builder
                             ]),
                                    Forms\Components\Fieldset::make('Display Name')
                                     ->schema([
-                                    Forms\Components\TextInput::make('name')->label('')->placeholder('Enter Display Name')->columnSpanFull(),
+                                    Forms\Components\TextInput::make('name')
+                                                ->label('')
+                                                ->placeholder('Enter Display Name')
+                                                ->columnSpanFull()
+                                                ->reactive()
+                                                ->lazy(false)
+                                                ->dehydrated()
                             ]),
                                 Forms\Components\Fieldset::make('Email Address')
                                     ->schema([
