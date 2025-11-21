@@ -152,7 +152,7 @@
                                     <input type="text" placeholder="Enter Purchase Order" name="" id="" style="font-size: 12px;width: 150px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"> 
                                 </td>
                                 <td class=" py-4" style="font-size:13px;">
-                                    <input type="date" value="{{ now()->addDays(14)->format('Y-m-d') }} " placeholder="Enter Purchase Order" name="" id="" style="font-size: 12px;width: 150px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"> 
+                                    <input type="date" value="{{ now()->addDays(14)->format('Y-m-d') }}" placeholder="Enter Purchase Order" name="" id="purchase-order-date" style="font-size: 12px;width: 150px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"> 
                                 </td>
                                  <td class="py-4">
                                         <input type="checkbox"
@@ -272,6 +272,16 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.initCustomDatePicker) {
+            window.initCustomDatePicker('purchase-order-date');
+        } else {
+            console.warn('initCustomDatePicker is not defined yet.');
+        }
+    });
+</script>
+
 </x-filament-panels::page>
 
 @push('styles')

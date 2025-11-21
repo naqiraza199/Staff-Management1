@@ -21,6 +21,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\View;
 
 class MediaManagerResource extends Resource
 {
@@ -145,7 +146,14 @@ public static function getEloquentQuery(): Builder
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
                                 ->required()
+                                ->extraInputAttributes(['id' => 'expired-input-create']) // <-- Unique ID is required!
                                 ->columnSpan(6),
+
+                                View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input-create'
+                                    ]),
                         ]),
                     Forms\Components\FileUpload::make('file')
                         ->label('Upload Document')
@@ -259,7 +267,14 @@ public static function getEloquentQuery(): Builder
                                 ->label('Expires At')
                                 ->required()
                                 ->default($record->expired_at)
+                                ->extraInputAttributes(['id' => 'expired-input']) // <-- Unique ID is required!
                                 ->columnSpan(6),
+
+                                 View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input'
+                                    ]),
                         ]),
                         Forms\Components\FileUpload::make('name')
                             ->label('Replace Document')

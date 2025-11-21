@@ -24,7 +24,8 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms\Components\Textarea;
-
+use App\Models\Company;
+use Filament\Forms\Components\View;
 
 class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
 {
@@ -111,66 +112,96 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                 ->schema([
                Forms\Components\Hidden::make('user_id')
                 ->default(fn ($livewire) => $livewire->userId)
-                ->columnSpan(6),
+                ->columnSpan(12),
 
 
               Forms\Components\Checkbox::make('no_expiration')
                     ->label('No Expiration')
-                    ->reactive() // 👈 important so Filament listens for changes
+                    ->reactive()
                     ->columnSpan(6),
 
+              Forms\Components\Checkbox::make('send_email')
+                        ->label('Send email for signature?')
+                        ->default(true)  
+                        ->columnSpan(6),
+
+
                     Select::make('document_category_id')
-                        ->label('Document Category')
-                        ->required()
-                        ->columnSpan(6)
-                        ->searchable()
-                        ->options(function () {
-                            $companyId = \App\Models\Company::where('user_id', Auth::id())->value('id');
-                            $grouped = [];
+                            ->label('Document Category')
+                            ->required()
+                            ->columnSpan(6)
+                            ->searchable()
+                            ->options(function () {
+                                $companyId = Company::where('user_id', Auth::id())->value('id');
+                                $grouped = [];
 
-                            $grouped['Competencies'] = \App\Models\DocumentCategory::query()
-                                ->where('is_staff_doc', 1)
-                                ->where('is_competencies', 1)
-                                ->where('company_id', $companyId)
-                                ->pluck('name', 'id')
-                                ->toArray();
+                                $grouped['Competencies'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_competencies', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                            $grouped['Qualifications'] = \App\Models\DocumentCategory::query()
-                                ->where('is_staff_doc', 1)
-                                ->where('is_qualifications', 1)
-                                ->where('company_id', $companyId)
-                                ->pluck('name', 'id')
-                                ->toArray();
+                                $grouped['Qualifications'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_qualifications', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                            $grouped['Compliance'] = \App\Models\DocumentCategory::query()
-                                ->where('is_staff_doc', 1)
-                                ->where('is_compliance', 1)
-                                ->where('company_id', $companyId)
-                                ->pluck('name', 'id')
-                                ->toArray();
+                                $grouped['Compliance'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_compliance', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                            $grouped['KPI'] = \App\Models\DocumentCategory::query()
-                                ->where('is_staff_doc', 1)
-                                ->where('is_kpi', 1)
-                                ->where('company_id', $companyId)
-                                ->pluck('name', 'id')
-                                ->toArray();
+                                $grouped['KPI'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_kpi', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                            $grouped['Other'] = \App\Models\DocumentCategory::query()
-                                ->where('is_staff_doc', 1)
-                                ->where('is_other', 1)
-                                ->where('company_id', $companyId)
-                                ->pluck('name', 'id')
-                                ->toArray();
+                                $grouped['Other'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_other', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                            return $grouped;
-                        }),
+                                // 👇 Add special “Other category (type manually)” option at the end
+                                $grouped['Other']['__other__'] = 'Other category (type manually)';
+
+                                return $grouped;
+                            })
+                            ->reactive() 
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state !== '__other__') {
+                                    $set('custom_document_category', null);
+                                }
+                            }),
+
+                            Forms\Components\TextInput::make('custom_document_category')
+                                ->label('Custom Category Name')
+                                ->placeholder('Enter new category name')
+                                ->columnSpan(6)
+                                ->required(fn (callable $get) => $get('document_category_id') === '__other__')
+                                ->visible(fn (callable $get) => $get('document_category_id') === '__other__'),
 
                         Forms\Components\DatePicker::make('expired_at')
                             ->label('Expires At')
                             ->required(fn (callable $get) => ! $get('no_expiration')) // required only if unchecked
                             ->hidden(fn (callable $get) => $get('no_expiration')) // hide if checked
+                            ->extraInputAttributes(['id' => 'expired-input-create']) // <-- Unique ID is required!
                             ->columnSpan(6),
+
+
+                                 View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input-create'
+                                    ]),
                 ]),
 
             Forms\Components\FileUpload::make('file')
@@ -195,36 +226,55 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                                 ->rows(5)
                                 ->placeholder('Enter Content Here'),
         ])
-        ->action(function (array $data, Tables\Actions\Action $action) {
-            $filePath = $data['file']; // relative path on 'public' disk
-            $extension = strtoupper(pathinfo($filePath, PATHINFO_EXTENSION));
 
-          $staffDoc =  \App\Models\Document::create([
-                'user_id'              => $data['user_id'],
-                'name'                 => $filePath,
-                'type'                 => $extension,
-                'document_category_id' => $data['document_category_id'],
-                'no_expiration'        => $data['no_expiration'] ?? 0,
-                'expired_at'           => $data['expired_at'] ?? null,
-                'signature_token'      => Str::uuid(),
-                'details' => $data['details'],
-                         
-                    ]);
+                    ->action(function (array $data, Tables\Actions\Action $action) {
 
+                        if (($data['document_category_id'] ?? null) === '__other__') {
+                            $companyId = Company::where('user_id', Auth::id())->value('id');
+
+                            $newCategory = DocumentCategory::create([
+                                'name'             => $data['custom_document_category'], 
+                                'status'           => 1,       
+                                'is_staff_doc'     => 1,
+                                'is_competencies'  => 0,
+                                'is_qualifications'=> 0,
+                                'is_compliance'    => 0,
+                                'is_kpi'           => 0,
+                                'is_other'         => 1,
+                                'company_id'       => $companyId,
+                            ]);
+
+                            $data['document_category_id'] = $newCategory->id;
+                        }
+
+                        $filePath  = $data['file']; 
+                        $extension = strtoupper(pathinfo($filePath, PATHINFO_EXTENSION));
+
+                        $staffDoc = Document::create([
+                            'user_id'              => $data['user_id'],
+                            'name'                 => $filePath,
+                            'type'                 => $extension,
+                            'document_category_id' => $data['document_category_id'],
+                            'no_expiration'        => $data['no_expiration'] ?? 0,
+                            'expired_at'           => $data['expired_at'] ?? null,
+                            'signature_token'      => Str::uuid(),
+                            'details'              => $data['details'],
+                        ]);
+
+                        if (!empty($data['send_email'])) {
                             Mail::to($staffDoc->user->email)->send(new DocumentSignatureRequest($staffDoc));
+                        }
 
-            // ✅ Close modal
-            $action->success();
+                        $action->success();
 
-            // ✅ Show notification
-            \Filament\Notifications\Notification::make()
-                ->title('Document uploaded successfully')
-                ->success()
-                ->send();
+                        \Filament\Notifications\Notification::make()
+                            ->title('Document uploaded successfully')
+                            ->success()
+                            ->send();
 
-            // ✅ Refresh table data
-            $this->dispatch('refreshTable');
-        })
+                        $this->dispatch('refreshTable');
+                    })
+
         ->modalHeading('Upload New Document')
         ->modalSubmitActionLabel('Upload')
         ->color('primary'),
@@ -309,6 +359,11 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->default(fn ($record) => $record?->no_expiration ?? false)
                             ->columnSpan(6),
 
+                            Forms\Components\Checkbox::make('send_email')
+                                ->label('Send email for signature?')
+                                ->default(true)  
+                                ->columnSpan(6),
+
 
 
                                 Select::make('document_category_id')
@@ -368,8 +423,15 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                                 ->label('Expires At')
                                 ->default($record->expired_at)
                                 ->required(fn (callable $get) => ! $get('no_expiration')) 
-                                ->hidden(fn (callable $get) => $get('no_expiration')) 
+                                ->hidden(fn (callable $get) => $get('no_expiration'))
+                                ->extraInputAttributes(['id' => 'expired-input']) // <-- Unique ID is required!
                                 ->columnSpan(6),
+
+                                 View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input'
+                                    ]),
                         ]),
                         Forms\Components\FileUpload::make('name')
                             ->label('Replace Document')
@@ -404,7 +466,10 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                         'signature_token'      => Str::uuid(),
                     ]);
 
-                    Mail::to($record->user->email)->send(new DocumentSignatureRequest($record));
+
+                          if (!empty($data['send_email'])) {
+                            Mail::to($record->user->email)->send(new DocumentSignatureRequest($record));
+                        }
 
 
                     \Filament\Notifications\Notification::make()

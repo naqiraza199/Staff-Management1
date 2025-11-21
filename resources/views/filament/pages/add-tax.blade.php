@@ -277,11 +277,11 @@
                     </div>
                     <div class="form-group">
                         <label class="block text-sm font-medium text-gray-700">Issued at</label>
-                        <input type="date" wire:model="issue_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" value="{{ now()->format('Y-m-d') }}">
+                        <input type="date" wire:model="issue_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" value="{{ now()->format('Y-m-d') }}" id="issued-at-1">
                     </div>
                     <div class="form-group">
                         <label class="block text-sm font-medium text-gray-700">Payment Due</label>
-                      <input type="date" wire:model="payment_due" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" value="{{ now()->addDays(14)->format('Y-m-d') }}">
+                      <input type="date" wire:model="payment_due" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm" value="{{ now()->addDays(14)->format('Y-m-d') }}" id="payment-due-1">
                     </div>
                     <div class="form-group">
                         <label class="block text-sm font-medium text-gray-700">PO</label>
@@ -456,92 +456,6 @@
                                     </div>
                                 </td>
                             </tr>
-                            <tr>
-                                <td class="px-6 py-4" style="font-size:13px;     width: 100%;">
-                                        <input 
-                                            style="padding: 10px;"
-                                            type="text" 
-                                            value="{{ $shiftTextHour }}" 
-                                            readonly
-                                            class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm truncate"
-                                            title="{{ $shiftTextHour }}"  
-                                        >
-                                    </td>
-                                <td class="px-6 py-4" style="font-size:13px;">Program</td>
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                 <select style="font-size: 12px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
-                                    @foreach($this->invoiceCategories as $category)
-                                        <option value="{{ $category->name }}">{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                                </td>
-                                <td class="px-6 py-4" style="font-size:13px;">1.0</td>
-                                <td class="px-6 py-4" style="font-size:13px;">$0.00</td>
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                    <div class="tooltip-container">
-                                        <input type="checkbox" name="tax" 
-                                               {{ $report->status === 'Paid' ? 'disabled' : 'checked' }}
-                                               title="">
-                                        @if($report->status === 'Paid')
-                                            <div class="tooltip">Already invoiced.</div>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4" style="font-size:13px;">$0.00</td>
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                    <div class="tooltip-container">
-                                        <input type="checkbox" name="tax" 
-                                               {{ $report->status === 'Paid' ? 'disabled' : '' }}
-                                               title="">
-                                        @if($report->status === 'Paid')
-                                            <div class="tooltip">Already invoiced.</div>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4" style="font-size:13px;     width: 100%;">
-                                        <input 
-                                            style="padding: 10px;"
-                                            type="text" 
-                                            value="{{ $shiftTextHour }}" 
-                                            readonly
-                                            class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm truncate"
-                                            title="{{ $shiftTextHour }}"  
-                                        >
-                                    </td>
-                                <td class="px-6 py-4" style="font-size:13px;">Additional</td>
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                 <select style="font-size: 12px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
-                                    @foreach($this->invoiceCategories as $category)
-                                       <option value="{{ $category->name }}">{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                                </td>
-                                <td class="px-6 py-4" style="font-size:13px;">1.0</td>
-                                <td class="px-6 py-4" style="font-size:13px;">$0.00</td>
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                    <div class="tooltip-container">
-                                        <input type="checkbox" name="tax" 
-                                               {{ $report->status === 'Paid' ? 'disabled' : 'checked' }}
-                                               title="">
-                                        @if($report->status === 'Paid')
-                                            <div class="tooltip">Already invoiced.</div>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4" style="font-size:13px;">$0.00</td>
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                    <div class="tooltip-container">
-                                        <input type="checkbox" name="tax" 
-                                               {{ $report->status === 'Paid' ? 'disabled' : '' }}
-                                               title="">
-                                        @if($report->status === 'Paid')
-                                            <div class="tooltip">Already invoiced.</div>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>   
                                 @endforeach
                            
                         </tbody>
@@ -652,7 +566,15 @@ function createInvoiceWithValues() {
         });
 }
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.initCustomDatePicker) return;
 
+        ['issued-at-1','payment-due-1'].forEach(function (id) {
+            window.initCustomDatePicker(id);
+        });
+    });
+</script>
 
 </x-filament-panels::page>
 

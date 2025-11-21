@@ -351,14 +351,14 @@ section#data\.add-notes {
     <!-- Date From -->
     <div style="display: flex; flex-direction: column;">
         <label style="font-weight: 600; font-size: 13px; color: #333;">Start Date</label>
-        <input type="date" wire:model.live="startDate"
+        <input id="create-input" type="date" wire:model.live="startDate"
             style="padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;">
     </div>
 
     <!-- Date To -->
     <div style="display: flex; flex-direction: column;">
         <label style="font-weight: 600; font-size: 13px; color: #333;">End Date</label>
-        <input type="date" wire:model.live="endDate"
+        <input id="edit-input" type="date" wire:model.live="endDate"
             style="padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;">
     </div>
 
@@ -396,7 +396,7 @@ section#data\.add-notes {
                                     @endphp
 
                                     <div style="display:flex;gap:10px">
-                                        <h2 style="font-weight: 700; color: #07899f; margin-top: 0.25rem;font-size:20px">{{ $authorName }}</h2> <span style="margin-top: 5px;">added a Note</span>
+                                        <h2 style="font-weight: 700; color: #005868ff; margin-top: 0.25rem;font-size:20px">{{ $authorName }}</h2> <span style="margin-top: 5px;">added a Note</span>
                                     </div>
 
                                     <hr style="margin-top: 10px;margin-bottom: 10px;">
@@ -490,7 +490,15 @@ section#data\.add-notes {
 
         </div>
 
+<script>
+        document.addEventListener('DOMContentLoaded', function () {
+        if (!window.initCustomDatePicker) return;
 
+        ['create-input','edit-input'].forEach(function (id) {
+            window.initCustomDatePicker(id);
+        });
+    });
+</script>
 
          
 

@@ -56,6 +56,7 @@ use Livewire\Attributes\On;
 use App\Models\Shift;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\View;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceGenerate extends Page implements HasForms
 {
@@ -108,10 +109,11 @@ class InvoiceGenerate extends Page implements HasForms
 
     }
 
-   #[On('generateInvoices')]
+#[On('generateInvoices')]
 public function generateInvoices(array $selectedClients): void
 {
-    $authUser = auth()->user();
+    try {
+$authUser = auth()->user();
     $companyId = Company::where('user_id', $authUser->id)->value('id');
 
     foreach ($selectedClients as $clientData) {
@@ -202,9 +204,24 @@ public function generateInvoices(array $selectedClients): void
     }
 
 
+        $this->redirect(request()->header('Referer'));
 
-    $this->redirect(request()->header('Referer'));
+    } 
+    catch (\Throwable $e) {
+    Log::error('Invoice generation failed', [
+        'message' => $e->getMessage(),
+        'trace'   => $e->getTraceAsString(),
+    ]);
+
+    Notification::make()
+        ->title('Something went wrong while generating invoices.')
+        ->body('Please make sure all required fields (like payment due date) are filled correctly, then try again.')
+        ->danger()
+        ->send();
 }
+
+}
+
 
 
     public function form(Form $form): Form

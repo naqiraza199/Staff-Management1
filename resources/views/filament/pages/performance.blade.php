@@ -424,12 +424,14 @@
                                 <input
                                     type="date"
                                     name="start_date"
+                                    id="start-date"
                                     value="{{ request('start_date') }}"
                                     class="border rounded px-2 py-1"
                                 >
 
                                 <input
                                     type="date"
+                                    id="end-date"
                                     name="end_date"
                                     value="{{ request('end_date') }}"
                                     class="border rounded px-2 py-1"
@@ -548,7 +550,14 @@
                 }
             });
         });
-    </script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.initCustomDatePicker) return;
+
+        ['start-date','end-date'].forEach(function (id) {
+            window.initCustomDatePicker(id);
+        });
+    });
+</script>
 
 
 

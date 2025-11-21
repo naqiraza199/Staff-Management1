@@ -353,9 +353,6 @@ class ClientResource extends Resource
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(25)
             ->columns([
-                Tables\Columns\TextColumn::make('client_no')
-                    ->searchable()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('display_name')
                     ->searchable()
                     ->sortable(),
@@ -416,7 +413,7 @@ class ClientResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

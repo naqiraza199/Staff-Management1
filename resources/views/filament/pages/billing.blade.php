@@ -892,4 +892,11 @@ function updateView(type) {
 }
 
 window.onload = () => initializeCharts('staff');
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.initCustomDatePicker) return;
+
+        ['start-date','end-date'].forEach(function (id) {
+            window.initCustomDatePicker(id);
+        });
+    });
 </script>

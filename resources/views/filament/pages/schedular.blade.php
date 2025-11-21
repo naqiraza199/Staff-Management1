@@ -69,28 +69,27 @@
             text-align: center;
         }
         .task {
-            background: linear-gradient(45deg, #60a5fa, #a78bfa);
             padding: 8px;
             margin: 8px 0;
             border-radius: 8px;
-            font-size: 9px;
-            color: white;
+            font-size: 13px;
+            color: #161414;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             transition: transform 0.3s ease;
-            height: 60px;
-            width: 100px;
+            height: 80px;
+            width: auto;
         }
         .task-vacant {
-            background: linear-gradient(135deg, #f97316, #facc15);
-            color: white;
+            background: #ffc164 !important;
+            color: #121212;
             padding: 8px;
             margin: 4px 0;
             border-radius: 4px;
             cursor: pointer;
         }
         .task-advanced {
-            background: linear-gradient(135deg, #22c55e, #86efac);
-            color: white;
+            background: #e3ffaf !important;
+            color: #121212;
         }
         .client-avatar {
             width: 24px;
@@ -451,7 +450,7 @@
             cursor: pointer;
             padding: 5px;
             margin: 2px 0;
-            background-color: #f0f0f0;
+            background-color: #c9f3ff;
             border-radius: 0px;
         }
         .calendar-day {
@@ -627,19 +626,19 @@
 position: absolute;
   top: 4px;
   padding: 7px 15px 0px 13px;
-  font-size: 9px;
-  color: #fff;
+  font-size: 13px;
+  color: #202020;
   box-shadow: 0 6px 18px rgba(24, 24, 24, 0.12);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 55px;
+  height: 80px;
 }
 
 /* small visual difference when vacant or advanced */
 .task.task-vacant.daily { background: linear-gradient(135deg, #f97316, #facc15); color: #111; }
 .task.task-advanced.daily { background: linear-gradient(45deg, #22c55e, #86efac); color: #111; }
-.task.daily.default { background: linear-gradient(45deg, #60a5fa, #a78bfa); }
+.task.daily.default { background: #c9f3ff; }
 /* === FIX SCROLL + LAYOUT OVERFLOW === */
 .calendar-section {
     width: 100%;
@@ -787,7 +786,7 @@ body.sidebar-collapsed .main-content-sidebar {
 
 #calendarWrapper.daily .calendar-day {
     overflow: visible !important;
-    height: auto; /* can adjust */
+    height: 110px; /* can adjust */
     position: relative;
 }
 
@@ -820,10 +819,9 @@ body.sidebar-collapsed .main-content-sidebar {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 4px 6px;
+    font-size: 11px !important;
 }
-.task.task-overnight { background-color: #cfe2ff !important; }
-.overnight-start { border-right: 2px dashed rgba(0,0,0,0.12); }
-.overnight-end { border-left: 2px dashed rgba(0,0,0,0.12); margin-left: -2px; }
+.task.task-overnight { background-color: #c9f3ff !important; }
 
     </style>
 
@@ -1339,7 +1337,6 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part1.innerHTML = `
                         <strong>${formatTime(shift.start_time)} - NEXT DAY -</strong><br>
                         ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
-                        <small>${clientNames[String(shift.client_id)] || ''}</small>
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
@@ -1353,6 +1350,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part2.className = cls1 + ' overnight-end';
                     part2.innerHTML = `
                         <strong>${formatTime(shift.end_time)}</strong><br>
+                        <small>${clientNames[String(shift.client_id)] || ''}</small>
                     `;
                     part2.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, nextDateKey); };
 
@@ -1447,7 +1445,6 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part1.innerHTML = `
                         <strong>${formatTime(shift.start_time)} - NEXT DAY -</strong><br>
                         ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
-                        <small>${clientNames[String(shift.client_id)] || ''}</small>
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
@@ -1461,6 +1458,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part2.className = cls1 + ' overnight-end';
                     part2.innerHTML = `
                         <strong> ${formatTime(shift.end_time)}</strong><br>
+                        <small>${clientNames[String(shift.client_id)] || ''}</small>
                     `;
                     part2.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, nextDateKey); };
 
@@ -1551,7 +1549,6 @@ function renderClientCalendar(filteredShifts = shifts) {
             div.innerHTML = `
                 <strong>${timeRange}</strong><br>
                 ${shiftType}<br>
-                <small>${staffName}</small>
             `;
 
             div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
@@ -1630,7 +1627,6 @@ sortedClients.forEach(([clientId, clientName]) => {
         div.innerHTML = `
             <strong>${timeRange}</strong><br>
             ${shiftType}<br>
-            <small>${staffName}</small>
         `;
         div.onclick = e => {
             e.stopPropagation();
@@ -1690,7 +1686,6 @@ sortedClients.forEach(([clientId, clientName]) => {
                 div.innerHTML = `
                     <strong>${timeRange}</strong><br>
                     ${shiftType}<br>
-                    <small>${staffName}</small>
                 `;
 
                 div.onclick = e => {
@@ -1767,7 +1762,6 @@ sortedClients.forEach(([clientId, clientName]) => {
             div.innerHTML = `
                 <strong>${timeRange}</strong><br>
                 ${shiftType}<br>
-                <small>${staffName}</small>
             `;
 
             div.onclick = e => {

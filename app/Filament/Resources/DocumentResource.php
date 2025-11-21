@@ -28,6 +28,7 @@ use Filament\Tables\Actions\ActionGroup;
 use App\Models\Company;
 use Filament\Forms\Components\Textarea;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\View;
 
 class DocumentResource extends Resource
 {
@@ -199,66 +200,88 @@ class DocumentResource extends Resource
                      Forms\Components\Checkbox::make('no_expiration')
                                 ->label('No Expiration')
                                 ->reactive()
-                                ->columnSpan(6),
+                                ->columnSpan(3),
 
                 
-                           Select::make('document_category_id')
-                                    ->label('Document Category')
-                                    ->required()
-                                    ->columnSpan(6)
-                                    ->searchable()
-                                    ->options(function () {
-                                            $companyId = Company::where('user_id', Auth::id())->value('id');
-                                            $grouped = [];
+                       
 
-                                            // Competencies
-                                            $grouped['Competencies'] = \App\Models\DocumentCategory::query()
-                                                ->where('is_staff_doc', 1)
-                                                ->where('is_competencies', 1)
-                                                ->where('company_id', $companyId)
-                                                ->pluck('name', 'id')
-                                                ->toArray();
 
-                                            // Qualifications
-                                            $grouped['Qualifications'] = \App\Models\DocumentCategory::query()
-                                                ->where('is_staff_doc', 1)
-                                                ->where('is_qualifications', 1)
-                                                ->where('company_id', $companyId)
-                                                ->pluck('name', 'id')
-                                                ->toArray();
+                    Select::make('document_category_id')
+                            ->label('Document Category')
+                            ->required()
+                            ->columnSpan(6)
+                            ->searchable()
+                            ->options(function () {
+                                $companyId = Company::where('user_id', Auth::id())->value('id');
+                                $grouped = [];
 
-                                            // Compliance
-                                            $grouped['Compliance'] = \App\Models\DocumentCategory::query()
-                                                ->where('is_staff_doc', 1)
-                                                ->where('is_compliance', 1)
-                                                ->where('company_id', $companyId)
-                                                ->pluck('name', 'id')
-                                                ->toArray();
+                                $grouped['Competencies'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_competencies', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                                            // KPI
-                                            $grouped['KPI'] = \App\Models\DocumentCategory::query()
-                                                ->where('is_staff_doc', 1)
-                                                ->where('is_kpi', 1)
-                                                ->where('company_id', $companyId)
-                                                ->pluck('name', 'id')
-                                                ->toArray();
+                                $grouped['Qualifications'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_qualifications', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                                            // Other
-                                            $grouped['Other'] = \App\Models\DocumentCategory::query()
-                                                ->where('is_staff_doc', 1)
-                                                ->where('is_other', 1)
-                                                ->where('company_id', $companyId)
-                                                ->pluck('name', 'id')
-                                                ->toArray();
+                                $grouped['Compliance'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_compliance', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                                            return $grouped;
-                                        }),
+                                $grouped['KPI'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_kpi', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
 
-                            DatePicker::make('expired_at')
-                                ->label('Expires At')
-                                ->required(fn (callable $get) => ! $get('no_expiration')) 
-                                ->hidden(fn (callable $get) => $get('no_expiration'))
-                                ->columnSpan(6),
+                                $grouped['Other'] = DocumentCategory::query()
+                                    ->where('is_staff_doc', 1)
+                                    ->where('is_other', 1)
+                                    ->where('company_id', $companyId)
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+
+                                // 👇 Add special “Other category (type manually)” option at the end
+                                $grouped['Other']['__other__'] = 'Other category (type manually)';
+
+                                return $grouped;
+                            })
+                            ->reactive() 
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state !== '__other__') {
+                                    $set('custom_document_category', null);
+                                }
+                            }),
+
+                            Forms\Components\TextInput::make('custom_document_category')
+                                ->label('Custom Category Name')
+                                ->placeholder('Enter new category name')
+                                ->columnSpan(6)
+                                ->required(fn (callable $get) => $get('document_category_id') === '__other__')
+                                ->visible(fn (callable $get) => $get('document_category_id') === '__other__'),
+
+                        Forms\Components\DatePicker::make('expired_at')
+                            ->label('Expires At')
+                            ->required(fn (callable $get) => ! $get('no_expiration')) // required only if unchecked
+                            ->hidden(fn (callable $get) => $get('no_expiration')) // hide if checked
+                            ->extraInputAttributes(['id' => 'expired-input-create']) // <-- Unique ID is required!
+                            ->columnSpan(6),
+
+
+                                 View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input-create'
+                                    ]),
                         ]),
                     Forms\Components\FileUpload::make('file')
                         ->label('Upload Document')
@@ -274,32 +297,62 @@ class DocumentResource extends Resource
                                 ->label('Content')
                                 ->rows(5)
                                 ->placeholder('Enter Content Here'),
+
+                                     Forms\Components\Checkbox::make('send_email')
+                        ->label('Send email for signature?')
+                        ->default(true),
                 ])
-                ->action(function (array $data): void {
-                    $file = $data['file'];
-                    $doCategory = $data['document_category_id'];
-                    $expires = $data['expired_at'] ?? null;
-                    $extension = strtoupper(pathinfo($file, PATHINFO_EXTENSION));
 
-                    $staffDoc = \App\Models\Document::create([
-                        'user_id' => $data['user_id'],
-                        'name' => $file,
-                        'type' => $extension,
-                        'document_category_id' => $doCategory,
-                        'no_expiration' => $data['no_expiration'],
-                        'expired_at' => $expires,
-                        'signature_token'      => Str::uuid(),
-                        'details' => $data['details'],
-                         
-                    ]);
 
-                            Mail::to($staffDoc->user->email)->send(new DocumentSignatureRequest($staffDoc));
+                                ->action(function (array $data): void {
+                                    $file      = $data['file'];
+                                    $expires   = $data['expired_at'] ?? null;
+                                    $extension = strtoupper(pathinfo($file, PATHINFO_EXTENSION));
 
-                    \Filament\Notifications\Notification::make()
-                        ->title('Document uploaded successfully')
-                        ->success()
-                        ->send();
-                })
+                                    // 🔹 If "Other category (type manually)" selected, create new category first
+                                    if (($data['document_category_id'] ?? null) === '__other__') {
+                                        $companyId = \App\Models\Company::where('user_id', Auth::id())->value('id');
+
+                                        $newCategory = DocumentCategory::create([
+                                            'name'              => $data['custom_document_category'],
+                                            'status'            => 1,
+                                            'is_staff_doc'      => 1,  // staff doc
+                                            'is_competencies'   => 0,
+                                            'is_qualifications' => 0,
+                                            'is_compliance'     => 0,
+                                            'is_kpi'            => 0,
+                                            'is_other'          => 1,  // mark as "Other"
+                                            'company_id'        => $companyId,
+                                        ]);
+
+                                        $data['document_category_id'] = $newCategory->id;
+                                    }
+
+                                    $doCategory = $data['document_category_id'];
+
+                                    // 🔹 Create document
+                                    $staffDoc = Document::create([
+                                        'user_id'              => $data['user_id'],
+                                        'name'                 => $file,
+                                        'type'                 => $extension,
+                                        'document_category_id' => $doCategory,
+                                        'no_expiration'        => $data['no_expiration'] ?? 0,
+                                        'expired_at'           => $expires,
+                                        'signature_token'      => Str::uuid(),
+                                        'details'              => $data['details'],
+                                    ]);
+
+                                    // 🔹 Send email only if send_email is checked (if you added checkbox)
+                                    if (!empty($data['send_email'])) {
+                                        Mail::to($staffDoc->user->email)->send(new DocumentSignatureRequest($staffDoc));
+                                    }
+
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('Document uploaded successfully')
+                                        ->success()
+                                        ->send();
+                                })
+
                 ->modalHeading('Upload New Document')
                 ->modalSubmitActionLabel('Upload')
                 ->color('primary'),
@@ -468,7 +521,14 @@ class DocumentResource extends Resource
                                 ->default($record->expired_at)
                                 ->required(fn (callable $get) => ! $get('no_expiration')) 
                                 ->hidden(fn (callable $get) => $get('no_expiration'))
+                                ->extraInputAttributes(['id' => 'expired-input']) // <-- Unique ID is required!
                                 ->columnSpan(6),
+
+                                 View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input'
+                                    ]),
                         ]),
                         Forms\Components\FileUpload::make('name')
                             ->label('Replace Document')
@@ -487,29 +547,46 @@ class DocumentResource extends Resource
                                 ->rows(5)
                                 ->default($record->details)
                                 ->placeholder('Enter Content Here'),
+
+                                 Forms\Components\Checkbox::make('send_email')
+                                ->label('Send email for signature?')
+                                ->default(true),
                     ];
                 })
-                ->action(function (array $data, $record): void {
-                    $extension = strtoupper(pathinfo($data['name'], PATHINFO_EXTENSION));
+                                        ->action(function (array $data, $record): void {
+                                        $extension = strtoupper(pathinfo($data['name'], PATHINFO_EXTENSION));
 
-                  $record->update([
-                        'user_id' => $data['user_id'],
-                        'name' => $data['name'],
-                        'document_category_id' => $data['document_category_id'],
-                         'expired_at'           => $data['expired_at'] ?? null,
-                        'no_expiration' => $data['no_expiration'],
-                        'type' => $extension,
-                        'details' => $data['details'],
-                        'signature_token'      => Str::uuid(),
-                    ]);
+                                        // 🔹 Update the document
+                                        $record->update([
+                                            'user_id'              => $data['user_id'],
+                                            'name'                 => $data['name'],
+                                            'document_category_id' => $data['document_category_id'],
+                                            'expired_at'           => $data['expired_at'] ?? null,
+                                            'no_expiration'        => $data['no_expiration'],
+                                            'type'                 => $extension,
+                                            'details'              => $data['details'],
+                                            'signature_token'      => Str::uuid(),
+                                        ]);
 
-                     Mail::to($record->user->email)->send(new DocumentSignatureRequest($record));
+                                        // 🔹 Refresh relation in case user_id changed
+                                        $record->refresh();
 
-                    \Filament\Notifications\Notification::make()
-                        ->title('Document updated successfully')
-                        ->success()
-                        ->send();
-                }),
+                                        // 🔹 Send email only if checkbox checked AND user email exists
+                                        if (!empty($data['send_email'])) {
+                                            $user = $record->user ?? null;   // relationship: Document belongsTo User
+
+                                            if ($user && !empty($user->email)) {
+                                                Mail::to($user->email)->send(new DocumentSignatureRequest($record));
+                                            }
+                                            // else: silently skip sending to avoid "To" header error
+                                        }
+
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Document updated successfully')
+                                            ->success()
+                                            ->send();
+                                    }),
+
                 Tables\Actions\DeleteAction::make()->color('danger')->label('Delete')
                 
                 ,

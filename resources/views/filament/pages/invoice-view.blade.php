@@ -643,7 +643,7 @@
 
                           <input type="number" name="paid_amount" step="0.01" placeholder="Amount">
                           <input type="text" name="reference" placeholder="Payment Reference">
-                          <input type="date" name="payment_date" value="{{ now()->toDateString() }}">
+                          <input type="date" name="payment_date" value="{{ now()->toDateString() }}" id="payment-date">
                           <button type="submit">Submit</button>
                       </form>
                       @endif
@@ -757,5 +757,14 @@ function toggleText(el) {
         fullText.style.display = "inline";
     }
 }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.initCustomDatePicker) return;
+
+        ['payment-date'].forEach(function (id) {
+            window.initCustomDatePicker(id);
+        });
+    });
 </script>
 </x-filament-panels::page>

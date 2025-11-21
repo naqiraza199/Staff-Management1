@@ -34,6 +34,7 @@ use App\Models\PublicHoliday;
 use App\Models\JobTitle;
 use Filament\Forms\Components\Textarea;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\View; 
 
 class Setting extends Page
 {
@@ -628,6 +629,7 @@ class Setting extends Page
                                                                                             Forms\Components\DatePicker::make('date')
                                                                                                 ->label('Holiday Date')
                                                                                                 ->required()
+                                                                                                ->extraInputAttributes(['id' => 'dob-input-1']) // <-- Unique ID is required!
                                                                                                 ->unique(
                                                                                                     table: PublicHoliday::class,
                                                                                                     column: 'date',
@@ -639,6 +641,12 @@ class Setting extends Page
                                                                                         ->defaultItems(1)
                                                                                         ->disableItemDeletion() // ✅ No delete allowed
                                                                                         ->disableLabel(),
+
+                                                                                            View::make('js-initializer')
+                                                                                                    ->view('filament.forms.components.js-initializer')
+                                                                                                    ->viewData([
+                                                                                                        'fieldId' => 'dob-input-1'
+                                                                                                    ]),
                                                                                 ]);
                                                                             })
                                                                             ->action(function (array $data) {

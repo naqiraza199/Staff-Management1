@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\DocumentSignatureRequest;
 use App\Models\Company;
 use Filament\Forms\Components\Textarea;
-
+use Filament\Forms\Components\View;
 
 class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 {
@@ -119,29 +119,61 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                                          Forms\Components\Checkbox::make('no_expiration')
                                             ->label('No Expiration')
                                             ->reactive() // 👈 important so Filament listens for changes
-                                            ->columnSpan(12),
+                                            ->columnSpan(6),
+
+                                    Forms\Components\Checkbox::make('send_email')
+                                        ->label('Send email for signature?')
+                                        ->default(true)
+                                        ->columnSpan(6),
+
 
                             Forms\Components\Select::make('document_category_id')
-                            ->label('Document Category')
-                            ->options(function () {
-                                $user = Auth::user();
-                                $companyId = Company::where('user_id', $user->id)->value('id');
+                                ->label('Document Category')
+                                ->options(function () {
+                                    $user = Auth::user();
+                                    $companyId = Company::where('user_id', $user->id)->value('id');
 
-                                return DocumentCategory::where('is_staff_doc', '!=', 1)
-                                    ->where('company_id', $companyId)
-                                    ->pluck('name', 'id')
-                                    ->toArray();
-                            })
-                            ->searchable()
-                            ->preload()
-                            ->required()
+                                    $options = DocumentCategory::where('is_staff_doc', '!=', 1)
+                                        ->where('company_id', $companyId)
+                                        ->pluck('name', 'id')
+                                        ->toArray();
+
+                                    $options['__other__'] = 'Other category (type manually)';
+
+                                    return $options;
+                                })
+                                ->searchable()
+                                ->preload()
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state !== '__other__') {
+                                        $set('custom_document_category', null);
+                                    }
+                                })
+                                ->required()
+                                ->columnSpan(6),
+
+                            Forms\Components\TextInput::make('custom_document_category')
+                                ->label('Custom Category Name')
+                                ->placeholder('Enter new category name')
+                                ->columnSpan(6)
+                                ->required(fn (callable $get) => $get('document_category_id') === '__other__')
+                                ->visible(fn (callable $get) => $get('document_category_id') === '__other__'),
+
+
+                            Forms\Components\DatePicker::make('expired_at')
+                            ->label('Expires At')
+                            ->required(fn (callable $get) => ! $get('no_expiration')) // required only if unchecked
+                            ->hidden(fn (callable $get) => $get('no_expiration')) // hide if checked
+                            ->extraInputAttributes(['id' => 'expired-input-create']) // <-- Unique ID is required!
                             ->columnSpan(6),
 
-                            DatePicker::make('expired_at')
-                                ->label('Expires At')
-                                 ->required(fn (callable $get) => ! $get('no_expiration')) 
-                                ->hidden(fn (callable $get) => $get('no_expiration'))
-                                ->columnSpan(6),
+
+                                 View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input-create'
+                                    ]),
                         ]),
                     Forms\Components\FileUpload::make('file')
                         ->label('Upload Document')
@@ -158,31 +190,55 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                                 ->rows(5)
                                 ->placeholder('Enter Content Here'),
                 ])
+
                 ->action(function (array $data): void {
-                    $file = $data['file'];
-                    $doCategory = $data['document_category_id'];
-                    $expires = $data['expired_at'] ?? null;
+                    $file      = $data['file'];
+                    $expires   = $data['expired_at'] ?? null;
                     $extension = strtoupper(pathinfo($file, PATHINFO_EXTENSION));
 
-                   $clientDoc = \App\Models\Document::create([
-                        'user_id' => auth()->id(),
-                        'client_id' => $data['client_id'],
-                        'name' => $file,
-                        'type' => $extension,
+                    if (($data['document_category_id'] ?? null) === '__other__') {
+                        $user = Auth::user();
+                        $companyId = Company::where('user_id', $user->id)->value('id');
+
+                        $newCategory = DocumentCategory::create([
+                            'name'              => $data['custom_document_category'],
+                            'status'            => 1,   
+                            'is_staff_doc'      => 0,   
+                            'is_competencies'   => 0,
+                            'is_qualifications' => 0,
+                            'is_compliance'     => 0,
+                            'is_kpi'            => 0,
+                            'is_other'          => 0,   
+                            'company_id'        => $companyId,
+                        ]);
+
+                        $data['document_category_id'] = $newCategory->id;
+                    }
+
+                    $doCategory = $data['document_category_id'];
+
+                    $clientDoc = Document::create([
+                        'user_id'              => auth()->id(),
+                        'client_id'            => $data['client_id'],
+                        'name'                 => $file,
+                        'type'                 => $extension,
                         'document_category_id' => $doCategory,
                         'no_expiration'        => $data['no_expiration'] ?? 0,
-                        'expired_at' => $expires,
+                        'expired_at'           => $expires,
                         'signature_token'      => Str::uuid(),
-                        'details' => $data['details'],
-                            ]);
+                        'details'              => $data['details'],
+                    ]);
 
-                            Mail::to($clientDoc->client->email)->send(new DocumentSignatureRequest($clientDoc));
+                    if (!empty($data['send_email'])) {
+                        Mail::to($clientDoc->client->email)->send(new DocumentSignatureRequest($clientDoc));
+                    }
 
                     \Filament\Notifications\Notification::make()
                         ->title('Document uploaded successfully')
                         ->success()
                         ->send();
                 })
+
                 ->modalHeading('Upload New Document')
                 ->modalSubmitActionLabel('Upload')
                 ->color('primary'),
@@ -266,7 +322,12 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->label('No Expiration')
                             ->reactive()
                             ->default(fn ($record) => $record?->no_expiration ?? false)
-                            ->columnSpan(12),
+                            ->columnSpan(6),
+
+                            Forms\Components\Checkbox::make('send_email')
+                                        ->label('Send email for signature?')
+                                        ->default(true)
+                                        ->columnSpan(6),
 
                         Select::make('document_category_id')
                                         ->label('Document Category')
@@ -287,12 +348,19 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 
 
 
-                            DatePicker::make('expired_at')
+                                    DatePicker::make('expired_at')
                                 ->label('Expires At')
                                 ->default($record->expired_at)
-                                 ->required(fn (callable $get) => ! $get('no_expiration')) 
+                                ->required(fn (callable $get) => ! $get('no_expiration')) 
                                 ->hidden(fn (callable $get) => $get('no_expiration'))
+                                ->extraInputAttributes(['id' => 'expired-input']) // <-- Unique ID is required!
                                 ->columnSpan(6),
+
+                                 View::make('js-initializer')
+                                    ->view('filament.forms.components.js-initializer')
+                                    ->viewData([
+                                        'fieldId' => 'expired-input'
+                                    ]),
                         ]),
                         Forms\Components\FileUpload::make('name')
                             ->label('Replace Document')
@@ -325,7 +393,9 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                         'signature_token'      => Str::uuid(),
                     ]);
 
-                            Mail::to($record->client->email)->send(new DocumentSignatureRequest($record));
+                      if (!empty($data['send_email'])) {
+                       Mail::to($record->client->email)->send(new DocumentSignatureRequest($record));
+                    }
 
 
                     \Filament\Notifications\Notification::make()
