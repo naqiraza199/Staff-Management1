@@ -161,11 +161,13 @@ public function mount(): void
                                                                 ->schema([
                                                                     TimePicker::make('client_start_time')
                                                                         ->label('')
+                                                                        ->seconds(false)
                                                                         ->default('02:00 AM')
                                                                         ->columnSpan(2),
 
                                                                     TimePicker::make('client_end_time')
                                                                         ->label('')
+                                                                        ->seconds(false)
                                                                         ->default('03:00 AM')
                                                                         ->columnSpan(2),
 
@@ -286,9 +288,11 @@ public function mount(): void
                                         ->columnSpan(3),
                                     TimePicker::make('start_time')
                                         ->label('')
+                                        ->seconds(false)
                                         ->columnSpan(4),
                                     TimePicker::make('end_time')
                                         ->label('')
+                                        ->seconds(false)
                                         ->columnSpan(4),
                                 ]),
                             Grid::make(3)
@@ -805,11 +809,13 @@ public function mount(): void
 
                                                         TimePicker::make('user_start_time')
                                                             ->label('')
+                                                            ->seconds(false)
                                                             ->default('02:00 AM')
                                                             ->columnSpan(2),
 
                                                         TimePicker::make('user_end_time')
                                                             ->label('')
+                                                            ->seconds(false)
                                                             ->default('03:00 AM')
                                                             ->columnSpan(2),
 

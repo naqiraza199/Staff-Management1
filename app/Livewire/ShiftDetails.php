@@ -300,16 +300,14 @@ public function confirm()
             $timeLocation = json_decode($timeLocation, true);
         }
 
-        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $timeLocation['start_time'])->format('h:i A');
-        $endTime   = \Carbon\Carbon::createFromFormat('H:i:s', $timeLocation['end_time'])->format('h:i A');
-        $timeRange = $startTime . ' - ' . $endTime;
+
 
 
     Event::create([
         'shift_id' => $this->shift->id,
         'title'    => $authUser->name . ' approved timesheet',
         'from'     => 'Approved',
-        'body'     => "Scheduled time approved for: {$timeRange} {$authUser->name}. "
+        'body'     => "Scheduled time approved for: {$authUser->name}. "
                      ."Mileage: {$approvedShift->mileage} km. "
                      ."Expense: \${$approvedShift->expense}. "
                      ."Allowance: {$approvedShift->allowance}. "
@@ -563,12 +561,9 @@ public function unapprove()
     $start = $timeLocation['start_time'] ?? null;
     $end = $timeLocation['end_time'] ?? null;
 
-    // if times are present, format them, otherwise use placeholders
-    $startTime = $start ? \Carbon\Carbon::createFromFormat('H:i:s', $start)->format('h:i A') : '--';
-    $endTime   = $end ? \Carbon\Carbon::createFromFormat('H:i:s', $end)->format('h:i A') : '--';
-    $timeRange = "{$startTime} - {$endTime}";
 
-    $bodyMessage = "Timesheet verification cancelled for: {$timeRange} {$authUser->name}. Comment:";
+
+    $bodyMessage = "Timesheet verification cancelled for: {$authUser->name}. Comment:";
 
     Event::create([
         'shift_id' => $this->shift->id,
@@ -867,10 +862,12 @@ public function viewAllEvents()
 
                         TimePicker::make('start_time')
                             ->label('')
+                            ->seconds(false)   
                             ->columnSpan(4),
 
                         TimePicker::make('end_time')
                             ->label('')
+                            ->seconds(false)   
                             ->columnSpan(4),
                     ]),
 

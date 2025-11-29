@@ -10,6 +10,7 @@ class Invoice extends Model
 
     protected $casts = [
     'billing_reports_ids' => 'array',
+    'description' => 'array', 
     ];
 
     public function client()

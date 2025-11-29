@@ -503,13 +503,16 @@ public function form(Form $form): Form
                             ->label('Time')
                             ->columnSpan(3),
 
-                        TimePicker::make('start_time')
-                            ->label('')
-                            ->columnSpan(4),
+                TimePicker::make('start_time')
+                    ->label('')
+                    ->seconds(false)   
+                    ->columnSpan(4),
 
-                        TimePicker::make('end_time')
-                            ->label('')
-                            ->columnSpan(4),
+                TimePicker::make('end_time')
+                    ->label('')
+                    ->seconds(false)   
+                    ->columnSpan(4),
+
                     ]),
 
                 Grid::make(5)

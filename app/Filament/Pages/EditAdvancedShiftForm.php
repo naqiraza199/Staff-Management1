@@ -268,9 +268,11 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                     ->disabled()
                                     ->default(fn ($get) => $get('client_name')),
                                 TimePicker::make('client_start_time')
+                                    ->seconds(false)
                                     ->label('Start Time')
                                     ->default(fn ($get) => $get('client_start_time')),
                                 TimePicker::make('client_end_time')
+                                    ->seconds(false)
                                     ->label('End Time')
                                     ->default(fn ($get) => $get('client_end_time')),
                                 Select::make('price_book_id')
@@ -333,9 +335,11 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ->default($this->data['shift_finishes_next_day'] ?? false),
                         TimePicker::make('start_time')
                             ->label('Start Time')
+                            ->seconds(false)
                             ->default($this->data['start_time'] ?? null),
                         TimePicker::make('end_time')
                             ->label('End Time')
+                            ->seconds(false)
                             ->default($this->data['end_time'] ?? null),
                         TextInput::make('break_time')
                             ->label('Break Time (minutes)')
@@ -508,9 +512,11 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                     ->default(fn ($get) => $get('user_name')),
                                 TimePicker::make('user_start_time')
                                     ->label('Start Time')
+                                    ->seconds(false)
                                     ->default(fn ($get) => $get('user_start_time')),
                                 TimePicker::make('user_end_time')
                                     ->label('End Time')
+                                    ->seconds(false)
                                     ->default(fn ($get) => $get('user_end_time')),
                                 Select::make('pay_group_id')
                                     ->label('Pay Group')

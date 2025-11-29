@@ -5,6 +5,9 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use App\Models\Company;
 use App\Models\InvoiceCategory;
+use App\Models\Invoice;
+use Carbon\Carbon;
+
 
 class AddTax extends Page
 {
@@ -153,13 +156,50 @@ public function createInvoice()
 {
     $authUser = auth()->user();
 
-    // 🔹 Step 1: Get related shift IDs from selected billing reports
-    $shiftIds = \App\Models\BillingReport::whereIn('id', $this->billing_ids)
-        ->pluck('shift_id')
-        ->filter() // remove nulls
-        ->toArray();
+    // Step 1: Get selected billing reports + enrich them (critical for ref codes)
+    $billingReports = \App\Models\BillingReport::with(['shift', 'client'])
+        ->whereIn('id', $this->billing_ids)
+        ->get()
+        ->map(function ($report) {
+            // Parse hours_x_rate
+            if (!empty($report->hours_x_rate) && strpos($report->hours_x_rate, 'x') !== false) {
+                [$hours, $rate] = array_map('trim', explode('x', $report->hours_x_rate, 2));
+                $report->hours = (float) $hours;
+                $report->rate  = $rate;
+            } else {
+                $report->hours = null;
+                $report->rate  = null;
+            }
 
-    // 🔹 Step 2: Check for unapproved shifts
+            // Parse distance_x_rate
+            if (!empty($report->distance_x_rate) && strpos($report->distance_x_rate, 'x') !== false) {
+                [$distance, $rate] = array_map('trim', explode('x', $report->distance_x_rate, 2));
+                $report->distance       = (float) $distance;
+                $report->distance_rate  = $rate;
+            } else {
+                $report->distance      = null;
+                $report->distance_rate = null;
+            }
+
+            // Match PriceBookDetail → gets real ref_hour & ref_km
+            if (!empty($report->price_book_id) && !empty($report->rate)) {
+                $numericRate = (float) str_replace(['$', ','], '', $report->rate);
+
+                $detail = \App\Models\PriceBookDetail::where('price_book_id', $report->price_book_id)
+                    ->where('per_hour', $numericRate)
+                    ->first();
+
+                if ($detail) {
+                    $report->matched_price_book_detail = $detail;
+                }
+            }
+
+            return $report;
+        });
+
+    // Step 2: Check for unapproved shifts
+    $shiftIds = $billingReports->pluck('shift_id')->filter()->toArray();
+
     $unapprovedShifts = \App\Models\Shift::whereIn('id', $shiftIds)
         ->where('is_approved', false)
         ->count();
@@ -170,48 +210,107 @@ public function createInvoice()
             ->body('Some shifts are not approved. Please approve all shifts before generating an invoice.')
             ->danger()
             ->send();
-
-        return; // stop here
+        return;
     }
 
-    // 🔹 Step 3: Calculate totals
+    // Step 3: Build description JSON (using Billing Report ID as key)
+    $hourShiftDescriptions = [];
+    $kmShiftDescriptions   = [];
+
+    foreach ($billingReports as $report) {
+        $shift = $report->shift;
+        if (!$shift) continue;
+
+        $clientSection   = is_string($shift->client_section) ? json_decode($shift->client_section, true) : ($shift->client_section ?? []);
+        $timeAndLocation = is_string($shift->time_and_location) ? json_decode($shift->time_and_location, true) : ($shift->time_and_location ?? []);
+
+        $clientName = $report->client?->display_name ?? 'Unknown Client';
+
+        $startTime = !empty($timeAndLocation['start_time']) ? Carbon::parse($timeAndLocation['start_time'])->format('h:i a') : '';
+        $endTime   = !empty($timeAndLocation['end_time'])   ? Carbon::parse($timeAndLocation['end_time'])->format('h:i a') : '';
+        $dateText  = !empty($timeAndLocation['start_date']) ? Carbon::parse($timeAndLocation['start_date'])->format('d/m/Y') : '';
+        $timeText  = trim("{$dateText} {$startTime} - {$endTime}");
+
+        // Price Book Name (simple or advanced shift)
+        $priceBookId = null;
+        if (!$shift->is_advanced_shift) {
+            $priceBookId = $clientSection['price_book_id'] ?? null;
+        } else {
+            $clientDetails = $clientSection['client_details'][0] ?? null;
+            $priceBookId = $clientDetails['price_book_id'] ?? null;
+        }
+
+        $priceBookName = $priceBookId
+            ? \App\Models\PriceBook::find($priceBookId)?->name ?? 'Unknown Price Book'
+            : 'Unknown Price Book';
+
+        $refHour = $report->matched_price_book_detail?->ref_hour ?? '-';
+        $refKm   = $report->matched_price_book_detail?->ref_km ?? '-';
+
+        $baseText  = "{$clientName} ({$timeText}) [{$priceBookName}]";
+        $billingId = $report->id;
+
+        if ($refHour && trim($refHour) !== '' && trim($refHour) !== '-') {
+            $hourShiftDescriptions[$billingId] = "{$baseText} [{$refHour}]";
+        }
+
+        if ($refKm && trim($refKm) !== '' && trim($refKm) !== '-' && $refKm !== $refHour) {
+            $kmShiftDescriptions[$billingId] = "{$baseText} [{$refKm}]";
+        }
+    }
+
+    $description = [
+        'hour_shift' => $hourShiftDescriptions,
+        'km_shift'   => $kmShiftDescriptions,
+    ];
+
+
+    if (empty($hourShiftDescriptions) && empty($kmShiftDescriptions)) {
+        $description = null;
+    }
+
+    // Step 4: Calculate totals
     $subtotalFromDB = \App\Models\BillingReport::whereIn('id', $this->billing_ids)
         ->where('status', '!=', 'Paid')
         ->sum('total_cost');
-    
-    $subtotalValue = $this->htmlSubtotal > 0 ? $this->htmlSubtotal : $subtotalFromDB;
-    $taxValue = $this->htmlTax > 0 ? $this->htmlTax : 0.0;
+
+    $subtotalValue   = $this->htmlSubtotal > 0 ? $this->htmlSubtotal : $subtotalFromDB;
+    $taxValue        = $this->htmlTax > 0 ? $this->htmlTax : 0.0;
     $grandTotalValue = $this->htmlGrandTotal > 0 ? $this->htmlGrandTotal : ($subtotalFromDB + ($subtotalFromDB * 0.10));
 
-    // 🔹 Step 4: Create invoice
+    $lastSequence = Invoice::max('invoice_sequence');
+    $sequence     = $lastSequence ? $lastSequence + 1 : 1;
+
+    // Step 5: Create invoice WITH description
     $invoice = \App\Models\Invoice::create([
-        'company_id'          => $this->company->id,
-        'client_id'           => $this->client_id,
-        'billing_reports_ids' => json_encode($this->billing_ids),
-        'invoice_no'          => '#' . rand(1000000, 9999999),
-        'issue_date'          => now()->toDateString(),
-        'payment_due'         => $this->payment_due,
-        'purchase_order'      => $this->purchase_order,
+        'company_id'            => $this->company->id,
+        'client_id'             => $this->client_id,
+        'billing_reports_ids'   => json_encode($this->billing_ids),
+        'invoice_sequence'      => $sequence,
+        'invoice_no'            => str_pad($sequence, 7, '0', STR_PAD_LEFT),
+        'issue_date'            => now()->toDateString(),
+        'payment_due'           => $this->payment_due,
+        'purchase_order'        => $this->purchase_order,
         'additional_contact_id' => $this->additional_contact_id === 'client' ? null : $this->additional_contact_id,
-        'ndis'                => $this->ref_no,
-        'ref_no'              => $this->ref_no,
-        'status'              => 'Unpaid/Overdue',
-        'amount'              => $subtotalValue,   
-        'tax'                 => $taxValue,        
-        'balance'             => $grandTotalValue, 
+        'ndis'                  => $this->ref_no,
+        'ref_no'                => $this->ref_no,
+        'status'                => 'Unpaid/Overdue',
+        'amount'                => $subtotalValue,
+        'tax'                   => $taxValue,
+        'balance'               => $grandTotalValue,
+
+        // THIS IS THE ONLY NEW LINE
+        'description'           => $description,
     ]);
 
-    // 🔹 Step 5: Update Billing Reports to Paid
-    \App\Models\BillingReport::whereIn('id', $this->billing_ids)
-        ->update(['status' => 'Paid']);
+    // Step 6: Update Billing Reports & Shifts
+    \App\Models\BillingReport::whereIn('id', $this->billing_ids)->update(['status' => 'Paid']);
 
-    // 🔹 Step 6: Update related Shifts to "Invoiced"
     if (!empty($shiftIds)) {
-        \App\Models\Shift::whereIn('id', $shiftIds)
-            ->update(['status' => 'Invoiced']);
+        \App\Models\Shift::whereIn('id', $shiftIds)->update(['status' => 'Invoiced']);
     }
 
-    // 🔹 Step 7: Log Event
+    // Step 7: Log & Notify
     \App\Models\Event::create([
         'invoice_id' => $invoice->id,
         'title'      => $authUser->name . ' Created Invoice',
@@ -219,14 +318,13 @@ public function createInvoice()
         'body'       => 'Invoice created successfully',
     ]);
 
-    // 🔹 Step 8: Notify success
     \Filament\Notifications\Notification::make()
         ->title('Invoice Created')
         ->body('Invoice ' . $invoice->invoice_no . ' created successfully.')
         ->success()
         ->send();
 
-    // 🔹 Step 9: Redirect
+    // Step 8: Redirect
     return redirect()->route('filament.admin.pages.add-tax', [
         'client_id'   => $this->client_id,
         'billing_ids' => implode(',', $this->billing_ids),

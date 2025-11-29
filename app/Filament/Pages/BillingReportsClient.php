@@ -472,10 +472,12 @@ public function table(Table $table): Table
         Grid::make(2)->schema([
             TimePicker::make('start_time')
                 ->label('Start Time')
+                ->seconds(false)
                 ->required(),
             
             TimePicker::make('end_time')
                 ->label('End Time')
+                ->seconds(false)
                 ->required(),
         ]),
 

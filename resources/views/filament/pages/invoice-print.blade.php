@@ -99,55 +99,79 @@
                 </thead>
                 <tbody>
                     @php $remainingTax = round($invoice->tax, 2); @endphp
-                    @foreach($billingReports as $report)
-                        @php
-                            $shift = \App\Models\Shift::find($report->shift_id);
-                            $clientName = \App\Models\Client::find($invoice->client_id)->display_name ?? 'Unknown Client';
-                            if ($shift) {
-                                $clientSection = is_string($shift->client_section) ? json_decode($shift->client_section, true) : ($shift->client_section ?? []);
-                                $timeAndLocation = is_string($shift->time_and_location) ? json_decode($shift->time_and_location, true) : ($shift->time_and_location ?? []);
-                                $priceBookName = 'Unknown Price Book';
-                                if (!$shift->is_advanced_shift) {
-                                    $priceBookName = \App\Models\PriceBook::find($clientSection['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
-                                } else {
-                                    $clientDetails = $clientSection['client_details'][0] ?? null;
-                                    if ($clientDetails) {
-                                        $priceBookName = \App\Models\PriceBook::find($clientDetails['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
-                                    }
-                                }
-                                $start = !empty($timeAndLocation['start_time']) ? \Carbon\Carbon::parse($timeAndLocation['start_time'])->format('h:i a') : '';
-                                $end = !empty($timeAndLocation['end_time']) ? \Carbon\Carbon::parse($timeAndLocation['end_time'])->format('h:i a') : '';
-                                $start_date = !empty($timeAndLocation['start_date']) ? \Carbon\Carbon::parse($timeAndLocation['start_date'])->format('d/m/Y') : '';
-                                $refHour = $report->matched_price_book_detail->ref_hour ?? '-';
-                                $refKm   = $report->matched_price_book_detail->ref_km ?? '-';
-                                $shiftTextHour = "$clientName ($start_date $start - $end) [$priceBookName] [$refHour]";
-                                $shiftTextKm   = "$clientName ($start_date $start - $end) [$priceBookName] [$refKm]";
-                            } else {
-                                $shiftTextHour = 'N/A';
-                                $shiftTextKm = 'N/A';
-                            }
+                      @php
+                                            $description = $invoice->description;
 
-                            $expectedTax = round(($report->total_cost ?? 0) * 0.10, 2);
-                            $rowTax = 0.0;
-                            if ($remainingTax >= $expectedTax) { $rowTax = $expectedTax; $remainingTax -= $expectedTax; }
-                        @endphp
-                        <tr>
-                            <td style="width:100%;">{{ $shiftTextHour }}</td>
-                            <td>Hours</td>
-                            <td>{{ $report->hours !== null ? number_format($report->hours, 1) : '-' }}</td>
-                            <td>${{ $report->rate ?? '-' }}</td>
-                            <td>${{ number_format($rowTax, 2) }}</td>
-                            <td>${{ number_format($report->hours_total, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>{!! $shiftTextKm !!}</td>
-                            <td>Kms</td>
-                            <td>{{ $report->distance !== null ? number_format($report->distance, 1) : '-' }}</td>
-                            <td>{{ $report->distance_rate ?? '-' }}</td>
-                            <td>0.0</td>
-                            <td>${{ number_format($report->distance_total, 2) }}</td>
-                        </tr>
-                    @endforeach
+                                            // Safely handle string, array, or null
+                                            if (is_string($description)) {
+                                                $description = json_decode($description, true);
+                                            }
+
+                                            if (!is_array($description)) {
+                                                $description = [];
+                                            }
+
+                                            $hourShifts = $description['hour_shift'] ?? [];
+                                            $kmShifts   = $description['km_shift'] ?? [];
+                                        @endphp
+
+                                        @foreach($billingReports as $report)
+                                            @php
+                                                $billingId = $report->id;
+                                                $hourText  = $hourShifts[$billingId] ?? '-';
+                                                $kmText    = $kmShifts[$billingId] ?? '-';
+                                                $hasKm     = !empty($kmText) && $kmText !== '-';
+                                            @endphp
+
+                                            {{-- HOUR ROW --}}
+                                            <tr class="billing-row" data-amount="{{ $report->total_cost }}">
+                                                <td class="px-6 py-4" style="font-size:13px; width: 100%;">
+                                                    <span class="font-medium">{{ $hourText }}</span>
+                                                </td>
+                                                <td class="px-6 py-4" style="font-size:13px;">Hours</td>
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    {{ $report->hours !== null ? number_format($report->hours, 1) : '-' }}
+                                                </td>
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    ${{ $report->rate ?? '-' }}
+                                                </td>
+
+                                                @php
+                                                    $expectedTax = round($report->total_cost * 0.10, 2);
+                                                    static $remainingTax = null;
+                                                    if ($remainingTax === null) {
+                                                        $remainingTax = round($invoice->tax, 2);
+                                                    }
+                                                    $rowTax = $remainingTax >= $expectedTax ? $expectedTax : $remainingTax;
+                                                    $remainingTax -= $rowTax;
+                                                @endphp
+
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    ${{ number_format($rowTax, 2) }}
+                                                </td>
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    ${{ number_format($report->hours_total ?? 0, 2) }}
+                                                </td>
+                                            </tr>
+
+                                            {{-- KM ROW (only if exists) --}}
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-6 py-4" style="font-size:13px; width: 100%;">
+                                                        <span>{{ $kmText }}</span>
+                                                    </td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">Kms</td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">
+                                                        {{ $report->distance !== null ? number_format($report->distance, 1) : '-' }}
+                                                    </td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">
+                                                        {{ $report->distance_rate ?? '-' }}
+                                                    </td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">$0.00</td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">
+                                                        ${{ number_format($report->distance_total ?? 0, 2) }}
+                                                    </td>
+                                                </tr>
+                                        @endforeach
                 </tbody>
             </table>
         </div>

@@ -58,9 +58,8 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\View;
 use Illuminate\Support\Facades\Log;
 
-class InvoiceGenerate extends Page implements HasForms
+class InvoiceGenerate extends Page 
 {
-    use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-s-document-chart-bar';
     protected static string $view = 'filament.pages.invoice-generate';
@@ -87,27 +86,34 @@ class InvoiceGenerate extends Page implements HasForms
 
     public ?array $data = [];
 
-    public function mount(): void
-    {
-        $authUser = auth()->user();
+  public function mount(): void
+{
+    $authUser = auth()->user();
 
-       $this->clients = Client::withSum(
-                ['billingReports as unpaid_total_cost' => function ($query) {
-                    $query->where('status', 'Unpaid');
-                }],
-                'total_cost'
-            )
-            ->withCount([
-                'billingReports as not_paid_reports_count' => function ($query) {
-                    $query->where('status', '!=', 'Paid');
-                }
-            ])
-            ->where('is_archive', 'Unarchive')
-            ->where('user_id', $authUser->id)
-            ->having('unpaid_total_cost', '>', 0)
-            ->get();
+    $this->clients = Client::with([
+            // load billing reports that are NOT Paid (so JS filters those by date)
+            'billingReports' => function ($q) {
+                $q->where('status', '!=', 'Paid')
+                  ->orderBy('date', 'asc');
+            },
+        ])
+        ->withSum(
+            ['billingReports as unpaid_total_cost' => function ($query) {
+                $query->where('status', 'Unpaid');
+            }],
+            'total_cost'
+        )
+        ->withCount([
+            'billingReports as not_paid_reports_count' => function ($query) {
+                $query->where('status', '!=', 'Paid');
+            }
+        ])
+        ->where('is_archive', 'Unarchive')
+        ->where('user_id', $authUser->id)
+        ->having('unpaid_total_cost', '>', 0)
+        ->get();
+}
 
-    }
 
 #[On('generateInvoices')]
 public function generateInvoices(array $selectedClients): void
@@ -161,13 +167,127 @@ $authUser = auth()->user();
         $invoiceNo = random_int(1000000, 9999999);
         $ndisRef = random_int(100000000, 999999999);
 
-        // ✅ Create invoice
+        $lastSequence = Invoice::max('invoice_sequence'); // null if no records
+        $sequence = $lastSequence ? $lastSequence + 1 : 1;
+
+        // ──────────────────────────────────────────────────────────────
+        // 1. FETCH + ENRICH BILLING REPORTS (CRITICAL: gets real ref codes)
+        // ──────────────────────────────────────────────────────────────
+        $billingReports = BillingReport::with(['shift', 'client'])
+            ->where('client_id', $clientId)
+            ->where('status', 'Unpaid')
+            ->get()
+            ->map(function ($report) {
+                // Parse hours_x_rate (e.g., "8 x $95.00")
+                if (!empty($report->hours_x_rate) && strpos($report->hours_x_rate, 'x') !== false) {
+                    [$hours, $rate] = array_map('trim', explode('x', $report->hours_x_rate, 2));
+                    $report->hours = (float) $hours;
+                    $report->rate  = $rate;
+                } else {
+                    $report->hours = null;
+                    $report->rate  = null;
+                }
+
+                // Parse distance_x_rate
+                if (!empty($report->distance_x_rate) && strpos($report->distance_x_rate, 'x') !== false) {
+                    [$distance, $rate] = array_map('trim', explode('x', $report->distance_x_rate, 2));
+                    $report->distance       = (float) $distance;
+                    $report->distance_rate  = $rate;
+                } else {
+                    $report->distance      = null;
+                    $report->distance_rate = null;
+                }
+
+                // Match PriceBookDetail to get ref_hour & ref_km
+                if (!empty($report->price_book_id) && !empty($report->rate)) {
+                    $numericRate = (float) str_replace(['$', ','], '', $report->rate);
+
+                    $detail = \App\Models\PriceBookDetail::where('price_book_id', $report->price_book_id)
+                        ->where('per_hour', $numericRate)
+                        ->first();
+
+                    if ($detail) {
+                        $report->matched_price_book_detail = $detail;
+                    }
+                }
+
+                return $report;
+            });
+
+        // ──────────────────────────────────────────────────────────────
+        // 2. BUILD DESCRIPTION JSON (using Billing Report ID as key)
+        // ──────────────────────────────────────────────────────────────
+        $hourShiftDescriptions = [];
+        $kmShiftDescriptions   = [];
+
+        foreach ($billingReports as $report) {
+            $shift = $report->shift;
+            if (!$shift) continue;
+
+            // Decode JSON fields safely
+            $clientSection   = is_string($shift->client_section) ? json_decode($shift->client_section, true) : ($shift->client_section ?? []);
+            $timeAndLocation = is_string($shift->time_and_location) ? json_decode($shift->time_and_location, true) : ($shift->time_and_location ?? []);
+
+            $clientName = $report->client?->display_name ?? 'Unknown Client';
+
+            // Format date & time
+            $startTime = !empty($timeAndLocation['start_time']) ? Carbon::parse($timeAndLocation['start_time'])->format('h:i a') : '';
+            $endTime   = !empty($timeAndLocation['end_time'])   ? Carbon::parse($timeAndLocation['end_time'])->format('h:i a') : '';
+            $dateText  = !empty($timeAndLocation['start_date']) ? Carbon::parse($timeAndLocation['start_date'])->format('d/m/Y') : '';
+            $timeText  = trim("{$dateText} {$startTime} - {$endTime}");
+
+            // Get Price Book Name (simple or advanced shift)
+            $priceBookId = null;
+            if (!$shift->is_advanced_shift) {
+                $priceBookId = $clientSection['price_book_id'] ?? null;
+            } else {
+                $clientDetails = $clientSection['client_details'][0] ?? null;
+                $priceBookId = $clientDetails['price_book_id'] ?? null;
+            }
+
+            $priceBookName = $priceBookId
+                ? \App\Models\PriceBook::find($priceBookId)?->name ?? 'Unknown Price Book'
+                : 'Unknown Price Book';
+
+            // Get real ref codes (now guaranteed to exist)
+            $refHour = $report->matched_price_book_detail?->ref_hour ?? '-';
+            $refKm   = $report->matched_price_book_detail?->ref_km ?? '-';
+
+            $baseText  = "{$clientName} ({$timeText}) [{$priceBookName}]";
+            $billingId = $report->id;
+
+            // Add hour shift
+            if ($refHour && trim($refHour) !== '' && trim($refHour) !== '-') {
+                $hourShiftDescriptions[$billingId] = "{$baseText} [{$refHour}]";
+            }
+
+            // Add km shift (only if different and valid)
+            if ($refKm && trim($refKm) !== '' && trim($refKm) !== '-' && $refKm !== $refHour) {
+                $kmShiftDescriptions[$billingId] = "{$baseText} [{$refKm}]";
+            }
+        }
+
+        // Final description array
+        $description = [
+            'hour_shift' => $hourShiftDescriptions,
+            'km_shift'   => $kmShiftDescriptions,
+        ];
+
+        if (empty($hourShiftDescriptions) && empty($kmShiftDescriptions)) {
+            $description = null;
+        }
+        // ──────────────────────────────────────────────────────────────
+        // NOW USE $description in Invoice::create()
+        // ──────────────────────────────────────────────────────────────
+
+        // Create the invoice
         $invoiceCreate = Invoice::create([
             'company_id'            => $companyId,
             'client_id'             => $clientId,
             'additional_contact_id' => $contactId,
             'billing_reports_ids'   => $billingReportIds,
-            'invoice_no'            => "#{$invoiceNo}",
+            'invoice_sequence'      => $sequence,
+            'invoice_no'            => str_pad($sequence, 7, '0', STR_PAD_LEFT),
             'issue_date'            => $issueDate,
             'payment_due'           => $paymentDue,
             'NDIS'                  => $ndisRef,
@@ -176,7 +296,9 @@ $authUser = auth()->user();
             'amount'                => $totalCost,
             'tax'                   => $taxAmount,
             'balance'               => $totalCost + $taxAmount,
+            'description' => $description,
         ]);
+
 
         // ✅ Update BillingReports → Paid
         BillingReport::whereIn('id', $billingReportIds)->update([
@@ -224,101 +346,7 @@ $authUser = auth()->user();
 
 
 
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Section::make()
-                    ->schema([
-                        \Filament\Forms\Components\Grid::make(3)
-                            ->schema([
-                               Select::make('group_by')
-                                    ->label('GROUP BY')
-                                    ->options([
-                                        'client' => 'Client',
-                                        'fund' => 'Fund',
-                                        'payment_type' => 'Payment Type',
-                                    ])
-                                    ->reactive()
-                                    ->default('client')
-                                    ->afterStateUpdated(fn ($state, $set) => $this->group_by = $state)
-                                    ->searchable(),
-
-                                CheckboxList::make('metrics') // Renamed from 'cost' to match default
-                                    ->label('Cost')
-                                    ->columns(3)
-                                    ->default(['hours', 'mileage', 'expenses'])
-                                    ->options([
-                                        'hours' => 'HOURS',
-                                        'mileage' => 'MILEAGE',
-                                        'expenses' => 'EXPENSES',
-                                    ]),
-                                DatePicker::make('shift_start')
-                                    ->label('SHIFT DATE')
-                                    ->displayFormat('d-m-Y')
-                                    ->default('18-09-2025')
-                                    // CRITICAL: Give it a unique ID for the JS calendar
-                                    ->extraInputAttributes(['id' => 'shift-start-input']) 
-                                    ->closeOnDateSelection(),
-
-                                // CRITICAL: Add the JavaScript initializer for the 'shift-start-input'
-                                View::make('shift-date-initializer')
-                                    ->view('filament.forms.components.js-initializer') // Path to your Blade view
-                                    ->viewData([
-                                        'fieldId' => 'shift-start-input' // Pass the unique ID
-                                    ]),
-                            ])
-                            ->extraAttributes(['class' => 'mb-4 border-b border-gray-200 pb-4']),
-                    ])
-                    ->label(''),
-                Toggle::make('advanced_options')
-                    ->label('Advanced Options')
-                    ->reactive()
-                    ->onIcon('heroicon-o-chevron-down')
-                    ->offIcon('heroicon-o-chevron-right')
-                    ->extraAttributes(['class' => 'text-sm text-blue-600 cursor-pointer']),
-                Section::make('')
-                    ->schema([
-                        \Filament\Forms\Components\Grid::make(2)
-                            ->schema([
-                               DatePicker::make('due_at')
-                                        ->label('DUE AT')
-                                        ->displayFormat('d-m-Y')
-                                        ->default('08-10-2025')
-                                        // CRITICAL: Give it a unique ID for the JS calendar
-                                        ->extraInputAttributes(['id' => 'due-at-input'])
-                                        ->closeOnDateSelection(),
-
-                                    // CRITICAL: Add the JavaScript initializer for 'due-at-input'
-                                    View::make('due-at-initializer')
-                                        ->view('filament.forms.components.js-initializer')
-                                        ->viewData([
-                                            'fieldId' => 'due-at-input' // Pass the unique ID
-                                        ]),
-
-                                    // 2. ISSUED AT Picker (NEW)
-                                    DatePicker::make('issued_at')
-                                        ->label('ISSUED AT')
-                                        ->displayFormat('d-m-Y')
-                                        ->default('24-09-2025')
-                                        // CRITICAL: Give it a unique ID for the JS calendar
-                                        ->extraInputAttributes(['id' => 'issued-at-input'])
-                                        ->closeOnDateSelection(),
-
-                                    // CRITICAL: Add the JavaScript initializer for 'issued-at-input'
-                                    View::make('issued-at-initializer')
-                                        ->view('filament.forms.components.js-initializer')
-                                        ->viewData([
-                                            'fieldId' => 'issued-at-input' // Pass the unique ID
-                                        ]),
-                            ])
-                            ->extraAttributes(['class' => 'gap-4']),
-                    ])
-                    ->hidden(fn ($get) => !$get('advanced_options'))
-                    ->collapsible(),
-            ])
-            ->statePath('data');
-    }
+    
 
 
    

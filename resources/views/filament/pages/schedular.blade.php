@@ -76,7 +76,7 @@
             color: #161414;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             transition: transform 0.3s ease;
-            height: 80px;
+            height: 90px;
             width: auto;
         }
         .task-vacant {
@@ -605,7 +605,7 @@
         /* Daily timeline container row that spans the hour columns */
 .daily-row {
     grid-column: 2 / -1; /* span across all hour columns after the left label column */
-    min-height: 58px;
+    min-height: 125px;
     border-bottom: 1px solid #eef2f7;
     position: relative;
     background: transparent;
@@ -990,10 +990,13 @@ body.sidebar-collapsed .main-content-sidebar {
             }
 
             function getWeekStart(date) {
-                const d = new Date(date);
-                d.setDate(d.getDate() - d.getDay());
-                return d;
-            }
+                        const d = new Date(date);
+                        const day = d.getDay();                     
+                        const diff = d.getDate() - day + (day === 0 ? -6 : 1); 
+                        d.setDate(diff);
+                        d.setHours(0, 0, 0, 0);
+                        return d;
+                    }
 
             function getPeriodDates(viewType, date) {
                 const d = new Date(date);
@@ -1335,8 +1338,10 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part1.className = cls1 + ' overnight-start';
 
                     part1.innerHTML = `
-                        <strong>${formatTime(shift.start_time)} - NEXT DAY -</strong><br>
+                        <strong>NEXT DAY</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
                         ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
+                        <small>${clientNames[String(shift.client_id)] || ''}</small>
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
@@ -1346,17 +1351,6 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     nextDay.setDate(d.getDate() + 1);
                     const nextDateKey = formatDateKey(nextDay);
 
-                    const part2 = document.createElement('div');
-                    part2.className = cls1 + ' overnight-end';
-                    part2.innerHTML = `
-                        <strong>${formatTime(shift.end_time)}</strong><br>
-                        <small>${clientNames[String(shift.client_id)] || ''}</small>
-                    `;
-                    part2.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, nextDateKey); };
-
-                    const pendingKey = `static__${taskName}__${nextDateKey}`;
-                    if (!pendingOvernight[pendingKey]) pendingOvernight[pendingKey] = [];
-                    pendingOvernight[pendingKey].push(part2);
                 });
 
                 // After adding today's shifts, append any pending continuation parts for this row/date
@@ -1443,8 +1437,10 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part1.className = cls1 + ' overnight-start';
 
                     part1.innerHTML = `
-                        <strong>${formatTime(shift.start_time)} - NEXT DAY -</strong><br>
+                         <strong>NEXT DAY</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
                         ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
+                        <small>${clientNames[String(shift.client_id)] || ''}</small>
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
@@ -1454,17 +1450,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     nextDay.setDate(d.getDate() + 1);
                     const nextDateKey = formatDateKey(nextDay);
 
-                    const part2 = document.createElement('div');
-                    part2.className = cls1 + ' overnight-end';
-                    part2.innerHTML = `
-                        <strong> ${formatTime(shift.end_time)}</strong><br>
-                        <small>${clientNames[String(shift.client_id)] || ''}</small>
-                    `;
-                    part2.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, nextDateKey); };
-
-                    const pendingKey = `user__${userId}__${nextDateKey}`;
-                    if (!pendingOvernight[pendingKey]) pendingOvernight[pendingKey] = [];
-                    pendingOvernight[pendingKey].push(part2);
+                    
                 });
 
                 // append any pending continuation parts for this user/date
@@ -1480,7 +1466,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
         const addStaffCell = document.createElement('div');
         addStaffCell.className = 'add-staff-cell';
         addStaffCell.innerHTML = `
-            <button class="add-staff-btn" onclick="openStaffModal()">Add Staff</button>
+            <button class="add-staff-btn" onclick="openStaffModal()">Add Staff</button>     
         `;
         calendar.appendChild(addStaffCell);
     }
@@ -2085,4 +2071,13 @@ function handleEmptyCalendarClick() {
 }
 
         </script>
+        <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.initCustomDatePicker) return;
+
+        ['customDatePicker'].forEach(function (id) {
+            window.initCustomDatePicker(id);
+        });
+    });
+</script>
     </x-filament-panels::page>

@@ -477,10 +477,12 @@ public function form(Form $form): Form
 
                         TimePicker::make('start_time')
                             ->label('')
+                            ->seconds(false)
                             ->columnSpan(4),
 
                         TimePicker::make('end_time')
                             ->label('')
+                            ->seconds(false)
                             ->columnSpan(4),
                     ]),
 

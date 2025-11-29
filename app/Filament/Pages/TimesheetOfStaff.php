@@ -378,17 +378,21 @@ $formatClientsForExport = function ($clientsData, $includePriceBookLookup = true
                         ->schema([
                             Forms\Components\TimePicker::make('start_time')
                                 ->label('Start At')
+                                ->seconds(false)
                                 ->required(),
 
                             Forms\Components\TimePicker::make('end_time')
+                            ->seconds(false)
                                 ->label('End At')
                                 ->required(),
 
                             Forms\Components\TimePicker::make('clockin')
+                            ->seconds(false)
                                 ->label('Clockin')
                                 ->placeholder('Clockin...'),
                             
                             Forms\Components\TimePicker::make('clockout')
+                            ->seconds(false)
                                 ->label('Clockout')
                                 ->placeholder('Clockout...'),
                         ]),

@@ -12,4 +12,9 @@ class BillingReport extends Model
     {
       return $this->belongsTo(Shift::class);
     }
+
+        public function client()
+    {
+      return $this->belongsTo(Client::class);
+    }
 }

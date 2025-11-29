@@ -333,6 +333,83 @@
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
+/* Container styling */
+.invoice-meta .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+/* 4 columns on medium+ screens */
+@media (min-width: 768px) {
+    .invoice-meta .grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Label styling */
+.invoice-meta label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+/* Inputs and select */
+.invoice-meta input[type="text"],
+.invoice-meta input[type="date"],
+.invoice-meta select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    color: #111827;
+    background-color: #ffffff;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+/* Placeholder / text color for select default */
+.invoice-meta select option[value=""] {
+    color: #6b7280;
+}
+
+/* Focus states */
+.invoice-meta input[type="text"]:focus,
+.invoice-meta input[type="date"]:focus,
+.invoice-meta select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background-color: #fefefe;
+}
+
+/* Hover */
+.invoice-meta input[type="text"]:hover,
+.invoice-meta input[type="date"]:hover,
+.invoice-meta select:hover {
+    border-color: #9ca3af;
+}
+
+/* Slight spacing between fields vertically on small screens */
+.invoice-meta .grid > div {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Nice subtle background & rounded edges for the whole section */
+.invoice-meta {
+    margin-bottom: 24px;
+}
+
     </style>
  <div class="p-6">
            <div id="invoice-print-area" class="bg-white shadow-sm rounded-lg p-4 mt-4">
@@ -353,7 +430,7 @@
                 @php 
                         $invoiceSetting = \App\Models\InvoiceSetting::where('company_id',$this->company->id)->first();
                 @endphp
-                 <div style="display: flex;justify-content: space-between;">
+                 <div style="display: flex;justify-content: space-between;margin-bottom: 40px;">
                        <div style="padding:30px">
                         <label class="block text-sm font-medium text-gray-700">From</label>
                         <p class="mt-1 text-sm text-gray-900">{{ $this->company->name }}</p>
@@ -387,9 +464,162 @@
                         <p><strong style="font-size:14px;">Ref No:</strong> <span style="font-size:13px;">{{ $invoice->ref_no }}</span> </p>
                     </div>
                  </div>
+  @php
+                              $additionalContacts = \App\Models\AdditionalContact::where('client_id', $invoice->client_id)->get();
+                          @endphp
+                                <div class="mt-8">
+                            <!-- Alpine.js Scope Wrapper -->
+                            <div x-data="{ editing: false }">
+                                <!-- Edit / Cancel Button -->
+                        @if($invoice->status !== 'Paid')
 
-                       <div class="mt-6">
-                    <table>
+                                <div class="mb-6">
+                                    <button 
+                                        type="button"
+                                        @click="editing = !editing"
+                                        style="background-color: #007bff;
+                                            color: white;
+                                            padding: 10px;
+                                            font-size: 13px;
+                                            border-radius: 5px;
+                                            float: right;
+                                            margin-top:-50px;"
+                                            {{ $editing ?? false ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' }}">
+                                        <span x-text="editing ? 'Cancel' : 'Edit Invoice'"></span>
+                                    </button>
+                                </div>
+                                @else
+                           
+                            <div class="text-gray-600" style="margin-bottom: 10px;">This invoice is marked as Paid and cannot be edited.</div>
+                        @endif
+                                <!-- EDIT MODE: Editable Form + Table -->
+                                <div x-show="editing" x-transition>
+                                    <form method="POST" action="{{ route('invoices.update', $invoice->id) }}">
+                                        @csrf
+                                        @method('PUT')
+
+                                        <!-- Top Editable Fields -->
+                                        <div class="invoice-meta">
+                                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-5 bg-gray-50 rounded-lg border">
+                                                    <div>
+                                                        <label>To</label>
+                                                        <select name="additional_contact_id">
+                                                            <option value="">Client</option>
+                                                            @foreach($additionalContacts as $contact)
+                                                                <option value="{{ $contact->id }}" 
+                                                                    {{ $invoice->additional_contact_id == $contact->id ? 'selected' : '' }}>
+                                                                    {{ $contact->first_name }} {{ $contact->last_name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Due</label>
+                                                        <input type="date" name="payment_due" id="payment-date" value="{{ $invoice->payment_due }}" class="w-full px-3 py-2 border rounded-md">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Ref Number</label>
+                                                        <input type="text" name="ref_no" value="{{ $invoice->ref_no }}" class="w-full px-3 py-2 border rounded-md">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Purchase Order</label>
+                                                        <input type="text" name="purchase_order" value="{{ $invoice->purchase_order }}" class="w-full px-3 py-2 border rounded-md">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                        <!-- Editable Table -->
+                                        <table class="w-full border-collapse bg-white shadow-sm">
+                                            <thead>
+                                                <tr class="bg-gray-100 text-left text-xs font-medium text-gray-700 uppercase">
+                                                    <th class="px-6 py-3">Description</th>
+                                                    <th class="px-6 py-3">Type</th>
+                                                    <th class="px-6 py-3">Qty</th>
+                                                    <th class="px-6 py-3">Rate</th>
+                                                    <th class="px-6 py-3">Tax</th>
+                                                    <th class="px-6 py-3">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-200">
+                                                @php
+                                                    $desc = is_string($invoice->description) 
+                                                        ? json_decode($invoice->description, true) 
+                                                        : ($invoice->description ?? ['hour_shift' => [], 'km_shift' => []]);
+                                                    $hourShifts = $desc['hour_shift'] ?? [];
+                                                    $kmShifts   = $desc['km_shift'] ?? [];
+                                                @endphp
+
+                                                @foreach($this->billingReports as $report)
+                                                    @php
+                                                        $id = $report->id;
+                                                        $hourText = $hourShifts[$id] ?? '-';
+                                                        $kmText   = $kmShifts[$id] ?? '-';
+                                                    @endphp
+
+                                                    <!-- HOUR ROW -->
+                                                    <tr class="hover:bg-gray-50">
+                                                        <td style="width: 100%;" class="px-6 py-4">
+                                                            <input 
+                                                                type="text" 
+                                                                name="description[hour_shift][{{ $id }}]" 
+                                                                value="{{ old('description.hour_shift.' . $id, $hourText) }}"
+                                                                class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                                                                required>
+                                                        </td>
+                                                        <td class="px-6 py-4 text-sm font-medium">Hours</td>
+                                                        <td class="px-6 py-4 text-sm">{{ $report->hours ? number_format($report->hours, 1) : '-' }}</td>
+                                                        <td class="px-6 py-4 text-sm">${{ $report->rate ?? '-' }}</td>
+                                                        <td class="px-6 py-4 text-sm">
+                                                            ${{ number_format(($report->hours_total ?? 0) * 0.10, 2) }}
+                                                        </td>
+                                                        <td class="px-6 py-4 text-sm font-medium">
+                                                            ${{ number_format($report->hours_total ?? 0, 2) }}
+                                                        </td>
+                                                    </tr>
+
+                                                    <!-- KM ROW -->
+                                                        <tr class="hover:bg-gray-50 bg-gray-50">
+                                                            <td class="px-6 py-4">
+                                                                <input 
+                                                                    type="text" 
+                                                                    name="description[km_shift][{{ $id }}]" 
+                                                                    value="{{ old('description.km_shift.' . $id, $kmText) }}"
+                                                                    class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500">
+                                                            </td>
+                                                            <td class="px-6 py-4 text-sm text-gray-700">Kms</td>
+                                                            <td class="px-6 py-4 text-sm">{{ $report->distance ? number_format($report->distance, 1) : '-' }}</td>
+                                                            <td class="px-6 py-4 text-sm">${{ $report->distance_rate ?? '-' }}</td>
+                                                            <td class="px-6 py-4 text-sm">$0.00</td>
+                                                            <td class="px-6 py-4 text-sm font-medium">
+                                                                ${{ number_format($report->distance_total ?? 0, 2) }}
+                                                            </td>
+                                                        </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+
+                                        <!-- Save Button -->
+                                        <div class="mt-8 flex justify-end">
+                                            <button 
+                                                type="submit"
+                                                style="background-color: #007bff;
+                                            color: white;
+                                            padding: 10px;
+                                            font-size: 13px;
+                                            border-radius: 5px;
+                                            float: right;
+                                            margin-top:20px;">
+                                                Save All Changes
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- READ-ONLY MODE: Normal Table (shown when not editing) -->
+                                <div x-show="!editing">
+                                    <!-- Your original read-only table here -->
+                                   <table>
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
@@ -401,120 +631,85 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                               @foreach($this->billingReports as $report)
+                              @php
+                                            $description = $invoice->description;
 
-                               @php
-                                    $shift = \App\Models\Shift::find($report->shift_id);
+                                            // Safely handle string, array, or null
+                                            if (is_string($description)) {
+                                                $description = json_decode($description, true);
+                                            }
 
-                                $clientName = \App\Models\Client::find($invoice->client_id)->display_name ?? 'Unknown Client';
+                                            if (!is_array($description)) {
+                                                $description = [];
+                                            }
 
-                                if ($shift) {
-                                    $clientSection = is_string($shift->client_section) ? json_decode($shift->client_section, true) : ($shift->client_section ?? []);
-                                    $timeAndLocation = is_string($shift->time_and_location) ? json_decode($shift->time_and_location, true) : ($shift->time_and_location ?? []);
+                                            $hourShifts = $description['hour_shift'] ?? [];
+                                            $kmShifts   = $description['km_shift'] ?? [];
+                                        @endphp
 
-                                    if (! $shift->is_advanced_shift) {
-                                        // Simple shift
-                                        $priceBookName = \App\Models\PriceBook::find($clientSection['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
+                                        @foreach($this->billingReports as $report)
+                                            @php
+                                                $billingId = $report->id;
+                                                $hourText  = $hourShifts[$billingId] ?? '-';
+                                                $kmText    = $kmShifts[$billingId] ?? '-';
+                                                $hasKm     = !empty($kmText) && $kmText !== '-';
+                                            @endphp
 
-                                        $start = !empty($timeAndLocation['start_time']) 
-                                            ? \Carbon\Carbon::parse($timeAndLocation['start_time'])->format('h:i a') 
-                                            : '';
-                                        $end = !empty($timeAndLocation['end_time']) 
-                                            ? \Carbon\Carbon::parse($timeAndLocation['end_time'])->format('h:i a') 
-                                            : '';
+                                            {{-- HOUR ROW --}}
+                                            <tr class="billing-row" data-amount="{{ $report->total_cost }}">
+                                                <td class="px-6 py-4" style="font-size:13px; width: 100%;">
+                                                    <span class="font-medium">{{ $hourText }}</span>
+                                                </td>
+                                                <td class="px-6 py-4" style="font-size:13px;">Hours</td>
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    {{ $report->hours !== null ? number_format($report->hours, 1) : '-' }}
+                                                </td>
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    ${{ $report->rate ?? '-' }}
+                                                </td>
 
-                                        $start_date = !empty($timeAndLocation['start_date']) 
-                                                ? \Carbon\Carbon::parse($timeAndLocation['start_date'])->format('d/m/Y') 
-                                                  : '';
+                                                @php
+                                                    $expectedTax = round($report->total_cost * 0.10, 2);
+                                                    static $remainingTax = null;
+                                                    if ($remainingTax === null) {
+                                                        $remainingTax = round($invoice->tax, 2);
+                                                    }
+                                                    $rowTax = $remainingTax >= $expectedTax ? $expectedTax : $remainingTax;
+                                                    $remainingTax -= $rowTax;
+                                                @endphp
 
-                                            $refHour = $report->matched_price_book_detail->ref_hour ?? '-';
-                                            $refKm   = $report->matched_price_book_detail->ref_km ?? '-';
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    ${{ number_format($rowTax, 2) }}
+                                                </td>
+                                                <td class="px-6 py-4" style="font-size:13px;">
+                                                    ${{ number_format($report->hours_total ?? 0, 2) }}
+                                                </td>
+                                            </tr>
 
-                                            $shiftTextHour = "{$clientName} ({$start_date} {$start} - {$end}) [{$priceBookName}] [{$refHour}]";
-                                            $shiftTextKm   = "{$clientName} ({$start_date} {$start} - {$end}) [{$priceBookName}] [{$refKm}]";
-
-                                    } else {
-                                        // Advanced shift
-                                        $clientDetails = $clientSection['client_details'][0] ?? null;
-
-                                        if (! $clientDetails) {
-                                            $shiftText = 'Advanced Shift';
-                                        } else {
-                                            $priceBookName = \App\Models\PriceBook::find($clientDetails['price_book_id'] ?? null)->name ?? 'Unknown Price Book';
-                                       
-                                            $start = !empty($timeAndLocation['start_time']) 
-                                                    ? \Carbon\Carbon::parse($timeAndLocation['start_time'])->format('h:i a') 
-                                                    : '';
-                                                $end = !empty($timeAndLocation['end_time']) 
-                                                    ? \Carbon\Carbon::parse($timeAndLocation['end_time'])->format('h:i a') 
-                                                    : '';
-
-                                                $start_date = !empty($timeAndLocation['start_date']) 
-                                                        ? \Carbon\Carbon::parse($timeAndLocation['start_date'])->format('d/m/Y') 
-                                                        : '';
-
-                                      $refHour = $report->matched_price_book_detail->ref_hour ?? '-';
-                                    $refKm   = $report->matched_price_book_detail->ref_km ?? '-';
-
-                                    $shiftTextHour = "{$clientName} ({$start_date} {$start} - {$end}) [{$priceBookName}] [{$refHour}]";
-                                    $shiftTextKm   = "{$clientName} ({$start_date} {$start} - {$end}) [{$priceBookName}] [{$refKm}]";
-
-                                        }
-                                    }
-                                } else {
-                                    $shiftText = 'N/A';
-                                }
-                               @endphp
-                                <tr class="billing-row" data-amount="{{ $report->total_cost }}">
-                                <td class="px-6 py-4" style="font-size:13px;     width: 100%;">
-                                       {{ $shiftTextHour }}
-                                    </td>
-                                <td class="px-6 py-4" style="font-size:13px;">Hours</td>
-                                <td class="px-6 py-4" style="font-size:13px;">{{ $report->hours !== null ? number_format($report->hours, 1) : '-' }}</td>
-                                <td class="px-6 py-4" style="font-size:13px;">${{ $report->rate ?? '-' }}</td>
-                             @php
-                                    // Calculate per-report expected tax
-                                    $expectedTax = round($report->total_cost * 0.10, 2);
-
-                                    // Track how much tax is left to assign
-                                    static $remainingTax = null;
-
-                                    if ($remainingTax === null) {
-                                        $remainingTax = round($invoice->tax, 2);
-                                    }
-
-                                    $rowTax = 0.0;
-
-                                    // If remaining tax is enough to cover this row’s expectedTax → assign
-                                    if ($remainingTax >= $expectedTax) {
-                                        $rowTax = $expectedTax;
-                                        $remainingTax -= $expectedTax;
-                                    }
-                                @endphp
-
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                    ${{ number_format($rowTax, 2) }}
-                                </td>
-
-                                <td class="px-6 py-4" style="font-size:13px;">
-                                    ${{ number_format($report->hours_total, 2) }}
-                                </td>
-                                
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4" style="font-size:13px;     width: 100%;">
-                                        {!! $shiftTextKm !!}
-                                    </td>
-                                <td class="px-6 py-4" style="font-size:13px;">Kms</td>
-                                <td class="px-6 py-4" style="font-size:13px;"> {{ $report->distance !== null ? number_format($report->distance, 1) : '-' }}</td>
-                                <td class="px-6 py-4" style="font-size:13px;">{{ $report->distance_rate ?? '-' }}</td>
-                                <td class="px-6 py-4" style="font-size:13px;">0.0</td>
-                                <td class="px-6 py-4" style="font-size:13px;">${{ number_format($report->distance_total, 2) }}</td>
-                            </tr>
-                                @endforeach
+                                            {{-- KM ROW (only if exists) --}}
+                                                <tr class="bg-gray-50">
+                                                    <td class="px-6 py-4" style="font-size:13px; width: 100%;">
+                                                        <span>{{ $kmText }}</span>
+                                                    </td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">Kms</td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">
+                                                        {{ $report->distance !== null ? number_format($report->distance, 1) : '-' }}
+                                                    </td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">
+                                                        {{ $report->distance_rate ?? '-' }}
+                                                    </td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">$0.00</td>
+                                                    <td class="px-6 py-4" style="font-size:13px;">
+                                                        ${{ number_format($report->distance_total ?? 0, 2) }}
+                                                    </td>
+                                                </tr>
+                                        @endforeach
                         </tbody>
                     </table>
-                </div>
+                                </div>
+                            </div>
+                      
+                    </div>
                  <div style="display: flex;justify-content: space-between;padding:20px;margin-top:50px">
                 
                 <div class="mt-4">
@@ -568,54 +763,6 @@
                         <button type="button">🖨 Print</button>
                     </a>
               @if($invoice->status !== 'Paid')
-             <div x-data="{ open: false }">
-                  <button type="button" class="edit-btn" @click="open = true">Edit</button>
-
-                  <div class="modal-overlay" x-show="open" x-transition>
-                      <div class="modal-box" x-show="open" x-transition.scale>
-
-                          <h2 class="modal-title">Edit Invoice</h2>
-
-                          @php
-                              $additionalContacts = \App\Models\AdditionalContact::where('client_id', $invoice->client_id)->get();
-                          @endphp
-
-                          <!-- Form -->
-                          <form method="POST" action="{{ route('invoices.update', $invoice->id) }}">
-                              @csrf
-                              @method('PUT')
-
-                              <div class="modal-form">
-                                  <label>To</label>
-                                  <select name="additional_contact_id">
-                                      <option value="">Client</option>
-                                      @foreach($additionalContacts as $contact)
-                                          <option value="{{ $contact->id }}" 
-                                              {{ $invoice->additional_contact_id == $contact->id ? 'selected' : '' }}>
-                                              {{ $contact->first_name }} {{ $contact->last_name }}
-                                          </option>
-                                      @endforeach
-                                  </select>
-
-                                  <label>Payment Due</label>
-                                  <input type="date" value="{{ $invoice->payment_due }}" name="payment_due">
-
-                                  <label>Ref Number</label>
-                                  <input type="text" value="{{ $invoice->ref_no }}" name="ref_no">
-
-                                  <label>Purchase Order</label>
-                                  <input type="text" value="{{ $invoice->purchase_order }}" name="purchase_order">
-                              </div>
-
-                              <div class="modal-actions">
-                                  <button type="button" class="btn cancel" @click="open = false">Cancel</button>
-                                  <button type="submit" class="btn save">Save</button>
-                              </div>
-                          </form>
-                      </div>
-                  </div>
-              </div>
-
                   <form id="void-form" action="{{ route('invoices.void', $invoice->id) }}" method="POST" style="display:none;">
                         @csrf
                     </form>

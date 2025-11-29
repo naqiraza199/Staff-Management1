@@ -17,7 +17,6 @@
     </button>
 </div>
 
-    {{ $this->form }}
        <style>
   .badge {
     display: inline-flex;
@@ -98,9 +97,90 @@
 
 <link rel="stylesheet" href="{{asset('invoice.css')}}">
   <div class="mt-6">
-       
+                           <div style="gap: 20px;padding: 30px;background: #ffffffff;border-left: 5px groove #8080806e;" class="flex items-end mb-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">GROUP BY</label>
+                                        <div class="relative">
+                                            <select style="width: 200px;" name="" id=""  class="block w-44 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                                <option value="Client">Client</option>
+                                                <option value="Fund">Fund</option>
+                                                <option value="Payment Type">Payment Type</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style="display:flex;gap: 10px;">
+                                        <div class="relative">
+                                            <input
+                                                type="checkbox"
+                                                style="margin-top: -9px;"
+                                            >
+                                         
+                                        </div>
+                                        <label style="font-size:15px;margin-top: -2px;" class="block font-medium text-gray-700 mb-1">HOURS</label>
+                                    </div>
+
+                                    <div style="display:flex;gap: 10px;">
+                                        <div class="relative">
+                                            <input
+                                                type="checkbox"
+                                                style="margin-top: -9px;"
+                                            >
+                                         
+                                        </div>
+                                        <label style="font-size:15px;margin-top: -2px;" class="block font-medium text-gray-700 mb-1">MILEAGE</label>
+                                    </div>
+
+                                    <div style="display:flex;gap: 10px;">
+                                        <div class="relative">
+                                            <input
+                                                type="checkbox"
+                                                style="margin-top: -9px;"
+                                            >
+                                         
+                                        </div>
+                                        <label style="font-size:15px;margin-top: -2px;" class="block font-medium text-gray-700 mb-1">EXPENSES</label>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">START DATE</label>
+                                        <div class="relative">
+                                            <input
+                                                id="shift-start-input"
+                                                type="date"
+                                                class="block w-44 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                            >
+                                         
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">END DATE</label>
+                                        <div class="relative">
+                                            <input
+                                                id="shift-end-input"
+                                                type="date"
+                                                class="block w-44 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                            >
+                                           
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-5">
+                                        <button
+                                            id="clear-date-filter"
+                                            type="button"
+                                            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <hr>
+
                     <table style="width: 100%;">
-                        <thead style="background-color: #707070;color: white;padding:20px">
+                        <thead style="background-color: #151a2d;color: white;padding:20px">
                             <tr>
                                  <th style="padding: 20px;" class="text-left text-xs font-medium uppercase">
                                     <input type="checkbox" id="include-master-checkbox">
@@ -117,12 +197,23 @@
                                 <th class="text-left text-xs font-medium uppercase">Status</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach($this->clients as $client)
-                                @php
-                                    $amount = $client->unpaid_total_cost ?? 0;
-                                @endphp
-                                <tr data-client-id="{{ $client->id }}">
+                        <tbody class="bg-white divide-y divide-gray-200" id="clients-table-body">
+                             @foreach($this->clients as $client)
+                                            {{-- Create JSON for JS: ensure date is string (Y-m-d) and amounts are numbers --}}
+                                            @php
+                                                $billingForJs = $client->billingReports->map(function ($r) {
+                                                    return [
+                                                        'date' => (string) $r->date,              // e.g. "2025-09-18"
+                                                        'amount' => (float) $r->total_cost,
+                                                        'status' => $r->status,
+                                                    ];
+                                                })->values();
+                                            $amount = $client->unpaid_total_cost ?? 0;
+                                            @endphp
+
+                                            <tr data-client-id="{{ $client->id }}"
+                                                data-billing-reports='@json($billingForJs)'>
+                                                                    
                                      <td class="py-4" style="text-align: center;">
                                                 <input type="checkbox" class="include-checkbox">    
                                             </td>
@@ -152,7 +243,7 @@
                                     <input type="text" placeholder="Enter Purchase Order" name="" id="" style="font-size: 12px;width: 150px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"> 
                                 </td>
                                 <td class=" py-4" style="font-size:13px;">
-                                    <input type="date" value="{{ now()->addDays(14)->format('Y-m-d') }}" placeholder="Enter Purchase Order" name="" id="purchase-order-date" style="font-size: 12px;width: 150px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"> 
+                                    <input type="date" value="{{ now()->addDays(14)->format('Y-m-d') }}"  name="" id="purchase-order-date" style="font-size: 12px;width: 150px;" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"> 
                                 </td>
                                  <td class="py-4">
                                         <input type="checkbox"
@@ -272,15 +363,100 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (window.initCustomDatePicker) {
-            window.initCustomDatePicker('purchase-order-date');
-        } else {
-            console.warn('initCustomDatePicker is not defined yet.');
-        }
+    <script>
+          document.addEventListener('DOMContentLoaded', function () {
+        if (!window.initCustomDatePicker) return;
+
+        ['purchase-order-date','shift-start-input','shift-end-input'].forEach(function (id) {
+            window.initCustomDatePicker(id);
+        });
     });
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.initCustomDatePicker) {
+                window.initCustomDatePicker('purchase-order-date');
+            } else {
+                console.warn('initCustomDatePicker is not defined yet.');
+            }
+        });
+    </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const startInput = document.getElementById('shift-start-input');
+    const endInput   = document.getElementById('shift-end-input');
+    const clearBtn   = document.getElementById('clear-date-filter');
+    const rows       = Array.from(document.querySelectorAll('#clients-table-body tr[data-billing-reports]'));
+
+    // For native <input type="date">, value is already 'YYYY-MM-DD'
+    function normalizeToYMD(value) {
+        if (!value) return null;
+        return value.trim(); // already correct
+    }
+
+    function filterRows() {
+        const startYmd = normalizeToYMD(startInput.value);
+        const endYmd   = normalizeToYMD(endInput.value);
+
+        rows.forEach(row => {
+            const raw = row.getAttribute('data-billing-reports');
+            if (!raw) {
+                row.style.display = 'none';
+                return;
+            }
+
+            let reports = [];
+            try {
+                reports = JSON.parse(raw);
+            } catch (e) {
+                console.error('Invalid JSON in data-billing-reports', e);
+                row.style.display = 'none';
+                return;
+            }
+
+            let totalAmount = 0;
+            let reportsCount = 0;
+
+            reports.forEach(rep => {
+                const repDate = rep.date; // expected 'YYYY-MM-DD'
+                if (!repDate) return;
+
+                let inRange = true;
+
+                if (startYmd && repDate < startYmd) inRange = false;
+                if (endYmd && repDate > endYmd) inRange = false;
+
+                if (inRange) {
+                    totalAmount += Number(rep.amount || 0);
+                    reportsCount++;
+                }
+            });
+
+            const amountSpan = row.querySelector('.amount');
+            if (amountSpan) amountSpan.textContent = totalAmount.toFixed(2);
+
+            const countSpan = row.querySelector('.reports-count');
+            if (countSpan) countSpan.textContent = reportsCount;
+
+            row.style.display = reportsCount > 0 ? '' : 'none';
+        });
+    }
+
+    if (startInput) startInput.addEventListener('change', filterRows);
+    if (endInput)   endInput.addEventListener('change', filterRows);
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            startInput.value = '';
+            endInput.value = '';
+            filterRows();
+        });
+    }
+
+    // initial
+    filterRows();
+});
 </script>
+
+
 
 </x-filament-panels::page>
 

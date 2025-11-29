@@ -116,32 +116,45 @@ public function addNote(Request $request, Invoice $invoice)
 
     return back()->with('success', 'Note added successfully.');
 }
- public function update(Request $request, Invoice $invoice)
-    {
-        $validated = $request->validate([
-            'additional_contact_id' => 'nullable|exists:additional_contacts,id',
-            'payment_due'           => 'nullable|date',
-            'ref_no'                => 'nullable|string|max:255',
-            'purchase_order'        => 'nullable|string|max:255',
-        ]);
+public function update(Request $request, Invoice $invoice)
+{
+    $request->validate([
+        'additional_contact_id' => 'nullable|exists:additional_contacts,id',
+        'payment_due'           => 'nullable|date',
+        'ref_no'                => 'nullable|string|max:255',
+        'purchase_order'        => 'nullable|string|max:255',
+        'description'           => 'nullable|array',
+        'description.hour_shift.*' => 'required|string',
+        'description.km_shift.*'   => 'nullable|string',
+    ]);
 
-        $invoice->update($validated);
+    $description = $request->description ?? [];
+    // Remove empty lines
+    $description['hour_shift'] = array_filter($description['hour_shift'] ?? [], fn($v) => trim($v) !== '');
+    $description['km_shift']   = array_filter($description['km_shift'] ?? [], fn($v) => trim($v) !== '');
 
-        Event::create([
-            'invoice_id' => $invoice->id,
-            'title'      => Auth::user()->name . ' Updated Invoice',
-            'from'       => 'Invoice',  
-            'body'       => 'Invoice updated',
-        ]);
+    $invoice->update([
+        'additional_contact_id' => $request->additional_contact_id,
+        'payment_due'           => $request->payment_due,
+        'ref_no'                => $request->ref_no,
+        'purchase_order'        => $request->purchase_order,
+        'description'           => !empty($description) ? $description : null,
+    ]);
 
-        Notification::make()
-            ->title('Invoice Updated')
-            ->body('Invoice updated successfully.')
-            ->success()
-            ->send();
+    \App\Models\Event::create([
+        'invoice_id' => $invoice->id,
+        'title'      => auth()->user()->name . ' Updated Invoice',
+        'from'       => 'Invoice',
+        'body'       => 'Invoice details and description updated',
+    ]);
 
-        return back()->with('success', 'Invoice updated successfully.');
-    }
+    \Filament\Notifications\Notification::make()
+        ->title('Invoice Updated')
+        ->success()
+        ->send();
+
+    return back();
+}
 
      public function void(Request $request, Invoice $invoice)
     {

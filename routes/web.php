@@ -27,6 +27,8 @@ use App\Notifications\SetPasswordNotification;
 
 use App\Http\Controllers\PdfController;
 
+use App\Models\Invoice;
+
 Route::get('/', [RedirectController::class, 'home']);
 
 
@@ -240,3 +242,19 @@ Route::post('/admin/send-set-password-email/{id}', function ($id) {
 
     return back();
 })->name('admin.send-set-password-email');
+
+
+
+Route::get('/update-invoices', function () {
+    $invoices = Invoice::orderBy('created_at')->get();
+    $sequence = 1;
+
+    foreach ($invoices as $invoice) {
+        $invoice->invoice_sequence = $sequence;
+        $invoice->invoice_no = str_pad($sequence, 7, '0', STR_PAD_LEFT);
+        $invoice->save();
+        $sequence++;
+    }
+
+    return "Invoices updated successfully!";
+});
