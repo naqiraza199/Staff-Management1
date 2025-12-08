@@ -497,21 +497,48 @@ public function form(Form $form): Form
                             ->columnSpan(2),
                     ]),
 
+                    Placeholder::make('shift_info')
+                        ->label('')
+                        ->content(function ($get) {
+                            $startDate = $get('start_date');
+                            $startTime = $get('start_time');
+                            $endTime = $get('end_time');
+                            if (!$startDate || !$startTime || !$endTime) return '';
+                            $start = Carbon::parse("$startDate $startTime");
+                            $end = Carbon::parse("$startDate $endTime");
+                            if ($end->lessThanOrEqualTo($start)) {
+                                $end = $end->addDay();
+                            }
+                            $hours = $start->floatDiffInHours($end);
+                            $formattedDate = Carbon::parse($startDate)->format('d/m/Y');
+                            return "This shift is " . number_format($hours, 1) . " hours, finishing next day, $formattedDate.";
+                        })
+                        ->visible(fn ($get) => $get('shift_finishes_next_day')),
+
                 Grid::make(11)
                     ->schema([
                         Placeholder::make('time')
                             ->label('Time')
                             ->columnSpan(3),
 
-                TimePicker::make('start_time')
-                    ->label('')
-                    ->seconds(false)   
+              TimePicker::make('start_time')
+                    ->seconds(false)
+                    ->extraInputAttributes(['id' => 'start-time-input'])
                     ->columnSpan(4),
 
                 TimePicker::make('end_time')
-                    ->label('')
-                    ->seconds(false)   
+                    ->seconds(false)
+                    ->extraInputAttributes(['id' => 'end-time-input'])
                     ->columnSpan(4),
+
+                View::make('start-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'start-time-input']),
+
+                View::make('end-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'end-time-input']),
+
 
                     ]),
 

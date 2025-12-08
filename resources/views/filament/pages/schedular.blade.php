@@ -69,27 +69,64 @@
             text-align: center;
         }
         .task {
-            padding: 8px;
-            margin: 8px 0;
-            border-radius: 8px;
+            padding: 4px 8px;
+            margin: 2px 0;
+            border-radius: 5px;
             font-size: 13px;
             color: #161414;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease;
-            height: 90px;
-            width: auto;
+            height: 50px;
+            width: 100%;
+            background: #e0f2fe;
+            border: 1px solid #0ea5e9;
+        }
+        .task strong {
+            font-size: 12px !important;
+            font-weight: 600;
+            color: #0ea5e9;
+        }
+        .task small {
+            font-size: 11px;
+            color: #666;
         }
         .task-vacant {
-            background: #ffc164 !important;
+            background: #ffe5b4 !important;
+            border: 1px solid #ffc164 !important;
             color: #121212;
-            padding: 8px;
-            margin: 4px 0;
-            border-radius: 4px;
             cursor: pointer;
+            border-left: 6px orange solid !important;
+            border-top-right-radius: 0px !important;
+            border-bottom-right-radius: 0px !important;
+             border-bottom-right-radius: 0px !important;
+            border-right: 0px solid #0ea5e9 !important;
+            border-bottom: 0px solid #0ea5e9 !important;
+
+        }
+        .task-vacant strong {
+            color: #ef620e;
         }
         .task-advanced {
-            background: #e3ffaf !important;
+           background: #d1fae5 !important;
+            border-left: 6px solid #10b981 !important;
             color: #121212;
+            height: 100px;
+            border: none;
+        }
+        .task-advanced strong {
+            color: #10b981;
+        }
+        .task.task-jobboard {
+            background: #e9d5ff !important;
+            border: 1px solid #a855f7 !important;
+            color: #121212;
+            border-left: 6px #b80db8 solid !important;
+            border-top-right-radius: 0px !important;
+            border-bottom-right-radius: 0px !important;
+            border-right: 0px solid #0ea5e9 !important;
+            border-bottom: 0px solid #0ea5e9 !important;
+            border-top: 0px solid #0ea5e9 !important;
+        }
+        .task.task-jobboard strong {
+            color: #aa06aa;
         }
         .client-avatar {
             width: 24px;
@@ -451,11 +488,20 @@
             padding: 5px;
             margin: 2px 0;
             background-color: #c9f3ff;
-            border-radius: 0px;
+            border-radius: 10px;
+            background: #e0f2fe ;
+            border-left: 6px solid #0ea5e9 ;
+            border-right: 0px solid #0ea5e9 ;
+            border-bottom: 0px solid #0ea5e9 ;
+            border-top: 0px solid #0ea5e9 ;
+            border-radius: 10px;
+            height: 100px;
+             border-top-right-radius: 0px !important;
+            border-bottom-right-radius: 0px !important;
         }
         .calendar-day {
                     min-height: auto;
-                    border: 1px solid #ddd;
+                    border: 1px solid #e8e8e8;
                     padding-bottom: 30px;
                  
         }
@@ -625,20 +671,36 @@
 .task.daily {
 position: absolute;
   top: 4px;
-  padding: 7px 15px 0px 13px;
-  font-size: 13px;
+  padding: 4px 8px;
+  font-size: 12px;
   color: #202020;
-  box-shadow: 0 6px 18px rgba(24, 24, 24, 0.12);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 80px;
+  height: 50px;
+  width: 100%;
+  background: #e0f2fe;
+  border: 1px solid #0ea5e9;
+  border-radius: 5px;
+}
+.task.daily strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0ea5e9;
+}
+.task.daily small {
+  font-size: 10px;
+  color: #666;
 }
 
 /* small visual difference when vacant or advanced */
-.task.task-vacant.daily { background: linear-gradient(135deg, #f97316, #facc15); color: #111; }
-.task.task-advanced.daily { background: linear-gradient(45deg, #22c55e, #86efac); color: #111; }
-.task.daily.default { background: #c9f3ff; }
+.task.task-vacant.daily { background: #ffe5b4; border-color: #ffc164; color: #111; }
+.task.task-vacant.daily strong { color: #ffc164; }
+.task.task-advanced.daily { background: #d1fae5; border-color: #10b981; color: #111; }
+.task.task-advanced.daily strong { color: #10b981; }
+.task.task-jobboard.daily { background: #e9d5ff; border-color: #a855f7; color: #111; }
+.task.task-jobboard.daily strong { color: #a855f7; }
+.task.daily.default { background: #e0f2fe; border-color: #0ea5e9; }
 /* === FIX SCROLL + LAYOUT OVERFLOW === */
 .calendar-section {
     width: 100%;
@@ -749,26 +811,33 @@ display: inline-flex;
 }
 /* 🧑‍💼 Staff/User label style */
 .user-staff-label  {
-    background-color: #f3f4f6; /* light gray */
+    background-color: #ffffffff; /* light gray */
     color: #111827;
+        text-align: center;
 }
 
 /* Circular badge for staff initials */
 .user-staff-label-badge {
  background-color: #4c4d51;
   color: white;
+      margin-bottom: 10px;
 }
 
 /* Client label style (similar to staff) */
 .client-staff-label {
-    background-color: #f3f4f6; /* light gray */
+    background-color: #ffffffff; /* light gray */
     color: #111827;
+        text-align: center;
+
+    
 }
 
 /* Circular badge for client initials */
 .client-staff-label-badge {
  background-color: #4c4d51;
   color: white;
+      margin-bottom: 10px;
+
 }
 .main-content-sidebar{
     left: 200px !important;
@@ -819,10 +888,23 @@ body.sidebar-collapsed .main-content-sidebar {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 4px 6px;
-    font-size: 11px !important;
+    font-size: 10px !important;
 }
-.task.task-overnight { background-color: #c9f3ff !important; }
-
+.task.task-overnight { 
+    background: #e0f2fe !important;
+    border-left: 6px solid #0ea5e9 !important;
+    border-radius: 10px;
+    height: 100px;
+    border:none;
+        border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+ }
+.overnight-continuation{
+    border: none !important;
+    border-left: 0px white groove !important;
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+}
     </style>
 
     <div wire:ignore.self x-data="{ calendarType: 'staff', viewType: 'Weekly' }">
@@ -927,7 +1009,7 @@ body.sidebar-collapsed .main-content-sidebar {
                         <button class="buto">Advanced Edit</button>
                     </a>
                 </div>
-                <div x-data="{ repeatChecked: false, jobBoardActive: @entangle('data.add_to_job_board'), recurrance: '' }">
+                <div x-data="{ nextDayChecked: false, repeatChecked: false, jobBoardActive: @entangle('data.add_to_job_board'), recurrance: '' }">
                     {{ $this->form }}
                 </div>
                 <div class="but-div">
@@ -1113,7 +1195,6 @@ function renderStaffCalendar(filteredShifts = shifts) {
             // timeline cell (no color)
             const timelineCell = document.createElement('div');
             timelineCell.className = 'calendar-day daily-row';
-            timelineCell.onclick = handleEmptyCalendarClick;
 
             const wrapper = document.createElement('div');
             wrapper.className = 'timeline-wrapper';
@@ -1155,6 +1236,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                 wrapper.appendChild(taskDiv);
             });
 
+            timelineCell.onclick = () => handleEmptyCalendarClick(dateKey);
             calendar.appendChild(timelineCell);
         });
 
@@ -1184,7 +1266,6 @@ function renderStaffCalendar(filteredShifts = shifts) {
             // 🔹 Create the timeline cell for this staff row
             const timelineCell = document.createElement('div');
             timelineCell.className = 'calendar-day daily-row';
-            timelineCell.onclick = handleEmptyCalendarClick;
 
             const wrapper = document.createElement('div');
             wrapper.className = 'timeline-wrapper';
@@ -1231,6 +1312,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                 wrapper.appendChild(taskDiv);
             });
 
+            timelineCell.onclick = () => handleEmptyCalendarClick(dateKey);
             calendar.appendChild(timelineCell);
         });
 
@@ -1288,79 +1370,76 @@ function renderStaffCalendar(filteredShifts = shifts) {
             dates.forEach(d => {
                 const dayCell = document.createElement('div');
                 dayCell.className = 'calendar-day';
-                dayCell.onclick = handleEmptyCalendarClick;
+const dateKey = formatDateKey(d);
+// mark row/date on cell (used for pending appends)
+dayCell.setAttribute('data-date', dateKey);
+dayCell.setAttribute('data-row', `static__${taskName}`);
 
-                const dateKey = formatDateKey(d);
-                // mark row/date on cell (used for pending appends)
-                dayCell.setAttribute('data-date', dateKey);
-                dayCell.setAttribute('data-row', `static__${taskName}`);
+const relevant = filteredShifts.filter(s => {
+    if (taskName === 'Vacant Shift' && !s.is_vacant) return false;
+    if (taskName === 'Job Board' && !s.add_to_job_board) return false;
+    return isShiftInDateRange(s, dateKey);
+});
 
-                const relevant = filteredShifts.filter(s => {
-                    if (taskName === 'Vacant Shift' && !s.is_vacant) return false;
-                    if (taskName === 'Job Board' && !s.add_to_job_board) return false;
-                    return isShiftInDateRange(s, dateKey);
-                });
+relevant.forEach(shift => {
+    // normal (non-overnight)
+    if (!isOvernightShift(shift)) {
+        const div = document.createElement('div');
+        let cls = 'task default';
+        if (shift.is_vacant) cls = 'task task-vacant';
+        else if (shift.add_to_job_board) cls = 'task task-jobboard';
+        else if (shift.is_advanced_shift) cls = 'task task-advanced';
+        div.className = cls;
 
-                relevant.forEach(shift => {
-                    // normal (non-overnight)
-                    if (!isOvernightShift(shift)) {
-                        const div = document.createElement('div');
-                        let cls = 'task default';
-                        if (shift.is_vacant) cls = 'task task-vacant';
-                        else if (shift.add_to_job_board) cls = 'task task-jobboard';
-                        else if (shift.is_advanced_shift) cls = 'task task-advanced';
-                        div.className = cls;
+        const clientName = clientNames[String(shift.client_id)] || '';
+        const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+        const timeRange = shift.start_time && shift.end_time
+            ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+            : 'No Time';
 
-                        const clientName = clientNames[String(shift.client_id)] || '';
-                        const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
-                        const timeRange = shift.start_time && shift.end_time
-                            ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
-                            : 'No Time';
+        div.innerHTML = `
+            <strong>${timeRange}</strong><br>
+            ${shiftType}<br>
+            <small>${clientName}</small>
+        `;
 
-                        div.innerHTML = `
-                            <strong>${timeRange}</strong><br>
-                            ${shiftType}<br>
-                            <small>${clientName}</small>
-                        `;
+        div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
+        dayCell.appendChild(div);
+        return;
+    }
 
-                        div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
-                        dayCell.appendChild(div);
-                        return;
-                    }
+    // Overnight shift: render today's portion now, schedule tomorrow's portion
+    // PART 1: today's portion (start -> MIDNIGHT)
+    const part1 = document.createElement('div');
+    let cls1 = 'task task-overnight';
+    if (shift.is_vacant) cls1 = 'task task-vacant';
+    else if (shift.add_to_job_board) cls1 = 'task task-jobboard';
+    else if (shift.is_advanced_shift) cls1 = 'task task-advanced';
+    part1.className = cls1 + ' overnight-start';
 
-                    // Overnight shift: render today's portion now, schedule tomorrow's portion
-                    // PART 1: today's portion (start -> MIDNIGHT)
-                    const part1 = document.createElement('div');
-                    let cls1 = 'task task-overnight';
-                    if (shift.is_vacant) cls1 = 'task task-vacant';
-                    else if (shift.add_to_job_board) cls1 = 'task task-jobboard';
-                    else if (shift.is_advanced_shift) cls1 = 'task task-advanced';
-                    part1.className = cls1 + ' overnight-start';
+    part1.innerHTML = `
+        <strong>NEXT DAY</strong><br>
+        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
+        ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
+        <small>${clientNames[String(shift.client_id)] || ''}</small>
+    `;
+    part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
+    dayCell.appendChild(part1);
 
-                    part1.innerHTML = `
-                        <strong>NEXT DAY</strong><br>
-                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
-                        ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
-                        <small>${clientNames[String(shift.client_id)] || ''}</small>
-                    `;
-                    part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
-                    dayCell.appendChild(part1);
+   
 
-                    // PART 2: create element for next day and store in pending map
-                    const nextDay = new Date(d);
-                    nextDay.setDate(d.getDate() + 1);
-                    const nextDateKey = formatDateKey(nextDay);
 
-                });
+});
 
-                // After adding today's shifts, append any pending continuation parts for this row/date
-                const pendingHereKey = `static__${taskName}__${dateKey}`;
-                if (pendingOvernight[pendingHereKey]) {
-                    pendingOvernight[pendingHereKey].forEach(node => dayCell.appendChild(node));
-                    delete pendingOvernight[pendingHereKey];
-                }
+// After adding today's shifts, append any pending continuation parts for this row/date
+const pendingHereKey = `static__${taskName}__${dateKey}`;
+if (pendingOvernight[pendingHereKey]) {
+    dayCell.appendChild(pendingOvernight[pendingHereKey]);
+    delete pendingOvernight[pendingHereKey];
+}
 
-                calendar.appendChild(dayCell);
+dayCell.onclick = () => handleEmptyCalendarClick(dateKey);
+calendar.appendChild(dayCell);
             });
         });
 
@@ -1381,7 +1460,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
             const staffCell = document.createElement('div');
             staffCell.className = 'staff-cell user-staff-label';
             staffCell.innerHTML = `
-                <span class="label-badge user-staff-label-badge">${initials}</span>
+                <span class="label-badge user-staff-label-badge">${initials}</span></br>
                 <span class="label-text">${userName}</span>
             `;
             calendar.appendChild(staffCell);
@@ -1390,7 +1469,6 @@ function renderStaffCalendar(filteredShifts = shifts) {
             dates.forEach(d => {
                 const dayCell = document.createElement('div');
                 dayCell.className = 'calendar-day';
-                dayCell.onclick = handleEmptyCalendarClick;
 
                 const dateKey = formatDateKey(d);
                 // mark row/date on cell (used for pending appends)
@@ -1437,7 +1515,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part1.className = cls1 + ' overnight-start';
 
                     part1.innerHTML = `
-                         <strong>NEXT DAY</strong><br>
+                          <strong>NEXT DAY</strong><br>
                         <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
                         ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
                         <small>${clientNames[String(shift.client_id)] || ''}</small>
@@ -1445,21 +1523,19 @@ function renderStaffCalendar(filteredShifts = shifts) {
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
 
-                    // schedule next-day part
-                    const nextDay = new Date(d);
-                    nextDay.setDate(d.getDate() + 1);
-                    const nextDateKey = formatDateKey(nextDay);
+                  
 
-                    
+
                 });
 
                 // append any pending continuation parts for this user/date
                 const pendingHereKey = `user__${userId}__${dateKey}`;
                 if (pendingOvernight[pendingHereKey]) {
-                    pendingOvernight[pendingHereKey].forEach(node => dayCell.appendChild(node));
+                    dayCell.appendChild(pendingOvernight[pendingHereKey]);
                     delete pendingOvernight[pendingHereKey];
                 }
 
+                dayCell.onclick = () => handleEmptyCalendarClick(dateKey);
                 calendar.appendChild(dayCell);
             });
         });
@@ -1483,6 +1559,12 @@ function renderClientCalendar(filteredShifts = shifts) {
     const dates = [];
 
     calendar.innerHTML = '<div class="day-header-staff">Client</div>';
+
+    // local helper (safe to be here; won't conflict with global if defined there)
+    function isOvernightShift(shift) {
+        return !!shift.shift_finishes_next_day ||
+               (!!shift.start_time && !!shift.end_time && shift.end_time < shift.start_time);
+    }
 
     if (viewType === 'Daily') {
         weekRange.textContent = startDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
@@ -1508,13 +1590,13 @@ function renderClientCalendar(filteredShifts = shifts) {
 
         const timelineVacant = document.createElement('div');
         timelineVacant.className = 'calendar-day daily-row';
-        timelineVacant.onclick = handleEmptyCalendarClick;
 
         const wrapVacant = document.createElement('div');
         wrapVacant.className = 'timeline-wrapper';
         timelineVacant.appendChild(wrapVacant);
 
         const dateKey = formatDateKey(startDate);
+        timelineVacant.onclick = () => handleEmptyCalendarClick(dateKey);
         const vacantShifts = filteredShifts.filter(
             s => s.is_vacant && isShiftInDateRange(s, dateKey)
         );
@@ -1562,7 +1644,7 @@ sortedClients.forEach(([clientId, clientName]) => {
     const clientCell = document.createElement('div');
     clientCell.className = 'staff-cell client-staff-label';
     clientCell.innerHTML = `
-        <span class="label-badge client-staff-label-badge">${initials}</span>
+        <span class="label-badge client-staff-label-badge">${initials}</span></br>
         <span class="label-text">${clientName}</span>
     `;
     calendar.appendChild(clientCell);
@@ -1570,7 +1652,6 @@ sortedClients.forEach(([clientId, clientName]) => {
     // 🔹 Create the timeline row
     const row = document.createElement('div');
     row.className = 'calendar-day daily-row';
-    row.onclick = handleEmptyCalendarClick;
 
     const wrapper = document.createElement('div');
     wrapper.className = 'timeline-wrapper';
@@ -1622,6 +1703,7 @@ sortedClients.forEach(([clientId, clientName]) => {
         wrapper.appendChild(div);
     });
 
+    row.onclick = () => handleEmptyCalendarClick(dateKey);
     calendar.appendChild(row);
 });
 
@@ -1640,7 +1722,9 @@ sortedClients.forEach(([clientId, clientName]) => {
         });
         calendar.className = `calendar-grid ${viewType.toLowerCase()}`;
 
-       // 🟥 Vacant row with badge
+        const pendingOvernight = {};
+
+        // 🟥 Vacant row with badge
         const label = document.createElement('div');
         label.className = 'staff-cell vacant-staff-label';
         label.innerHTML = `
@@ -1652,35 +1736,65 @@ sortedClients.forEach(([clientId, clientName]) => {
         dates.forEach(day => {
             const cell = document.createElement('div');
             cell.className = 'calendar-day';
-            cell.onclick = handleEmptyCalendarClick;
 
             const dateKey = formatDateKey(day);
+            cell.setAttribute('data-date', dateKey);
+            cell.setAttribute('data-row', 'client_vacant');
+            cell.onclick = () => handleEmptyCalendarClick(dateKey);
             const relevant = filteredShifts.filter(
                 s => s.is_vacant && isShiftInDateRange(s, dateKey)
             );
 
             relevant.forEach(shift => {
-                const div = document.createElement('div');
-                div.className = 'task task-vacant';
+                // normal (non-overnight)
+                if (!isOvernightShift(shift)) {
+                    const div = document.createElement('div');
+                    div.className = 'task task-vacant';
 
-                const staffName = users[String(shift.user_id)] || '';
-                const shiftType = shiftTypeNames[String(shift.shift_type_id)] || '';
-                const timeRange = shift.start_time && shift.end_time
-                    ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
-                    : 'No Time';
+                    const staffName = users[String(shift.user_id)] || '';
+                    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || '';
+                    const timeRange = shift.start_time && shift.end_time
+                        ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                        : 'No Time';
 
-                div.innerHTML = `
-                    <strong>${timeRange}</strong><br>
-                    ${shiftType}<br>
+                    div.innerHTML = `
+                        <strong>${timeRange}</strong><br>
+                        ${shiftType}<br>
+                    `;
+
+                    div.onclick = e => {
+                        e.stopPropagation();
+                        openShiftSlider(shift.id, dateKey);
+                    };
+
+                    cell.appendChild(div);
+                    return;
+                }
+
+                // Overnight shift: render today's portion now, schedule tomorrow's portion
+                // PART 1: today's portion (start -> MIDNIGHT)
+                const part1 = document.createElement('div');
+                part1.className = 'task task-vacant overnight-start';
+
+                part1.innerHTML = `
+                    <strong>NEXT DAY</strong><br>
+                    <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
+                    ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
                 `;
 
-                div.onclick = e => {
-                    e.stopPropagation();
-                    openShiftSlider(shift.id, dateKey);
-                };
+                part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
 
-                cell.appendChild(div);
+                cell.appendChild(part1);
+
+               
             });
+
+            // After adding today's shifts, append any pending continuation parts for this row/date
+            const pendingHereKey = `client_vacant__${dateKey}`;
+            if (pendingOvernight[pendingHereKey]) {
+                cell.appendChild(pendingOvernight[pendingHereKey]);
+                delete pendingOvernight[pendingHereKey];
+            }
 
             calendar.appendChild(cell);
         });
@@ -1702,7 +1816,7 @@ sortedClients.forEach(([clientId, clientName]) => {
     const clientCell = document.createElement('div');
     clientCell.className = 'staff-cell client-staff-label';
     clientCell.innerHTML = `
-        <span class="label-badge client-staff-label-badge">${initials}</span>
+        <span class="label-badge client-staff-label-badge">${initials}</span></br>
         <span class="label-text">${clientName}</span>
     `;
     calendar.appendChild(clientCell);
@@ -1711,9 +1825,11 @@ sortedClients.forEach(([clientId, clientName]) => {
     dates.forEach(day => {
         const cell = document.createElement('div');
         cell.className = 'calendar-day';
-        cell.onclick = handleEmptyCalendarClick;
 
         const dateKey = formatDateKey(day);
+        cell.setAttribute('data-date', dateKey);
+        cell.setAttribute('data-row', `client__${clientId}`);
+        cell.onclick = () => handleEmptyCalendarClick(dateKey);
         const clientShifts = filteredShifts
             .filter(s => {
                 try {
@@ -1731,32 +1847,61 @@ sortedClients.forEach(([clientId, clientName]) => {
             .filter(s => isShiftInDateRange(s, dateKey));
 
         clientShifts.forEach(shift => {
-            const div = document.createElement('div');
-            let cls = 'task default';
-            if (shift.is_vacant) cls = 'task task-vacant';
-            else if (shift.is_advanced_shift) cls = 'task task-advanced';
-            else if (shift.add_to_job_board) cls = 'task task-jobboard';
-            div.className = cls;
+            // Non-overnight: render as before
+            if (!isOvernightShift(shift)) {
+                const div = document.createElement('div');
+                let cls = 'task default';
+                if (shift.is_vacant) cls = 'task task-vacant';
+                else if (shift.is_advanced_shift) cls = 'task task-advanced';
+                else if (shift.add_to_job_board) cls = 'task task-jobboard';
+                div.className = cls;
 
-            const staffName = users[String(shift.user_id)] || '';
-            const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
-            const timeRange =
-                shift.start_time && shift.end_time
-                    ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
-                    : 'No Time';
+                const staffName = users[String(shift.user_id)] || '';
+                const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+                const timeRange =
+                    shift.start_time && shift.end_time
+                        ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                        : 'No Time';
 
-            div.innerHTML = `
-                <strong>${timeRange}</strong><br>
-                ${shiftType}<br>
+                div.innerHTML = `
+                    <strong>${timeRange}</strong><br>
+                    ${shiftType}<br>
+                `;
+
+                div.onclick = e => {
+                    e.stopPropagation();
+                    openShiftSlider(shift.id, dateKey);
+                };
+
+                cell.appendChild(div);
+                return;
+            }
+
+            // Overnight: today's portion (start -> MIDNIGHT)
+            const part1 = document.createElement('div');
+            let cls1 = 'task task-overnight';
+            if (shift.is_vacant) cls1 = 'task task-vacant';
+            else if (shift.add_to_job_board) cls1 = 'task task-jobboard';
+            else if (shift.is_advanced_shift) cls1 = 'task task-advanced';
+            part1.className = cls1 + ' overnight-start';
+
+            part1.innerHTML = `
+                  <strong>NEXT DAY</strong><br>
+                <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
+                ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
             `;
+            part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
+            cell.appendChild(part1);
 
-            div.onclick = e => {
-                e.stopPropagation();
-                openShiftSlider(shift.id, dateKey);
-            };
-
-            cell.appendChild(div);
+       
         });
+
+        // append any pending continuation parts for this client/date
+        const pendingHereKey = `client__${clientId}__${dateKey}`;
+        if (pendingOvernight[pendingHereKey]) {
+            cell.appendChild(pendingOvernight[pendingHereKey]);
+            delete pendingOvernight[pendingHereKey];
+        }
 
         calendar.appendChild(cell);
     });
@@ -1900,6 +2045,18 @@ function sortClientsBy(viewType, filteredShifts) {
 
                 const modal = document.getElementById('taskModal');
                 if (modal) modal.style.display = 'flex';
+
+                // Set the DatePicker value to the clicked date in DD-MM-YYYY format
+                if (dateKey) {
+                    const dateInput = document.getElementById('start-date-input');
+                    if (dateInput) {
+                        const [year, month, day] = dateKey.split('-');
+                        dateInput.value = `${day}-${month}-${year}`;
+                        // Trigger input and change events to update Filament form state
+                        dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
             }
 
             function closeModal() {
@@ -2065,9 +2222,9 @@ function sortClientsBy(viewType, filteredShifts) {
                 highlightToday();
             });
             // 🔹 Handles clicking empty blocks across all calendar views
-function handleEmptyCalendarClick() {
+function handleEmptyCalendarClick(dateKey) {
     // Opens your Filament Shift modal globally
-    openModal('shift-modal');
+    openModal('shift-modal', dateKey);
 }
 
         </script>

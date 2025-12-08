@@ -33,6 +33,9 @@ use App\Models\Language;
 use App\Models\DocumentCategory;
 use App\Models\Event;
 use Filament\Forms\Components\View;
+use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\Actions;
+use Carbon\Carbon;
 
 class EditAdvancedShiftForm extends Page implements HasForms
 {
@@ -94,8 +97,8 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             $clientDetails[] = [
                                 'client_id'         => $client->id,
                                 'client_name'       => $client->display_name,
-                                'client_start_time' => $existingDetail['client_start_time'] ?? '02:00 AM',
-                                'client_end_time'   => $existingDetail['client_end_time'] ?? '03:00 AM',
+                                'client_start_time' => $existingDetail['client_start_time'] ?? data_get($timeAndLocation, 'start_time'),
+                                'client_end_time'   => $existingDetail['client_end_time'] ?? data_get($timeAndLocation, 'end_time'),
                                 'price_book_id'     => $existingDetail['price_book_id'] ?? null,
                                 'hours'             => $existingDetail['hours'] ?? null,
                             ];
@@ -105,8 +108,8 @@ class EditAdvancedShiftForm extends Page implements HasForms
                         $clientDetails[] = [
                             'client_id'         => $client->id,
                             'client_name'       => $client->display_name,
-                            'client_start_time' => '02:00 AM',
-                            'client_end_time'   => '03:00 AM',
+                            'client_start_time' => data_get($timeAndLocation, 'start_time'),
+                            'client_end_time'   => data_get($timeAndLocation, 'end_time'),
                             'price_book_id'     => null,
                             'hours'             => null,
                         ];
@@ -308,17 +311,92 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                                 '1:20' => '1:20',
                                             ])
                                     ->default(fn ($get) => $get('hours')),
+                                Actions::make([
+                                    Action::make('split')
+                                        ->icon('heroicon-m-scissors')
+                                        ->label('')
+                                        ->iconButton()
+                                        ->tooltip('Split Shifts')
+                                        ->color('info')
+                                        ->action(function (Action $action, $set, $get) {
+                                            $record = $get();
+                                            if (!$record) return;
+                                            $details = $get('../../client_details');
+                                            if (!$details) return;
+                                            $clientId = $record['client_id'];
+                                            $clientItems = collect($details)->where('client_id', $clientId)->sortBy('client_start_time')->values();
+                                            $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
+                                            $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+                                            $numSections = $clientItems->count() + 1;
+                                            $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
+                                            $currentStart = $totalStart;
+                                            $newClientItems = [];
+                                            for ($i = 0; $i < $numSections; $i++) {
+                                                $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                                                $newClientItems[] = [
+                                                    'client_id' => $clientId,
+                                                    'client_name' => $record['client_name'],
+                                                    'client_start_time' => $currentStart->format('H:i'),
+                                                    'client_end_time' => $currentEnd->format('H:i'),
+                                                    'price_book_id' => $record['price_book_id'],
+                                                    'hours' => '1:' . ($i + 1),
+                                                ];
+                                                $currentStart = $currentEnd;
+                                            }
+                                            // Replace the client's details
+                                            $otherDetails = collect($details)->where('client_id', '!=', $clientId)->values()->all();
+                                            $set('../../client_details', array_merge($otherDetails, $newClientItems));
+                                        }),
+                                    Action::make('delete')
+                                        ->icon('heroicon-m-trash')
+                                        ->label('')
+                                        ->iconButton()
+                                        ->color('danger')
+                                        ->action(function (Action $action, $set, $get) {
+                                            $record = $get();
+                                            if (!$record) return;
+                                            $details = $get('../../client_details');
+                                            if (!$details) return;
+                                            $clientId = $record['client_id'];
+                                            $clientItems = collect($details)->where('client_id', $clientId)->sortBy('client_start_time')->values();
+                                            if ($clientItems->count() > 1) {
+                                                // Redistribute time
+                                                $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
+                                                $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+                                                $totalMinutes = $totalStart->diffInMinutes($totalEnd);
+                                                $numSections = $clientItems->count() - 1;
+                                                $sectionMinutes = $totalMinutes / $numSections;
+                                                $currentStart = $totalStart;
+                                                $newClientItems = [];
+                                                for ($i = 0; $i < $numSections; $i++) {
+                                                    $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                                                    $newClientItems[] = [
+                                                        'client_id' => $clientId,
+                                                        'client_name' => $record['client_name'],
+                                                        'client_start_time' => $currentStart->format('H:i'),
+                                                        'client_end_time' => $currentEnd->format('H:i'),
+                                                        'price_book_id' => $record['price_book_id'],
+                                                        'hours' => '1:' . ($i + 1),
+                                                    ];
+                                                    $currentStart = $currentEnd;
+                                                }
+                                                // Replace the client's details
+                                                $otherDetails = collect($details)->where('client_id', '!=', $clientId)->values()->all();
+                                                $set('../../client_details', array_merge($otherDetails, $newClientItems));
+                                            } else {
+                                                // Just delete
+                                                $newDetails = collect($details)->reject(function ($item) use ($record) {
+                                                    return $item['client_id'] == $record['client_id'] &&
+                                                           $item['client_start_time'] == $record['client_start_time'];
+                                                })->values()->all();
+                                                $set('../../client_details', $newDetails);
+                                            }
+                                        }),
+                                ]),
                             ])
-                             ->cloneable()
-                                                    ->cloneAction(
-                                                        fn (\Filament\Forms\Components\Actions\Action $action) =>
-                                                            $action->icon('heroicon-m-scissors')
-                                                                ->button()
-                                                                ->label('Split')
-                                                                ->color('info')
-                                                    )
-                            ->columns(5)
+                            ->columns(6)
                             ->addable(false)
+                            ->deletable(false)
                             ->visible(fn ($get) => !empty($get('client_id')))
                             ->default($this->data['client_details'] ?? []),
                     ])

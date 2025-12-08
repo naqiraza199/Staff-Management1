@@ -851,8 +851,11 @@ public function viewAllEvents()
 
                         Checkbox::make('shift_finishes_next_day')
                             ->label('Shift finishes the next day')
+                            ->reactive()
                             ->columnSpan(2),
                     ]),
+
+                      
 
                 Grid::make(11)
                     ->schema([
@@ -860,16 +863,52 @@ public function viewAllEvents()
                             ->label('Time')
                             ->columnSpan(3),
 
-                        TimePicker::make('start_time')
-                            ->label('')
-                            ->seconds(false)   
-                            ->columnSpan(4),
+                         TimePicker::make('start_time')
+                    ->seconds(false)
+                    ->extraInputAttributes(['id' => 'edit-start-time-input'])
+                    ->columnSpan(4),
 
-                        TimePicker::make('end_time')
-                            ->label('')
-                            ->seconds(false)   
-                            ->columnSpan(4),
+                TimePicker::make('end_time')
+                    ->seconds(false)
+                    ->extraInputAttributes(['id' => 'edit-end-time-input'])
+                    ->columnSpan(4),
+
+                View::make('start-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'edit-start-time-input']),
+
+                View::make('end-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'edit-end-time-input']),
                     ]),
+
+                    Placeholder::make('shift_info')
+                        ->label('')
+                        ->content(function ($get) {
+                            $startDate = $get('start_date');
+                            $startTime = $get('start_time');
+                            $endTime   = $get('end_time');
+                            $finishesNextDay = (bool) $get('shift_finishes_next_day');
+
+                            if (!$startDate || !$startTime || !$endTime) return '';
+
+                            $start = Carbon::parse("$startDate $startTime");
+                            $end   = Carbon::parse("$startDate $endTime");
+
+                            if ($finishesNextDay) $end = $end->addDay();
+
+                            $hours = $start->floatDiffInHours($end);
+
+                            $displayDate = $finishesNextDay
+                                ? Carbon::parse($startDate)->addDay()->format('d/m/Y')
+                                : Carbon::parse($startDate)->format('d/m/Y');
+
+                            return "This shift is " . number_format($hours, 1) . " hours" 
+                                . ($finishesNextDay ? ', finishing next day' : '') 
+                                . ", $displayDate.";
+                        })
+                        ->visible(fn ($get) => $get('shift_finishes_next_day'))
+                        ->extraAttributes(['style' => 'text-align: right;']),
 
                 Grid::make(5)
                     ->schema([

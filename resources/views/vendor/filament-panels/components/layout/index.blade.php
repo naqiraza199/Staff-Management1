@@ -8,7 +8,7 @@
 
 <x-filament-panels::layout.base :livewire="$livewire">
     <div class="fi-layout flex min-h-screen w-full overflow-x-clip">
-
+@include('filament.forms.components.custom-time-picker')
         {{-- ADMIN PANEL: Show Custom Sidebar --}}
         @if ($isAdminPanel)
             @include('vendor.filament-panels.components.layout.my-sidebar')

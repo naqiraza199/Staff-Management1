@@ -43,7 +43,7 @@ use App\Models\PriceBookDetail;
 use App\Models\BillingReport;
 use Carbon\Carbon;
 use Filament\Forms\Components\View;
-
+use Filament\Forms\Components\Actions as AdvancedAction;
 use App\Models\TimesheetReport;
 use App\Models\Timesheet;
 
@@ -154,77 +154,196 @@ public function mount(): void
                                                         $set('client_details', []);
                                                     }
                                                 }),
-                                                    Repeater::make('client_details')
-                                                        ->label(fn ($get, $state) => $get('client_name'))
-                                                        ->schema([
-                                                            Grid::make(10)
-                                                                ->schema([
-                                                                    TimePicker::make('client_start_time')
-                                                                        ->label('')
-                                                                        ->seconds(false)
-                                                                        ->default('02:00 AM')
-                                                                        ->columnSpan(2),
+                          
 
-                                                                    TimePicker::make('client_end_time')
-                                                                        ->label('')
-                                                                        ->seconds(false)
-                                                                        ->default('03:00 AM')
-                                                                        ->columnSpan(2),
+Repeater::make('client_details')
+    ->label(fn ($get, $state) => $get('client_name'))
+    ->schema([
+         Grid::make(30)
+        ->schema([
+       
+                TimePicker::make('client_start_time')
+                    ->label('')
+                    ->seconds(false)
+                    ->default('02:00 AM')
+                    ->columnSpan(5),
 
-                                                                    Placeholder::make('pla')
-                                                                        ->label('')
-                                                                        ->columnSpan(1),
+                TimePicker::make('client_end_time')
+                    ->label('')
+                    ->seconds(false)
+                    ->default('03:00 AM')
+                    ->columnSpan(5),
 
-                                                                    Select::make('price_book_id')
-                                                                        ->label('')
-                                                                        ->options(
-                                                                            PriceBook::where('company_id', $companyId)
-                                                                                ->orderByDesc('id')
-                                                                                ->pluck('name', 'id')
-                                                                        )
-                                                                        ->columnSpan(5),
 
-                                                                    Select::make('hours')
-                                                                        ->label('')
-                                                                        ->placeholder('1:1')
-                                                                        ->options([
-                                                                            '1:1' => '1:1',
-                                                                            '1:2' => '1:2',
-                                                                            '1:3' => '1:3',
-                                                                            '1:4' => '1:4',
-                                                                            '1:5' => '1:5',
-                                                                            '1:6' => '1:6',
-                                                                            '1:7' => '1:7',
-                                                                            '1:8' => '1:8',
-                                                                            '1:9' => '1:9',
-                                                                            '1:10' => '1:10',
-                                                                            '1:11' => '1:11',
-                                                                            '1:12' => '1:12',
-                                                                            '1:13' => '1:13',
-                                                                            '1:14' => '1:14',
-                                                                            '1:15' => '1:15',
-                                                                            '1:16' => '1:16',
-                                                                            '1:17' => '1:17',
-                                                                            '1:18' => '1:18',
-                                                                            '1:19' => '1:19',
-                                                                            '1:20' => '1:20',
-                                                                        ])
-                                                                        ->columnSpan(2),
-                                                                ])
-                                                        ])
 
-                                           ->cloneable()
-                                                    ->cloneAction(
-                                                        fn (\Filament\Forms\Components\Actions\Action $action) =>
-                                                            $action->icon('heroicon-m-scissors')
-                                                                ->button()
-                                                                ->label('Split')
-                                                                ->color('info')
-                                                    )
-                                                ->addable(false)
-                                                ->columnSpan(3)
-                                                ->itemLabel(fn (array $state): ?string => $state['client_name'] ?? 'Client')
-                                                ->visible(fn ($get) => !empty($get('client_id')))
+                Select::make('price_book_id')
+                    ->label('')
+                    ->options(
+                        PriceBook::where('company_id', $companyId)
+                            ->orderByDesc('id')
+                            ->pluck('name', 'id')
+                    )
+                    ->columnSpan(5),
+                    
+
+                Select::make('hours')
+                    ->label('')
+                    ->placeholder('1:1')
+                    ->options([
+                        '1:1' => '1:1',
+                        '1:2' => '1:2',
+                        '1:3' => '1:3',
+                        '1:4' => '1:4',
+                        '1:5' => '1:5',
+                        '1:6' => '1:6',
+                        '1:7' => '1:7',
+                        '1:8' => '1:8',
+                        '1:9' => '1:9',
+                        '1:10' => '1:10',
+                        '1:11' => '1:11',
+                        '1:12' => '1:12',
+                        '1:13' => '1:13',
+                        '1:14' => '1:14',
+                        '1:15' => '1:15',
+                        '1:16' => '1:16',
+                        '1:17' => '1:17',
+                        '1:18' => '1:18',
+                        '1:19' => '1:19',
+                        '1:20' => '1:20',
+                    ])
+                    ->columnSpan(5),
+
+
+         
+
+
+              
+
+                      AdvancedAction::make([
+    NewAction::make('split')
+        ->icon('heroicon-m-scissors')
+        ->label('')
+        ->iconButton()
+        ->tooltip('Split Shifts')
+        ->color('info')
+        ->action(function (NewAction $action, $set, $get) {
+            $record = $get();
+            if (!$record) return;
+
+            $details = $get('../../client_details');
+            if (!$details) return;
+
+            $clientId = $record['client_id'];
+            $clientItems = collect($details)
+                ->where('client_id', $clientId)
+                ->sortBy('client_start_time')
+                ->values();
+
+            $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
+            $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+            $numSections = $clientItems->count() + 1;
+            $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
+
+            $currentStart = $totalStart;
+            $newClientItems = [];
+
+            for ($i = 0; $i < $numSections; $i++) {
+                $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                $newClientItems[] = [
+                    'client_id' => $clientId,
+                    'client_name' => $record['client_name'],
+                    'client_start_time' => $currentStart->format('H:i'),
+                    'client_end_time' => $currentEnd->format('H:i'),
+                    'price_book_id'     => \App\Models\PriceBook::where('id', $record['price_book_id'] ?? null)->value('id'),
+                    'hours' => '1:' . ($i + 1),
+                ];
+                $currentStart = $currentEnd;
+            }
+
+            $otherDetails = collect($details)
+                ->where('client_id', '!=', $clientId)
+                ->values()
+                ->all();
+
+            $set('../../client_details', array_merge($otherDetails, $newClientItems));
+        }),
+
+    NewAction::make('delete')
+        ->icon('heroicon-m-trash')
+        ->label('')
+        ->iconButton()
+        ->color('danger')
+        ->action(function (NewAction $action, $set, $get) {
+            $record = $get();
+            if (!$record) return;
+
+            $details = $get('../../client_details');
+            if (!$details) return;
+
+            $clientId = $record['client_id'];
+            $clientItems = collect($details)
+                ->where('client_id', $clientId)
+                ->sortBy('client_start_time')
+                ->values();
+
+            if ($clientItems->count() > 1) {
+                // Redistribute time
+                $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
+                $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+                $totalMinutes = $totalStart->diffInMinutes($totalEnd);
+                $numSections = $clientItems->count() - 1;
+                $sectionMinutes = $totalMinutes / $numSections;
+
+                $currentStart = $totalStart;
+                $newClientItems = [];
+
+                for ($i = 0; $i < $numSections; $i++) {
+                    $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                    $newClientItems[] = [
+                        'client_id' => $clientId,
+                        'client_name' => $record['client_name'],
+                        'client_start_time' => $currentStart->format('H:i'),
+                        'client_end_time' => $currentEnd->format('H:i'),
+                        'price_book_id'     => \App\Models\PriceBook::where('id', $record['price_book_id'] ?? null)->value('id'),
+                        'hours' => '1:' . ($i + 1),
+                    ];
+                    $currentStart = $currentEnd;
+                }
+
+                $otherDetails = collect($details)
+                    ->where('client_id', '!=', $clientId)
+                    ->values()
+                    ->all();
+
+                $set('../../client_details', array_merge($otherDetails, $newClientItems));
+            } else {
+                // Just delete the single item
+                $newDetails = collect($details)
+                    ->reject(fn($item) =>
+                        $item['client_id'] == $record['client_id'] &&
+                        $item['client_start_time'] == $record['client_start_time']
+                    )
+                    ->values()
+                    ->all();
+
+                $set('../../client_details', $newDetails);
+            }
+        }),
+])
+                    ->columnSpan(4),
+
+ 
+
+
+    ])
+    
+            
+        ])
+    ->columnSpanFull()
+    ->addable(false)
+    ->deletable(false)
+    ->itemLabel(fn (array $state): ?string => $state['client_name'] ?? 'Client')
+    ->visible(fn ($get) => !empty($get('client_id')))
 
                                         ]),
                                 ])
@@ -294,7 +413,12 @@ public function mount(): void
                                         ->label('')
                                         ->seconds(false)
                                         ->columnSpan(4),
+
+                                       
+
                                 ]),
+               
+
                             Grid::make(3)
                                 ->schema([
                                     Placeholder::make('break_lab')
@@ -834,7 +958,10 @@ public function mount(): void
                                                             })
                                                             ->columnSpan(5),
 
-                                                    ])
+                                                      
+
+                                                        ]),
+                                                         
                                                 ])
 
                                         ->addable(false)
@@ -1271,8 +1398,8 @@ public function createShift()
                 'shift_id'   => $newShift->id,
                 'date'       => $shiftDate->toDateString(),
                 'clients'    => $data['client_section']['client_details'] ?? [],
-                'start_time' => $shiftStart->format('H:i:s'),
-                'end_time'   => $shiftEnd->format('H:i:s'),
+                'start_time' => $shiftStart->format('H:i'),
+                'end_time'   => $shiftEnd->format('H:i'),
                 'break_time' => $newShift->time_and_location['break_time'] ?? 0,
                 'hours'      => $total,
                 'distance'   => $newShift->shift_section['mileage'] ?? 0,
@@ -1326,8 +1453,8 @@ public function createShift()
         $clientId    = $clientDetail['client_id'];
         $priceBookId = $clientDetail['price_book_id'];
 
-        $shiftStart  = Carbon::createFromFormat('H:i:s', $clientDetail['client_start_time']);
-        $shiftEnd    = Carbon::createFromFormat('H:i:s', $clientDetail['client_end_time']);
+        $shiftStart  = Carbon::createFromFormat('H:i', $clientDetail['client_start_time']);
+        $shiftEnd    = Carbon::createFromFormat('H:i', $clientDetail['client_end_time']);
 
         // ✅ Handle overnight shift (e.g., 11PM → 3AM)
         if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
@@ -1348,7 +1475,7 @@ public function createShift()
         $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
             ->where('day_of_week', $dayType)
             ->where(function ($q) use ($shiftEnd) {
-                $endTime = $shiftEnd->format('H:i:s');
+                $endTime = $shiftEnd->format('H:i');
 
                 $q->where(function ($sub) use ($endTime) {
                     // normal ranges
