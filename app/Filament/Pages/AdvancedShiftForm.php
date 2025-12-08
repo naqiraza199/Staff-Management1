@@ -166,13 +166,17 @@ Repeater::make('client_details')
                     ->label('')
                     ->seconds(false)
                     ->default('02:00 AM')
+                    ->extraInputAttributes(['id' => 'client-start-time-input'])
                     ->columnSpan(5),
 
                 TimePicker::make('client_end_time')
                     ->label('')
                     ->seconds(false)
                     ->default('03:00 AM')
+                    ->extraInputAttributes(['id' => 'client-end-time-input'])
                     ->columnSpan(5),
+
+            
 
 
 
@@ -216,7 +220,11 @@ Repeater::make('client_details')
 
          
 
+    View::make('start-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'client-start-time-input']),
 
+              
               
 
                       AdvancedAction::make([
@@ -332,7 +340,9 @@ Repeater::make('client_details')
 ])
                     ->columnSpan(4),
 
- 
+   View::make('end-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'client-end-time-input']),
 
 
     ])
@@ -408,13 +418,21 @@ Repeater::make('client_details')
                                     TimePicker::make('start_time')
                                         ->label('')
                                         ->seconds(false)
+                                        ->extraInputAttributes(['id' => 'advanced-start-time-input'])
                                         ->columnSpan(4),
                                     TimePicker::make('end_time')
                                         ->label('')
                                         ->seconds(false)
+                                        ->extraInputAttributes(['id' => 'advanced-end-time-input'])
                                         ->columnSpan(4),
 
-                                       
+                                        View::make('advanced-start-time-init')
+                                            ->view('filament.forms.components.time-js-initializer')
+                                            ->viewData(['fieldId' => 'advanced-start-time-input']),
+
+                                        View::make('advanced-start-time-init')
+                                        ->view('filament.forms.components.time-js-initializer')
+                                        ->viewData(['fieldId' => 'advanced-end-time-input']),
 
                                 ]),
                
@@ -935,13 +953,17 @@ Repeater::make('client_details')
                                                             ->label('')
                                                             ->seconds(false)
                                                             ->default('02:00 AM')
+                                                            ->extraInputAttributes(['id' => 'user-start-time-input'])
                                                             ->columnSpan(2),
 
                                                         TimePicker::make('user_end_time')
                                                             ->label('')
                                                             ->seconds(false)
                                                             ->default('03:00 AM')
+                                                            ->extraInputAttributes(['id' => 'user-end-time-input'])
                                                             ->columnSpan(2),
+
+                                                       
 
                                                         Placeholder::make('lkadfad')
                                                             ->label('')
@@ -957,7 +979,13 @@ Repeater::make('client_details')
                                                                     ->toArray();
                                                             })
                                                             ->columnSpan(5),
+                                                                View::make('user-start-time-init')
+                                                                    ->view('filament.forms.components.time-js-initializer')
+                                                                    ->viewData(['fieldId' => 'user-start-time-input']),
 
+                                                                View::make('user-start-time-init')
+                                                                ->view('filament.forms.components.time-js-initializer')
+                                                                ->viewData(['fieldId' => 'user-end-time-input']),
                                                       
 
                                                         ]),

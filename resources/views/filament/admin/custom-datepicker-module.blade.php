@@ -316,26 +316,29 @@
 
         /** Formats the date and writes it to the currently active input field. */
         const formatSelectedDate = (date, input) => {
-            const d = new Date(date);
-            let month = '' + (d.getMonth() + 1);
-            let day = '' + d.getDate();
-            const year = d.getFullYear();
+                const d = new Date(date);
 
-            if (month.length < 2) month = '0' + month;
-            if (day.length < 2) day = '0' + day;
+                let month = '' + (d.getMonth() + 1);
+                let day   = '' + d.getDate();
+                const year = d.getFullYear();
 
-            const filamentFormat = `${year}-${month}-${day}`;
-            
-            if (input) {
-                input.value = filamentFormat;
-                // Dispatch events for Livewire/Filament to pick up the change
-                input.dispatchEvent(new Event('change', { bubbles: true }));
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-            }
+                if (month.length < 2) month = '0' + month;
+                if (day.length < 2)   day   = '0' + day;
 
-            // Update the global state so render functions know what to highlight
-            selectedDate = d;
-        };
+                // ✅ FINAL FORMAT (Same for display + save)
+                const finalFormat = `${day}-${month}-${year}`;
+
+                if (input) {
+                    input.value = finalFormat;
+
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    input.dispatchEvent(new Event('input',  { bubbles: true }));
+                }
+
+                selectedDate = d;
+            };
+
+
 
         const isSameDay = (d1, d2) => 
             d1.getFullYear() === d2.getFullYear() &&
@@ -471,26 +474,68 @@
         // --- Show/Hide Logic ---
         
         /** Called when a DatePicker input is clicked. */
-        const showCalendar = (inputElement) => {
-            // 1. Set the active input for this session
-            activeInput = inputElement; 
+       const showCalendar = (inputElement) => {
+    activeInput = inputElement;
 
-            // 2. Read the current value from the specific input
-            if (activeInput && activeInput.value) {
-                const parsedDate = new Date(activeInput.value + 'T00:00:00');
-                if (!isNaN(parsedDate)) {
-                    selectedDate = parsedDate;
-                }
-            } else {
-                selectedDate = new Date(); // If no value, default to today
-            }
-            
-            currentViewDate = new Date(selectedDate);
-            showMonthView(); 
-            positionCalendar();
-
-            calendarContainer.classList.add('dp-active');
+    if (activeInput && activeInput.value) {
+        const parsedDate = new Date(activeInput.value + 'T00:00:00');
+        if (!isNaN(parsedDate)) {
+            selectedDate = parsedDate;
         }
+    } else {
+        selectedDate = new Date();
+    }
+
+    currentViewDate = new Date(selectedDate);
+
+    showMonthView();
+    positionCalendar();
+    calendarContainer.classList.add('dp-active');
+};
+
+
+
+        function ensureDateDisplaySpan(input){
+            if (input._dpDisplay) return input._dpDisplay;
+
+            const span = document.createElement('span');
+            span.style.marginLeft = '8px';
+            span.style.fontWeight = '600';
+            span.style.cursor = 'pointer';
+            span.style.fontSize = '0.9em';
+
+            input.parentNode.insertBefore(span, input.nextSibling);
+
+            span.addEventListener('click', (e) => {
+                e.stopPropagation();
+                input.click();
+            });
+
+            input._dpDisplay = span;
+            return span;
+        }
+
+        // ✅ Parses BOTH "2025-12-10" and "10-12-2025"
+        function parseDateValue(value){
+            if (!value) return null;
+
+            value = value.trim();
+
+            // YYYY-MM-DD
+            let isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (isoMatch) {
+                return new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T00:00:00`);
+            }
+
+            // DD-MM-YYYY
+            let humanMatch = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            if (humanMatch) {
+                return new Date(`${humanMatch[3]}-${humanMatch[2]}-${humanMatch[1]}T00:00:00`);
+            }
+
+            return null;
+        }
+
 
         const hideCalendar = () => {
             calendarContainer.classList.remove('dp-active');

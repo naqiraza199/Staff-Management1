@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\View;
 
 class StaffFormPage extends Page implements HasForms
 {
@@ -127,7 +128,10 @@ class StaffFormPage extends Page implements HasForms
 
                         Forms\Components\DatePicker::make('dob')
                             ->label('Date Of Birth')
+                            ->extraInputAttributes(['id' => 'date-of-birth']) // <-- UNIQUE ID
                             ->columnSpan(1),
+
+
 
                         Forms\Components\Select::make('employment_type')
                             ->options([
@@ -139,6 +143,12 @@ class StaffFormPage extends Page implements HasForms
                             ])
                             ->columnSpan(1),
                     ]),
+                    
+                    View::make('start-date-initializer')
+                        ->view('filament.forms.components.js-initializer')
+                        ->viewData([
+                            'fieldId' => 'date-of-birth'
+                        ]),
 
                 Forms\Components\Grid::make(1)
                     ->schema([

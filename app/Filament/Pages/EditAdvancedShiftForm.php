@@ -273,10 +273,12 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                 TimePicker::make('client_start_time')
                                     ->seconds(false)
                                     ->label('Start Time')
+                                    ->extraInputAttributes(['id' => 'edit-client-start-time-input'])
                                     ->default(fn ($get) => $get('client_start_time')),
                                 TimePicker::make('client_end_time')
                                     ->seconds(false)
                                     ->label('End Time')
+                                    ->extraInputAttributes(['id' => 'edit-client-end-time-input'])
                                     ->default(fn ($get) => $get('client_end_time')),
                                 Select::make('price_book_id')
                                     ->label('Price Book')
@@ -311,6 +313,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                                 '1:20' => '1:20',
                                             ])
                                     ->default(fn ($get) => $get('hours')),
+                                       
                                 Actions::make([
                                     Action::make('split')
                                         ->icon('heroicon-m-scissors')
@@ -393,6 +396,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                             }
                                         }),
                                 ]),
+                             
                             ])
                             ->columns(6)
                             ->addable(false)
@@ -401,6 +405,12 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ->default($this->data['client_details'] ?? []),
                     ])
                     ->collapsible(),
+                     View::make('edit-start-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'edit-client-start-time-input']),
+                       View::make('edit-end-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(['fieldId' => 'edit-client-end-time-input']),
 
                 Section::make('Time & Location')
                     ->schema([
@@ -414,10 +424,12 @@ class EditAdvancedShiftForm extends Page implements HasForms
                         TimePicker::make('start_time')
                             ->label('Start Time')
                             ->seconds(false)
+                            ->extraInputAttributes(['id' => 'edit-advanced-start-time-input'])
                             ->default($this->data['start_time'] ?? null),
                         TimePicker::make('end_time')
                             ->label('End Time')
                             ->seconds(false)
+                            ->extraInputAttributes(['id' => 'edit-advanced-end-time-input'])
                             ->default($this->data['end_time'] ?? null),
                         TextInput::make('break_time')
                             ->label('Break Time (minutes)')
@@ -452,6 +464,14 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                 Checkbox::make('occurs_on_weekly.saturday')->label('Sat')->default($this->data['occurs_on_weekly']['saturday'] ?? false),
                             ])
                             ->visible(fn ($get) => $get('repeat') && $get('recurrance') === 'Weekly'),
+
+                              View::make('edit-advanced-start-time-init')
+                                            ->view('filament.forms.components.time-js-initializer')
+                                            ->viewData(['fieldId' => 'edit-advanced-start-time-input']),
+
+                                        View::make('edit-advanced-start-time-init')
+                                        ->view('filament.forms.components.time-js-initializer')
+                                        ->viewData(['fieldId' => 'edit-advanced-end-time-input']),
                         Grid::make(2)
                             ->schema([
                                 Select::make('repeat_every_monthly')
@@ -591,11 +611,21 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                 TimePicker::make('user_start_time')
                                     ->label('Start Time')
                                     ->seconds(false)
+                                    ->extraInputAttributes(['id' => 'edit-user-start-time-input'])
                                     ->default(fn ($get) => $get('user_start_time')),
                                 TimePicker::make('user_end_time')
                                     ->label('End Time')
                                     ->seconds(false)
+                                    ->extraInputAttributes(['id' => 'edit-user-end-time-input'])
                                     ->default(fn ($get) => $get('user_end_time')),
+
+                                    View::make('edit-user-start-time-init')
+                                        ->view('filament.forms.components.time-js-initializer')
+                                        ->viewData(['fieldId' => 'edit-user-start-time-input']),
+
+                                    View::make('edit-user-start-time-init')
+                                    ->view('filament.forms.components.time-js-initializer')
+                                    ->viewData(['fieldId' => 'edit-user-end-time-input']),
                                 Select::make('pay_group_id')
                                     ->label('Pay Group')
                                     ->options(PayGroup::where('user_id', auth()->id())->where('is_archive', 0)->pluck('name', 'id'))

@@ -863,15 +863,16 @@ public function viewAllEvents()
                             ->label('Time')
                             ->columnSpan(3),
 
-                         TimePicker::make('start_time')
-                    ->seconds(false)
-                    ->extraInputAttributes(['id' => 'edit-start-time-input'])
-                    ->columnSpan(4),
+                    TimePicker::make('start_time')
+                        ->seconds(false)
+                        ->extraInputAttributes(['id' => 'edit-start-time-input'])
+                        ->columnSpan(4),
 
-                TimePicker::make('end_time')
-                    ->seconds(false)
-                    ->extraInputAttributes(['id' => 'edit-end-time-input'])
-                    ->columnSpan(4),
+                    TimePicker::make('end_time')
+                        ->seconds(false)
+                        ->extraInputAttributes(['id' => 'edit-end-time-input'])
+                        ->columnSpan(4),
+
 
                 View::make('start-time-init')
                     ->view('filament.forms.components.time-js-initializer')
