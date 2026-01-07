@@ -703,7 +703,7 @@
                <li class="nav-item dropdown-container nested">
                   <a href="#" class="nav-link dropdown-toggle">
                   <span class="material-symbols-rounded">keyboard_arrow_right</span>
-                  <span class="nav-label">Price Items</span>
+                  <span class="nav-label">Prices</span>
                   <span class="dropdown-icon material-symbols-rounded">keyboard_arrow_down</span>
                   </a>  
                   <ul class="dropdown-menu">

@@ -115,14 +115,14 @@
         </div>
 
     <!-- New Price Modal -->
-<x-filament::modal id="new-price-modal" :close-by-clicking-away="false">
+<x-filament::modal id="new-price-modal" :close-by-clicking-away="false" width="5xl">
 
         <x-slot name="heading">
             New Price
         </x-slot>
 
         <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Day of Week</label>
                     <select wire:model="priceData.day_of_week" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
@@ -135,11 +135,15 @@
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
-                    <input type="time" wire:model="priceData.start_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <input id="new-start-time" type="time" wire:model="priceData.start_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
-                    <input type="time" wire:model="priceData.end_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <input id="new-end-time" type="time" wire:model="priceData.end_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                </div>
+                                <div>
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
+                    <input id="create-input" wire:model="priceData.effective_date" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 </div>
                                         <!-- Reference Number (Hour) -->
                                 <div>
@@ -164,7 +168,6 @@
                                         type="number"
                                         step="0.01"
                                         wire:model="priceData.per_hour"
-                                        readonly
                                         class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2
                                             bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                         placeholder="Auto-filled from prices table"
@@ -196,17 +199,13 @@
                                             type="number"
                                             step="0.01"
                                             wire:model="priceData.per_km"
-                                            readonly
                                             class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2
                                                 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                             placeholder="Auto-filled from prices table"
                                         />
                                     </div>
 
-                <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
-                    <input id="create-input" type="date" wire:model="priceData.effective_date" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                </div>
+
             </div>
         </div>
 
@@ -229,11 +228,11 @@
     </x-filament::modal>
 
     <!-- Edit Price Modal -->
-<x-filament::modal id="edit-price-modal" :close-by-clicking-away="false">
+<x-filament::modal id="edit-price-modal" :close-by-clicking-away="false" width="5xl">
     <x-slot name="heading">Edit Price</x-slot>
 
     <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Day of Week</label>
                 <select wire:model="editingPriceData.day_of_week"
@@ -248,13 +247,19 @@
 
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
-                <input type="time" wire:model="editingPriceData.start_time"
+                <input id="edit-start-time" type="time" wire:model="editingPriceData.start_time"
                        class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
 
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
-                <input type="time" wire:model="editingPriceData.end_time"
+                <input id="edit-end-time" type="time" wire:model="editingPriceData.end_time"
+                       class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            </div>
+
+                        <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
+                <input id="edit-input"  wire:model="editingPriceData.effective_date"
                        class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
                             <!-- Reference Number (Hour) - Edit -->
@@ -280,7 +285,6 @@
                                     type="number"
                                     step="0.01"
                                     wire:model="editingPriceData.per_hour"
-                                    readonly
                                     class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2
                                         bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                     placeholder="Auto-filled from prices table"
@@ -312,7 +316,6 @@
                                         type="number"
                                         step="0.01"
                                         wire:model="editingPriceData.per_km"
-                                        readonly
                                         class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2
                                             bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                         placeholder="Auto-filled from prices table"
@@ -320,11 +323,7 @@
                                 </div>
 
 
-            <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
-                <input id="edit-input" type="date" wire:model="editingPriceData.effective_date"
-                       class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-            </div>
+
         </div>
     </div>
 
@@ -402,12 +401,18 @@
     </x-slot>
 </x-filament::modal>
 
+@include('filament.forms.components.custom-time-picker')
+
 <script>
         document.addEventListener('DOMContentLoaded', function () {
         if (!window.initCustomDatePicker) return;
 
         ['create-input','edit-input'].forEach(function (id) {
             window.initCustomDatePicker(id);
+        });
+
+        ['new-start-time','new-end-time','edit-start-time','edit-end-time'].forEach(function (id) {
+            window.initCustomTimePicker(id);
         });
     });
 </script>

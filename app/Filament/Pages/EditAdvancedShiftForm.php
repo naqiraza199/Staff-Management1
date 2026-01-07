@@ -104,13 +104,13 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ];
                         }
                     } else {
-                        // no existing rows → add one default
+                        // no existing rows → add one default (for simple shifts, use root price_book_id)
                         $clientDetails[] = [
                             'client_id'         => $client->id,
                             'client_name'       => $client->display_name,
                             'client_start_time' => data_get($timeAndLocation, 'start_time'),
                             'client_end_time'   => data_get($timeAndLocation, 'end_time'),
-                            'price_book_id'     => null,
+                            'price_book_id'     => data_get($clientSection, 'price_book_id') ?? null,
                             'hours'             => null,
                         ];
                     }
@@ -247,6 +247,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ->live()
                             ->afterStateUpdated(function ($state, $set) {
                                 $details = [];
+                                $clientIndex = 1;
                                 if (!empty($state)) {
                                     $clients = Client::whereIn('id', $state)->get();
                                     foreach ($clients as $client) {
@@ -257,8 +258,9 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                             'client_start_time' => $existingDetail['client_start_time'] ?? '02:00 AM',
                                             'client_end_time' => $existingDetail['client_end_time'] ?? '03:00 AM',
                                             'price_book_id' => $existingDetail['price_book_id'] ?? null,
-                                            'hours' => $existingDetail['hours'] ?? null,
+                                            'hours' => $existingDetail['hours'] ?? '1:' . $clientIndex,
                                         ];
+                                        $clientIndex++;
                                     }
                                 }
                                 $set('client_details', $details);
@@ -273,12 +275,12 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                 TimePicker::make('client_start_time')
                                     ->seconds(false)
                                     ->label('Start Time')
-                                    ->extraInputAttributes(['id' => 'edit-client-start-time-input'])
+                                    ->extraInputAttributes(['id' => 'edit-client-start-time-input', 'style' => 'font-size: 12px;'])
                                     ->default(fn ($get) => $get('client_start_time')),
                                 TimePicker::make('client_end_time')
                                     ->seconds(false)
                                     ->label('End Time')
-                                    ->extraInputAttributes(['id' => 'edit-client-end-time-input'])
+                                    ->extraInputAttributes(['id' => 'edit-client-end-time-input', 'style' => 'font-size: 12px;'])
                                     ->default(fn ($get) => $get('client_end_time')),
                                 Select::make('price_book_id')
                                     ->label('Price Book')
@@ -295,22 +297,6 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                                 '1:2' => '1:2',
                                                 '1:3' => '1:3',
                                                 '1:4' => '1:4',
-                                                '1:5' => '1:5',
-                                                '1:6' => '1:6',
-                                                '1:7' => '1:7',
-                                                '1:8' => '1:8',
-                                                '1:9' => '1:9',
-                                                '1:10' => '1:10',
-                                                '1:11' => '1:11',
-                                                '1:12' => '1:12',
-                                                '1:13' => '1:13',
-                                                '1:14' => '1:14',
-                                                '1:15' => '1:15',
-                                                '1:16' => '1:16',
-                                                '1:17' => '1:17',
-                                                '1:18' => '1:18',
-                                                '1:19' => '1:19',
-                                                '1:20' => '1:20',
                                             ])
                                     ->default(fn ($get) => $get('hours')),
                                        
@@ -342,7 +328,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                                     'client_start_time' => $currentStart->format('H:i'),
                                                     'client_end_time' => $currentEnd->format('H:i'),
                                                     'price_book_id' => $record['price_book_id'],
-                                                    'hours' => '1:' . ($i + 1),
+                                                    'hours' => $record['hours'] ?? '1:1',
                                                 ];
                                                 $currentStart = $currentEnd;
                                             }
@@ -379,7 +365,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                                         'client_start_time' => $currentStart->format('H:i'),
                                                         'client_end_time' => $currentEnd->format('H:i'),
                                                         'price_book_id' => $record['price_book_id'],
-                                                        'hours' => '1:' . ($i + 1),
+                                                        'hours' => $record['hours'] ?? '1:1',
                                                     ];
                                                     $currentStart = $currentEnd;
                                                 }
@@ -416,7 +402,8 @@ class EditAdvancedShiftForm extends Page implements HasForms
                     ->schema([
                         DatePicker::make('start_date')
                             ->label('Start Date')
-                            ->extraInputAttributes(['id' => 'start-date-input-advanced-edit']) // <-- UNIQUE ID
+                            ->extraInputAttributes(['id' => 'start-date-input-advanced-edit',
+                                                'wire:ignore' => true,]) // <-- UNIQUE ID
                             ->default($this->data['start_date'] ?? null),
                         Checkbox::make('shift_finishes_next_day')
                             ->label('Shift Finishes Next Day')
@@ -486,7 +473,8 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ->visible(fn ($get) => $get('repeat') && $get('recurrance') === 'Monthly'),
                         DatePicker::make('end_date')
                             ->label('End Date')
-                            ->extraInputAttributes(['id' => 'end-date-input-advanced-edit']) // <-- UNIQUE ID
+                            ->extraInputAttributes(['id' => 'end-date-input-advanced-edit',
+                                                'wire:ignore' => true,]) // <-- UNIQUE ID
                             ->default($this->data['end_date'] ?? null)
                             ->visible(fn ($get) => $get('repeat')),
                         TextInput::make('address')

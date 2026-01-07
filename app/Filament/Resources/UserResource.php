@@ -236,7 +236,10 @@ public static function getEloquentQuery(): Builder
                                 DatePicker::make('dob')
                                     ->label('Date Of Birth')
                                     ->columnSpan(1)
-                                    ->extraInputAttributes(['id' => 'dob-input']), // <-- Unique ID is required!
+                                    ->extraInputAttributes([
+                                                'id' => 'dob-input',
+                                                'wire:ignore' => true,   // ✅ THIS IS CRITICAL
+                                    ]),
 
 
 

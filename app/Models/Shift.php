@@ -21,6 +21,8 @@ class Shift extends Model
         'is_approved',
         'is_cancelled',
         'status',
+        'series_uuid',
+        'parent_shift_id',
     ];
 
     protected $casts = [

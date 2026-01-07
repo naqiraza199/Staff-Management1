@@ -974,7 +974,7 @@ body.sidebar-collapsed .main-content-sidebar {
                             <h2 id="week-range"></h2>
                             <button class="buto" onclick="nextPeriod()">Next</button>
                         </div>
-                            <div class="calendar-section">
+                            <div wire:ignore.self class="calendar-section">
                                 <div class="calendar-scroll">
                                     <div id="staffCalendar" class="calendar-grid" :class="viewType.toLowerCase()">
                                         <!-- Headers + rows populated dynamically -->
@@ -992,7 +992,7 @@ body.sidebar-collapsed .main-content-sidebar {
                 <h2 id="client-week-range"></h2>
                 <button class="buto" onclick="nextPeriod()">Next</button>
             </div>
-            <div class="calendar-section">
+            <div wire:ignore.self class="calendar-section">
                 <div class="calendar-scroll">
                     <div id="clientCalendar" class="calendar-grid" :class="viewType.toLowerCase()">
                         <!-- Headers + rows populated dynamically -->
@@ -1001,7 +1001,12 @@ body.sidebar-collapsed .main-content-sidebar {
             </div>
         </div>
 
-        <div class="modal" id="taskModal">
+        <div id="taskModal"
+                    class="modal"
+                    style="{{ $isTaskModalOpen ? 'display: flex;' : 'display: none;' }}"
+                    x-cloak
+                    wire:ignore.self
+                >
             <div class="task-modal-content" id="taskModalContent">
                 <div class="whiti">
                     <button class="buto full-view-btn" onclick="toggleFullView('taskModalContent')">&#x26F6;</button>
@@ -1553,24 +1558,31 @@ calendar.appendChild(dayCell);
 function renderClientCalendar(filteredShifts = shifts) {
     const calendar = document.getElementById('clientCalendar');
     if (!calendar) return;
+
     const weekRange = document.getElementById('client-week-range');
     const viewType = document.getElementById('viewType').value;
+
     const { startDate, endDate } = getPeriodDates(viewType, currentDate);
     const dates = [];
 
-    calendar.innerHTML = '<div class="day-header-staff">Client</div>';
-
-    // local helper (safe to be here; won't conflict with global if defined there)
+    // local helper
     function isOvernightShift(shift) {
         return !!shift.shift_finishes_next_day ||
                (!!shift.start_time && !!shift.end_time && shift.end_time < shift.start_time);
     }
 
+    calendar.innerHTML = '<div class="day-header-staff">Client</div>';
+
     if (viewType === 'Daily') {
-        weekRange.textContent = startDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+        // ── DAILY VIEW ───────────────────────────────────────
+        weekRange.textContent = startDate.toLocaleDateString('en-US', {
+            weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
+        });
+
         const timeSlots = getDailyTimeSlots();
+        const dayCount = timeSlots.length;
         calendar.className = 'calendar-grid daily';
-        calendar.style.setProperty('--hour-count', timeSlots.length);
+        calendar.style.setProperty('--hour-count', dayCount);
 
         timeSlots.forEach(slot => {
             const header = document.createElement('div');
@@ -1579,180 +1591,165 @@ function renderClientCalendar(filteredShifts = shifts) {
             calendar.appendChild(header);
         });
 
-        // 🟥 Vacant row with circular badge
-        const labelCell = document.createElement('div');
-        labelCell.className = 'staff-cell vacant-staff-label';
-        labelCell.innerHTML = `
+        // Vacant Shift row
+        const vacantLabel = document.createElement('div');
+        vacantLabel.className = 'staff-cell vacant-staff-label';
+        vacantLabel.innerHTML = `
             <span class="label-badge vacant-staff-label-badge">VS</span>
             <span class="label-text">Vacant Shift</span>
         `;
-        calendar.appendChild(labelCell);
+        calendar.appendChild(vacantLabel);
 
-        const timelineVacant = document.createElement('div');
-        timelineVacant.className = 'calendar-day daily-row';
-
-        const wrapVacant = document.createElement('div');
-        wrapVacant.className = 'timeline-wrapper';
-        timelineVacant.appendChild(wrapVacant);
+        const vacantTimeline = document.createElement('div');
+        vacantTimeline.className = 'calendar-day daily-row';
+        const vacantWrapper = document.createElement('div');
+        vacantWrapper.className = 'timeline-wrapper';
+        vacantTimeline.appendChild(vacantWrapper);
 
         const dateKey = formatDateKey(startDate);
-        timelineVacant.onclick = () => handleEmptyCalendarClick(dateKey);
+        vacantTimeline.onclick = () => handleEmptyCalendarClick(dateKey);
+
         const vacantShifts = filteredShifts.filter(
             s => s.is_vacant && isShiftInDateRange(s, dateKey)
         );
 
         vacantShifts.forEach(shift => {
             const { startMinutes, durationMinutes, totalMinutes } = calculateShiftPosition(shift, startDate);
+
             const div = document.createElement('div');
-            div.className = 'task task-vacant daily';
+            div.className = 'task daily task-vacant';
             div.style.left = `${(startMinutes / totalMinutes) * 100}%`;
             div.style.width = `${Math.min((durationMinutes / totalMinutes) * 100, 100)}%`;
 
-            const staffName = users[String(shift.user_id)] || '';
-            const shiftType = shiftTypeNames[String(shift.shift_type_id)] || '';
             const timeRange = shift.start_time && shift.end_time
                 ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                 : 'No Time';
+            const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+            const staffName = users[String(shift.user_id)] || '';
 
             div.innerHTML = `
-                <strong>${timeRange}</strong><br>
-                ${shiftType}<br>
+                <strong>${timeRange}</strong>
+                <div>${shiftType}</div>
+                <div class="small-text">${staffName}</div>
             `;
-
             div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
-            wrapVacant.appendChild(div);
+
+            vacantWrapper.appendChild(div);
         });
 
-        calendar.appendChild(timelineVacant);
+        calendar.appendChild(vacantTimeline);
 
+        // ── Clients ──────────────────────────────────────────
+        const sortedClients = sortClientsBy(viewType, filteredShifts);
 
-        calendar.appendChild(timelineVacant);
+        sortedClients.forEach(([clientId, clientName]) => {
+            const initials = clientName
+                .split(' ')
+                .map(w => w[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase();
 
-        // Clients
-  const sortedClients = sortClientsBy(viewType, filteredShifts);
+            const clientCell = document.createElement('div');
+            clientCell.className = 'staff-cell client-staff-label';
+            clientCell.innerHTML = `
+                <span class="label-badge client-staff-label-badge">${initials}</span>
+                <span class="label-text">${clientName}</span>
+            `;
+            calendar.appendChild(clientCell);
 
-sortedClients.forEach(([clientId, clientName]) => { 
-    // 🔹 Create initials (e.g. "Adam Care" → "AC")
-    const initials = clientName
-        .split(' ')
-        .map(w => w[0])
-        .join('')
-        .substring(0, 2)
-        .toUpperCase();
+            const timelineCell = document.createElement('div');
+            timelineCell.className = 'calendar-day daily-row';
 
-    // 🟢 Create left label with badge + client name
-    const clientCell = document.createElement('div');
-    clientCell.className = 'staff-cell client-staff-label';
-    clientCell.innerHTML = `
-        <span class="label-badge client-staff-label-badge">${initials}</span></br>
-        <span class="label-text">${clientName}</span>
-    `;
-    calendar.appendChild(clientCell);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'timeline-wrapper';
+            timelineCell.appendChild(wrapper);
 
-    // 🔹 Create the timeline row
-    const row = document.createElement('div');
-    row.className = 'calendar-day daily-row';
+            const clientShifts = filteredShifts.filter(
+                s => String(s.client_id) === String(clientId) && isShiftInDateRange(s, dateKey)
+            );
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'timeline-wrapper';
-    row.appendChild(wrapper);
+            clientShifts.forEach(shift => {
+                const { startMinutes, durationMinutes, totalMinutes } = calculateShiftPosition(shift, startDate);
 
-    const clientShifts = filteredShifts
-        .filter(s => {
-            try {
-                const parsed = typeof s.client_section === 'string'
-                    ? JSON.parse(s.client_section)
-                    : s.client_section || {};
-                const ids = Array.isArray(parsed.client_id)
-                    ? parsed.client_id.map(String)
-                    : [];
-                return String(s.client_id) === String(clientId) || ids.includes(String(clientId));
-            } catch {
-                return String(s.client_id) === String(clientId);
-            }
-        })
-        .filter(s => isShiftInDateRange(s, dateKey));
+                let cls = 'task daily default';
+                if (shift.is_vacant) cls = 'task daily task-vacant';
+                else if (shift.is_advanced_shift) cls = 'task daily task-advanced';
+                else if (shift.add_to_job_board) cls = 'task daily task-jobboard';
 
-    clientShifts.forEach(shift => {
-        const { startMinutes, durationMinutes, totalMinutes } = calculateShiftPosition(shift, startDate);
-        const div = document.createElement('div');
-        let cls = 'task daily default';
-        if (shift.is_vacant) cls = 'task daily task-vacant';
-        else if (shift.is_advanced_shift) cls = 'task daily task-advanced';
-        else if (shift.add_to_job_board) cls = 'task daily task-jobboard';
-        div.className = cls;
-        div.style.left = `${(startMinutes / totalMinutes) * 100}%`;
-        div.style.width = `${Math.min((durationMinutes / totalMinutes) * 100, 100)}%`;
+                const div = document.createElement('div');
+                div.className = cls;
+                div.style.left = `${(startMinutes / totalMinutes) * 100}%`;
+                div.style.width = `${Math.min((durationMinutes / totalMinutes) * 100, 100)}%`;
 
-        const staffName = users[String(shift.user_id)] || '';
-        const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
-        const timeRange =
-            shift.start_time && shift.end_time
-                ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
-                : 'No Time';
+                const timeRange = shift.start_time && shift.end_time
+                    ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                    : 'No Time';
+                const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+                const staffName = users[String(shift.user_id)] || '';
 
-        div.innerHTML = `
-            <strong>${timeRange}</strong><br>
-            ${shiftType}<br>
-        `;
-        div.onclick = e => {
-            e.stopPropagation();
-            openShiftSlider(shift.id, dateKey);
-        };
+                div.innerHTML = `
+                    <strong>${timeRange}</strong>
+                    <div>${shiftType}</div>
+                    <div class="small-text">${staffName}</div>
+                `;
+                div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
 
-        wrapper.appendChild(div);
-    });
+                wrapper.appendChild(div);
+            });
 
-    row.onclick = () => handleEmptyCalendarClick(dateKey);
-    calendar.appendChild(row);
-});
-
+            timelineCell.onclick = () => handleEmptyCalendarClick(dateKey);
+            calendar.appendChild(timelineCell);
+        });
 
     } else {
-        // Weekly / Fortnightly
-        let d = new Date(startDate);
-        while (d <= endDate) { dates.push(new Date(d)); d.setDate(d.getDate() + 1); }
+        // ── WEEKLY / FORTNIGHTLY ─────────────────────────────
+        const dayCount = viewType === 'Weekly' ? 7 : 14;
+        let day = new Date(startDate);
+        while (day <= endDate) {
+            dates.push(new Date(day));
+            day.setDate(day.getDate() + 1);
+        }
+
         weekRange.textContent = `${formatDateShort(startDate)} - ${formatDateShort(endDate)}`;
-        calendar.innerHTML = '<div class="day-header-staff">Client</div>';
-        dates.forEach(day => {
+        calendar.className = `calendar-grid ${viewType.toLowerCase()}`;
+
+        dates.forEach(d => {
             const header = document.createElement('div');
             header.className = 'day-header';
-            header.textContent = `${day.toLocaleDateString('en-US', { weekday: 'short' })} ${day.getDate()}`;
+            header.textContent = `${d.toLocaleDateString('en-US', { weekday: 'short' })} ${d.getDate()}`;
             calendar.appendChild(header);
         });
-        calendar.className = `calendar-grid ${viewType.toLowerCase()}`;
 
         const pendingOvernight = {};
 
-        // 🟥 Vacant row with badge
-        const label = document.createElement('div');
-        label.className = 'staff-cell vacant-staff-label';
-        label.innerHTML = `
+        // Vacant Shift row
+        const vacantLabel = document.createElement('div');
+        vacantLabel.className = 'staff-cell vacant-staff-label';
+        vacantLabel.innerHTML = `
             <span class="label-badge vacant-staff-label-badge">VS</span>
             <span class="label-text">Vacant Shift</span>
         `;
-        calendar.appendChild(label);
+        calendar.appendChild(vacantLabel);
 
-        dates.forEach(day => {
+        dates.forEach(d => {
+            const dateKey = formatDateKey(d);
             const cell = document.createElement('div');
             cell.className = 'calendar-day';
-
-            const dateKey = formatDateKey(day);
             cell.setAttribute('data-date', dateKey);
-            cell.setAttribute('data-row', 'client_vacant');
-            cell.onclick = () => handleEmptyCalendarClick(dateKey);
-            const relevant = filteredShifts.filter(
+            cell.setAttribute('data-row', 'vacant');
+
+            const vacantShifts = filteredShifts.filter(
                 s => s.is_vacant && isShiftInDateRange(s, dateKey)
             );
 
-            relevant.forEach(shift => {
-                // normal (non-overnight)
+            vacantShifts.forEach(shift => {
                 if (!isOvernightShift(shift)) {
                     const div = document.createElement('div');
                     div.className = 'task task-vacant';
 
                     const staffName = users[String(shift.user_id)] || '';
-                    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || '';
+                    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
                     const timeRange = shift.start_time && shift.end_time
                         ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                         : 'No Time';
@@ -1760,153 +1757,130 @@ sortedClients.forEach(([clientId, clientName]) => {
                     div.innerHTML = `
                         <strong>${timeRange}</strong><br>
                         ${shiftType}<br>
+                        <small>${staffName}</small>
                     `;
-
-                    div.onclick = e => {
-                        e.stopPropagation();
-                        openShiftSlider(shift.id, dateKey);
-                    };
-
+                    div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     cell.appendChild(div);
-                    return;
+                } else {
+                    // Overnight start part
+                    const part1 = document.createElement('div');
+                    part1.className = 'task task-vacant overnight-start';
+                    const staffName = users[String(shift.user_id)] || '';
+                    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+
+                    part1.innerHTML = `
+                        <strong>NEXT DAY</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
+                        ${shiftType}<br>
+                        <small>${staffName}</small>
+                    `;
+                    part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
+                    cell.appendChild(part1);
+
+              
                 }
-
-                // Overnight shift: render today's portion now, schedule tomorrow's portion
-                // PART 1: today's portion (start -> MIDNIGHT)
-                const part1 = document.createElement('div');
-                part1.className = 'task task-vacant overnight-start';
-
-                part1.innerHTML = `
-                    <strong>NEXT DAY</strong><br>
-                    <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
-                    ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
-                `;
-
-                part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
-
-                cell.appendChild(part1);
-
-               
             });
 
-            // After adding today's shifts, append any pending continuation parts for this row/date
-            const pendingHereKey = `client_vacant__${dateKey}`;
-            if (pendingOvernight[pendingHereKey]) {
-                cell.appendChild(pendingOvernight[pendingHereKey]);
-                delete pendingOvernight[pendingHereKey];
+            // Append pending continuation
+            const pendingKey = `vacant__${dateKey}`;
+            if (pendingOvernight[pendingKey]) {
+                cell.appendChild(pendingOvernight[pendingKey]);
+                delete pendingOvernight[pendingKey];
             }
 
+            cell.onclick = () => handleEmptyCalendarClick(dateKey);
             calendar.appendChild(cell);
         });
 
+        // ── Clients ──────────────────────────────────────────
+        const sortedClients = sortClientsBy(viewType, filteredShifts);
 
-    // 🟦 Clients
-const sortedClients = sortClientsBy(viewType, filteredShifts);
+        sortedClients.forEach(([clientId, clientName]) => {
+            const initials = clientName
+                .split(' ')
+                .map(w => w[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase();
 
-sortedClients.forEach(([clientId, clientName]) => {
-    // 🔹 Create initials (e.g. "Adam Care" → "AC")
-    const initials = clientName
-        .split(' ')
-        .map(w => w[0])
-        .join('')
-        .substring(0, 2)
-        .toUpperCase();
-
-    // 🟢 Create left label with circular badge + client name
-    const clientCell = document.createElement('div');
-    clientCell.className = 'staff-cell client-staff-label';
-    clientCell.innerHTML = `
-        <span class="label-badge client-staff-label-badge">${initials}</span></br>
-        <span class="label-text">${clientName}</span>
-    `;
-    calendar.appendChild(clientCell);
-
-    // 🔹 Loop through all days in view (Weekly / Fortnightly)
-    dates.forEach(day => {
-        const cell = document.createElement('div');
-        cell.className = 'calendar-day';
-
-        const dateKey = formatDateKey(day);
-        cell.setAttribute('data-date', dateKey);
-        cell.setAttribute('data-row', `client__${clientId}`);
-        cell.onclick = () => handleEmptyCalendarClick(dateKey);
-        const clientShifts = filteredShifts
-            .filter(s => {
-                try {
-                    const parsed = typeof s.client_section === 'string'
-                        ? JSON.parse(s.client_section)
-                        : s.client_section || {};
-                    const ids = Array.isArray(parsed.client_id)
-                        ? parsed.client_id.map(String)
-                        : [];
-                    return String(s.client_id) === String(clientId) || ids.includes(String(clientId));
-                } catch {
-                    return String(s.client_id) === String(clientId);
-                }
-            })
-            .filter(s => isShiftInDateRange(s, dateKey));
-
-        clientShifts.forEach(shift => {
-            // Non-overnight: render as before
-            if (!isOvernightShift(shift)) {
-                const div = document.createElement('div');
-                let cls = 'task default';
-                if (shift.is_vacant) cls = 'task task-vacant';
-                else if (shift.is_advanced_shift) cls = 'task task-advanced';
-                else if (shift.add_to_job_board) cls = 'task task-jobboard';
-                div.className = cls;
-
-                const staffName = users[String(shift.user_id)] || '';
-                const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
-                const timeRange =
-                    shift.start_time && shift.end_time
-                        ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
-                        : 'No Time';
-
-                div.innerHTML = `
-                    <strong>${timeRange}</strong><br>
-                    ${shiftType}<br>
-                `;
-
-                div.onclick = e => {
-                    e.stopPropagation();
-                    openShiftSlider(shift.id, dateKey);
-                };
-
-                cell.appendChild(div);
-                return;
-            }
-
-            // Overnight: today's portion (start -> MIDNIGHT)
-            const part1 = document.createElement('div');
-            let cls1 = 'task task-overnight';
-            if (shift.is_vacant) cls1 = 'task task-vacant';
-            else if (shift.add_to_job_board) cls1 = 'task task-jobboard';
-            else if (shift.is_advanced_shift) cls1 = 'task task-advanced';
-            part1.className = cls1 + ' overnight-start';
-
-            part1.innerHTML = `
-                  <strong>NEXT DAY</strong><br>
-                <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
-                ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
+            const clientCell = document.createElement('div');
+            clientCell.className = 'staff-cell client-staff-label';
+            clientCell.innerHTML = `
+                <span class="label-badge client-staff-label-badge">${initials}</span>
+                <span class="label-text">${clientName}</span>
             `;
-            part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
-            cell.appendChild(part1);
+            calendar.appendChild(clientCell);
 
-       
+            dates.forEach(d => {
+                const dateKey = formatDateKey(d);
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day';
+                cell.setAttribute('data-date', dateKey);
+                cell.setAttribute('data-row', `client__${clientId}`);
+
+                const clientShifts = filteredShifts.filter(
+                    s => String(s.client_id) === String(clientId) && isShiftInDateRange(s, dateKey)
+                );
+
+                clientShifts.forEach(shift => {
+                    if (!isOvernightShift(shift)) {
+                        const div = document.createElement('div');
+                        let cls = 'task default';
+                        if (shift.is_vacant) cls = 'task task-vacant';
+                        else if (shift.is_advanced_shift) cls = 'task task-advanced';
+                        else if (shift.add_to_job_board) cls = 'task task-jobboard';
+                        div.className = cls;
+
+                        const staffName = users[String(shift.user_id)] || '';
+                        const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+                        const timeRange = shift.start_time && shift.end_time
+                            ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
+                            : 'No Time';
+
+                        div.innerHTML = `
+                            <strong>${timeRange}</strong><br>
+                            ${shiftType}<br>
+                            <small>${staffName}</small>
+                        `;
+                        div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
+                        cell.appendChild(div);
+                    } else {
+                        // Overnight start part
+                        const part1 = document.createElement('div');
+                        let cls1 = 'task task-overnight';
+                        if (shift.is_vacant) cls1 = 'task task-vacant';
+                        else if (shift.is_advanced_shift) cls1 = 'task task-advanced';
+                        else if (shift.add_to_job_board) cls1 = 'task task-jobboard';
+                        part1.className = cls1 + ' overnight-start';
+
+                        const staffName = users[String(shift.user_id)] || '';
+                        const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+
+                        part1.innerHTML = `
+                            <strong>NEXT DAY</strong><br>
+                            <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
+                            ${shiftType}<br>
+                            <small>${staffName}</small>
+                        `;
+                        part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
+                        cell.appendChild(part1);
+
+                        // Continuation tomorrow
+                        
+                    }
+                });
+
+                // Append any pending continuation
+                const pendingKey = `client__${clientId}__${dateKey}`;
+                if (pendingOvernight[pendingKey]) {
+                    cell.appendChild(pendingOvernight[pendingKey]);
+                    delete pendingOvernight[pendingKey];
+                }
+
+                cell.onclick = () => handleEmptyCalendarClick(dateKey);
+                calendar.appendChild(cell);
+            });
         });
-
-        // append any pending continuation parts for this client/date
-        const pendingHereKey = `client__${clientId}__${dateKey}`;
-        if (pendingOvernight[pendingHereKey]) {
-            cell.appendChild(pendingOvernight[pendingHereKey]);
-            delete pendingOvernight[pendingHereKey];
-        }
-
-        calendar.appendChild(cell);
-    });
-});
-
     }
 }
 
@@ -2213,6 +2187,31 @@ function sortClientsBy(viewType, filteredShifts) {
                     Livewire.dispatch('updateShift', { shiftId, selectedDate });
                 });
             });
+
+            // Make sure this runs after Livewire is ready
+                document.addEventListener('livewire:initialized', () => {
+
+                    // This hook runs AFTER Livewire has finished morphing/updating the DOM
+                    Livewire.hook('morph.updated', (el, component) => {
+                        // Re-draw both calendars + highlight
+                        if (typeof renderStaffCalendar === 'function') {
+                            renderStaffCalendar(filteredShifts);
+                        }
+                        if (typeof renderClientCalendar === 'function') {
+                            renderClientCalendar(filteredShifts);
+                        }
+                        if (typeof highlightToday === 'function') {
+                            highlightToday();
+                        }
+                    });
+
+                    // Optional: also re-render when the component is fully loaded/updated
+                    Livewire.hook('component.initialized', (component) => {
+                        renderStaffCalendar(filteredShifts);
+                        renderClientCalendar(filteredShifts);
+                        highlightToday();
+                    });
+                });
 
             document.addEventListener('DOMContentLoaded', () => {
                 // Ensure initial render uses Weekly view

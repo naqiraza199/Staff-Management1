@@ -130,11 +130,11 @@
 
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
-                    <input type="time" wire:model="payItemData.start_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <input id="pay-new-start-time" type="time" wire:model="payItemData.start_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
-                    <input type="time" wire:model="payItemData.end_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <input id="pay-new-end-time" type="time" wire:model="payItemData.end_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
@@ -142,7 +142,7 @@
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
-                    <input id="create-input" type="date" wire:model="payItemData.effective_date" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <input id="create-input" wire:model="payItemData.effective_date" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 </div>
             </div>
         </div>
@@ -187,13 +187,13 @@
 
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
-                <input type="time" wire:model="editingpayItemData.start_time"
+                <input id="pay-edit-start-time" type="time" wire:model="editingpayItemData.start_time"
                        class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
 
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
-                <input type="time" wire:model="editingpayItemData.end_time"
+                <input id="pay-edit-end-time" type="time" wire:model="editingpayItemData.end_time"
                        class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
 
@@ -204,7 +204,7 @@
             </div>
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
-                <input id="edit-input" type="date" wire:model="editingpayItemData.effective_date"
+                <input id="edit-input" wire:model="editingpayItemData.effective_date"
                        class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
         </div>
@@ -249,12 +249,18 @@
     </x-slot>
 </x-filament::modal>
 
+@include('filament.forms.components.custom-time-picker')
+
 <script>
         document.addEventListener('DOMContentLoaded', function () {
         if (!window.initCustomDatePicker) return;
 
         ['create-input','edit-input'].forEach(function (id) {
             window.initCustomDatePicker(id);
+        });
+
+        ['pay-new-start-time','pay-new-end-time','pay-edit-start-time','pay-edit-end-time'].forEach(function (id) {
+            window.initCustomTimePicker(id);
         });
     });
 </script>

@@ -829,10 +829,23 @@ public function viewAllEvents()
                         Placeholder::make('date_lab')
                             ->label('Date')
                             ->columnSpan(1),
-                   DatePicker::make('start_date')
-                        ->label('')
-                        ->extraInputAttributes(['id' => 'start-date-input-edit']) // <-- UNIQUE ID
-                        ->columnSpan(2),
+                   TextInput::make('start_date')
+                            ->label('')
+                            ->extraInputAttributes([
+                                'id' => 'start-date-input-edit',
+                                'wire:ignore' => true,
+                            ])
+                            ->columnSpan(2)
+                            ->formatStateUsing(function ($state) {
+                                // show in dd-mm-yyyy format
+                                return $state ? \Carbon\Carbon::parse($state)->format('d-m-Y') : null;
+                            })
+                            ->dehydrateStateUsing(function ($state) {
+                                // convert to yyyy-mm-dd before saving to DB
+                                return $state ? \Carbon\Carbon::createFromFormat('d-m-Y', $state)->format('Y-m-d') : null;
+                            }),
+
+
 
 
                     // Add initializer for START DATE
@@ -1129,7 +1142,8 @@ public function viewAllEvents()
 
                              DatePicker::make('end_date')
                             ->label('')
-                            ->extraInputAttributes(['id' => 'end-date-input-edit']) // <-- UNIQUE ID
+                            ->extraInputAttributes(['id' => 'end-date-input-edit',
+                                                'wire:ignore' => true,]) // <-- UNIQUE ID
                             ->columnSpan(2),
                     ])
                     ->extraAttributes([
@@ -1155,24 +1169,7 @@ public function viewAllEvents()
                             ->columnSpan(2),
                     ]),
 
-                Grid::make(5)
-                    ->schema([
-                        Placeholder::make('')
-                            ->label('')
-                            ->columnSpan(3),
-
-                        Placeholder::make('invalid_address')
-                            ->label('')
-                            ->content(function ($record) {
-                                return new HtmlString('
-                                    <span style="color:#09090B">
-                                        Invalid address, <a style="color:blue" href="">read more</a>
-                                    </span>
-                                ');
-                            })
-                            ->disableLabel()
-                            ->columnSpan(2),
-                    ]),
+                
 
                 Grid::make(3)
                     ->schema([

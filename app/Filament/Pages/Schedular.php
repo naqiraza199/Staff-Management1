@@ -39,6 +39,7 @@ use App\Models\TimesheetReport;
 use App\Models\Timesheet;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\View;
+use Illuminate\Support\Str;
 
 use Carbon\CarbonInterval;
 
@@ -78,12 +79,37 @@ public $clientNames;
 public $shiftTypeNames;
 public $display_name;
 public $shiftTypes;
-
+public bool $isTaskModalOpen = false;
 
 public bool $showTaskModal = false;
 public ?int $shiftId = null;
     public ?string $selectedDate = null;
 
+    protected $listeners = [
+    'open-task-modal'   => 'openTaskModal',
+    'close-task-modal'  => 'closeTaskModal',
+    ];
+
+    public function openTaskModal($params = [])
+    {
+        $dateKey = $params['dateKey'] ?? null;
+
+        if ($dateKey) {
+            // Convert 2025-01-06 → 06-01-2025 (day-month-year)
+            [$year, $month, $day] = explode('-', $dateKey);
+            $formatted = "$day-$month-$year";
+
+            // Put it directly into the form data → DatePicker will see it
+            $this->data['time_and_location']['start_date'] = $formatted;
+        }
+
+        $this->isTaskModalOpen = true;
+    }
+
+    public function closeTaskModal()
+    {
+        $this->isTaskModalOpen = false;
+    }
     public function loadShiftDetails()
     {
         $this->dispatch('show-shift-details', [
@@ -475,7 +501,8 @@ public function form(Form $form): Form
                             ->columnSpan(1),
                     DatePicker::make('start_date')
                         ->label('')
-                        ->extraInputAttributes(['id' => 'start-date-input']) // <-- UNIQUE ID
+                        ->extraInputAttributes(['id' => 'start-date-input',
+                                                'wire:ignore' => true,]) // <-- UNIQUE ID
                         ->columnSpan(2),
 
 
@@ -486,34 +513,7 @@ public function form(Form $form): Form
                         ->viewData([
                             'fieldId' => 'start-date-input'
                         ]),
-                Grid::make(5)
-                    ->schema([
-                        Placeholder::make('')
-                            ->label('')
-                            ->columnSpan(3),
-
-                        Checkbox::make('shift_finishes_next_day')
-                            ->label('Shift finishes the next day')
-                            ->columnSpan(2),
-                    ]),
-
-                    Placeholder::make('shift_info')
-                        ->label('')
-                        ->content(function ($get) {
-                            $startDate = $get('start_date');
-                            $startTime = $get('start_time');
-                            $endTime = $get('end_time');
-                            if (!$startDate || !$startTime || !$endTime) return '';
-                            $start = Carbon::parse("$startDate $startTime");
-                            $end = Carbon::parse("$startDate $endTime");
-                            if ($end->lessThanOrEqualTo($start)) {
-                                $end = $end->addDay();
-                            }
-                            $hours = $start->floatDiffInHours($end);
-                            $formattedDate = Carbon::parse($startDate)->format('d/m/Y');
-                            return "This shift is " . number_format($hours, 1) . " hours, finishing next day, $formattedDate.";
-                        })
-                        ->visible(fn ($get) => $get('shift_finishes_next_day')),
+              
 
                 Grid::make(11)
                     ->schema([
@@ -541,6 +541,69 @@ public function form(Form $form): Form
 
 
                     ]),
+
+                      Grid::make(5)
+                    ->schema([
+                        Placeholder::make('')
+                            ->label('')
+                            ->columnSpan(3),
+
+                        Checkbox::make('shift_finishes_next_day')
+                            ->label('Shift finishes the next day')
+                            ->reactive()
+                            ->columnSpan(2),
+
+                            Placeholder::make('shift_info')
+                                    ->label('')
+                                    ->content(function (Get $get) {
+                                        $startDate = $get('start_date');
+                                        $startTime = $get('start_time');
+                                        $endTime   = $get('end_time');
+                                        $finishesNextDay = (bool) $get('shift_finishes_next_day');
+
+                                        // If any required field is missing → show nothing
+                                        if (!$startDate || !$startTime || !$endTime) {
+                                            return '';
+                                        }
+
+                                        // Parse dates & times
+                                        $start = Carbon::parse("$startDate $startTime");
+                                        $end   = Carbon::parse("$startDate $endTime");
+
+                                        // If overnight shift is marked → add one day to end
+                                        if ($finishesNextDay) {
+                                            $end = $end->addDay();
+                                        }
+
+                                        // Calculate hours (always correct now)
+                                        $hours = $start->floatDiffInHours($end);
+
+                                        // Show the **finishing date** correctly
+                                        $displayDate = $finishesNextDay
+                                            ? Carbon::parse($startDate)->addDay()->format('d/m/Y')
+                                            : Carbon::parse($startDate)->format('d/m/Y');
+
+                                        // Build message
+                                        $message = "This shift is " . number_format($hours, 1) . " hours";
+
+                                        if ($finishesNextDay) {
+                                            $message .= ', finishing next day';
+                                        }
+
+                                        $message .= ", $displayDate.";
+
+                                        return $message;
+                                    })
+                                    // Only show this placeholder when overnight is checked
+                                    ->visible(fn (Get $get) => (bool) $get('shift_finishes_next_day'))
+                                    ->extraAttributes([
+                                        'style' => 'text-align: right; color: black;'
+                                    ])
+                                    ->columnSpan(5),
+
+                    ]),
+
+                    
 
                 Grid::make(5)
                     ->schema([
@@ -764,7 +827,8 @@ public function form(Form $form): Form
 
                         DatePicker::make('end_date')
                             ->label('')
-                            ->extraInputAttributes(['id' => 'end-date-input']) // <-- UNIQUE ID
+                            ->extraInputAttributes(['id' => 'end-date-input',
+                                                'wire:ignore' => true,]) // <-- UNIQUE ID
                             ->columnSpan(2),
 
                     
@@ -791,24 +855,7 @@ public function form(Form $form): Form
                             ->columnSpan(2),
                     ]),
 
-                Grid::make(5)
-                    ->schema([
-                        Placeholder::make('')
-                            ->label('')
-                            ->columnSpan(3),
-
-                        Placeholder::make('invalid_address')
-                            ->label('')
-                            ->content(function ($record) {
-                                return new HtmlString('
-                                    <span style="color:#09090B">
-                                        Invalid address, <a style="color:blue" href="">read more</a>
-                                    </span>
-                                ');
-                            })
-                            ->disableLabel()
-                            ->columnSpan(2),
-                    ]),
+               
 
                 Grid::make(3)
                     ->schema([
@@ -828,6 +875,7 @@ public function form(Form $form): Form
             ->collapsible(),
 
             Toggle::make('add_to_job_board')
+                ->reactive()
                 ->label('Add To Job Board'),
 
             Section::make(
@@ -1069,173 +1117,241 @@ public function form(Form $form): Form
 
 public function createShift()
 {
-     $data = $this->form->getState();
-     $authUser = Auth::user();  
-     $shiftCompanyID = Company::where('user_id', $authUser->id)->value('id');
-  
+    $data = $this->form->getState();
+    $authUser = Auth::user();
+    $companyId = Company::where('user_id', $authUser->id)->value('id');
 
+    // 🔑 One UUID for whole recurring series
+    $seriesUuid = (string) \Illuminate\Support\Str::uuid();
 
-$carerSection = empty($data['add_to_job_board']) ? [
-    'user_id'      => data_get($data, 'carer_section.user_id'),
-    'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
-    'user_details' => data_get($data, 'carer_section.user_details', []),
-    'notify'       => data_get($data, 'carer_section.notify', false),
-] : null;
+    // --------------------------------------------------
+    // 🧑‍⚕️ Carer / Vacant Logic (UNCHANGED)
+    // --------------------------------------------------
+    $carerSection = empty($data['add_to_job_board']) ? [
+        'user_id'      => data_get($data, 'carer_section.user_id'),
+        'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
+        'user_details' => data_get($data, 'carer_section.user_details', []),
+        'notify'       => data_get($data, 'carer_section.notify', false),
+    ] : null;
 
-// Default
-$isVacant = 0;
+    $isVacant = 0;
+    if (
+        empty($data['add_to_job_board']) && (
+            ($carerSection['user_id'] === null && $carerSection['pay_group_id'] === null) ||
+            ($carerSection['user_id'] === [] && $carerSection['user_details'] === [] && $carerSection['notify'] === false)
+        )
+    ) {
+        $isVacant = 1;
+    }
 
-// Check conditions for vacant
-if (
-    empty($data['add_to_job_board']) && (
-        ($carerSection['user_id'] === null && $carerSection['pay_group_id'] === null) ||
-        ($carerSection['user_id'] === [] && $carerSection['user_details'] === [] && $carerSection['notify'] === false)
-    )
-) {
-    $isVacant = 1;
-}
+    // --------------------------------------------------
+    // 🔁 BUILD REPEAT DATES (JS LOGIC MIRROR)
+    // --------------------------------------------------
+    $startDate = Carbon::parse(data_get($data, 'time_and_location.start_date'));
+    $endDate = data_get($data, 'time_and_location.end_date')
+        ? Carbon::parse(data_get($data, 'time_and_location.end_date'))
+        : $startDate->copy();
 
-$newShift = Shift::create([
-    'client_section' => [
-        'client_id'     => data_get($data, 'client_section.client_id'),
-        'price_book_id' => data_get($data, 'client_section.price_book_id'),
-        'funds'         => data_get($data, 'client_section.funds'),
-    ],
-    'shift_section' => [
-        'shift_type_id'          => data_get($data, 'shift_section.shift_type_id'),
-        'additional_shift_types' => data_get($data, 'shift_section.additional_shift_types', []),
-        'allowance_id'           => data_get($data, 'shift_section.allowance_id', []),
-    ],
-    'time_and_location' => [
-        'start_date'              => data_get($data, 'time_and_location.start_date'),
-        'shift_finishes_next_day' => data_get($data, 'time_and_location.shift_finishes_next_day', false),
-        'start_time'              => data_get($data, 'time_and_location.start_time'),
-        'end_time'                => data_get($data, 'time_and_location.end_time'),
-        'repeat'                  => data_get($data, 'time_and_location.repeat', false),
-        'recurrance'              => data_get($data, 'time_and_location.recurrance'),
-        'repeat_every_daily'      => data_get($data, 'time_and_location.repeat_every_daily'),
-        'repeat_every_weekly'     => data_get($data, 'time_and_location.repeat_every_weekly'),
-        'repeat_every_monthly'    => data_get($data, 'time_and_location.repeat_every_monthly'),
-        'occurs_on_monthly'       => data_get($data, 'time_and_location.occurs_on_monthly'),
-        'occurs_on_weekly' => [
-            'sunday'    => data_get($data, 'time_and_location.occurs_on_weekly.sunday', false),
-            'monday'    => data_get($data, 'time_and_location.occurs_on_weekly.monday', false),
-            'tuesday'   => data_get($data, 'time_and_location.occurs_on_weekly.tuesday', false),
-            'wednesday' => data_get($data, 'time_and_location.occurs_on_weekly.wednesday', false),
-            'thursday'  => data_get($data, 'time_and_location.occurs_on_weekly.thursday', false),
-            'friday'    => data_get($data, 'time_and_location.occurs_on_weekly.friday', false),
-            'saturday'  => data_get($data, 'time_and_location.occurs_on_weekly.saturday', false),
-        ],
-        'end_date'              => data_get($data, 'time_and_location.end_date'),
-        'address'               => data_get($data, 'time_and_location.address'),
-        'unit_apartment_number' => data_get($data, 'time_and_location.unit_apartment_number'),
-    ],
-    'add_to_job_board' => data_get($data, 'add_to_job_board', false),
-    'carer_section'    => $carerSection,
-    'job_section'      => !empty($data['add_to_job_board']) ? [
-        'team_id'          => data_get($data, 'job_section.team_id' , []),
-        'shift_assignment' => data_get($data, 'job_section.shift_assignment'),
-    ] : null,
-    'status' => !empty($data['add_to_job_board'])
-    ? 'Job Board'
-    : 'Pending',
-    'instruction' => [
-        'description' => data_get($data, 'instruction.description'),
-    ],
-    'company_id' => $shiftCompanyID,
-    'is_vacant'  => $isVacant, // ✅ set here
-]);
+    $recurrence = data_get($data, 'time_and_location.recurrance');
+    $repeatDates = [];
 
+    for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
 
-                  if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
-
-    $shiftDate   = Carbon::parse(data_get($data, 'time_and_location.start_date'));
-    $shiftStart  = Carbon::parse(data_get($data, 'time_and_location.start_time'));
-    $shiftEnd    = Carbon::parse(data_get($data, 'time_and_location.end_time'));
-    $priceBookId = data_get($data, 'client_section.price_book_id');
-
-    if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
-            // Shift ends next day (e.g., 11PM → 3AM)
-            $shiftEnd = $shiftEnd->addDay();
+        if ($recurrence === 'Daily') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_daily', 1);
+            if ($startDate->diffInDays($date) % $every === 0) {
+                $repeatDates[] = $date->copy();
+            }
         }
 
-        $hours = $shiftStart->floatDiffInHours($shiftEnd);
+        elseif ($recurrence === 'Weekly') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_weekly', 1);
+            $weeks = floor($startDate->diffInDays($date) / 7);
+            $dayKey = strtolower($date->format('l'));
 
+            if (
+                $weeks % $every === 0 &&
+                data_get($data, "time_and_location.occurs_on_weekly.$dayKey")
+            ) {
+                $repeatDates[] = $date->copy();
+            }
+        }
 
-    $dayOfWeek = $shiftDate->format('l');
-    $dayType = match ($dayOfWeek) {
-        'Saturday' => 'Saturday',
-        'Sunday'   => 'Sunday',
-        default    => 'Weekdays - I',
-    };
+        elseif ($recurrence === 'Monthly') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_monthly', 1);
+            $occursOn = (int) data_get($data, 'time_and_location.occurs_on_monthly');
 
-    // ✅ Handle normal ranges + over-midnight + all-day
-    $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
-        ->where('day_of_week', $dayType)
-        ->where(function ($q) use ($shiftEnd) {
-            $endTime = $shiftEnd->format('H:i:s');
+            $monthsDiff = ($date->year - $startDate->year) * 12 + ($date->month - $startDate->month);
 
-            $q->where(function ($sub) use ($endTime) {
-                // normal ranges
-                $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
-                    ->whereColumn('end_time', '>', 'start_time');
-            })
-            ->orWhere(function ($sub) use ($endTime) {
-                // over-midnight ranges like 20:00 → 00:00
-                $sub->whereColumn('end_time', '<', 'start_time')
-                    ->where(function ($wrap) use ($endTime) {
-                        $wrap->where('start_time', '<=', $endTime)
-                             ->orWhere('end_time', '>=', $endTime);
-                    });
-            })
-            ->orWhere(function ($sub) {
-                // all-day case
-                $sub->whereTime('start_time', '00:00:00')
-                    ->whereTime('end_time', '00:00:00');
-            });
-        })
-        ->orderBy('start_time')
-        ->first();
+            if ($date->day === $occursOn && $monthsDiff % $every === 0) {
+                $repeatDates[] = $date->copy();
+            }
+        }
 
-    $rate = $priceDetail?->per_hour ?? 0;
-    $per_km_price = $priceDetail?->per_km ?? 0;
+        else {
+            $repeatDates[] = $startDate->copy();
+            break;
+        }
+    }
 
-    $totalCost = $hours * $rate;
+    // --------------------------------------------------
+    // 🔂 CREATE SHIFTS + ALL RELATED RECORDS
+    // --------------------------------------------------
+    foreach ($repeatDates as $shiftDate) {
 
-    $hoursXRate = number_format($hours, 1) . ' x $' . number_format($rate, 2);
-    $distanceXRate = 0.0 . ' x $' . number_format($per_km_price, 2);
+        // --------------------------------------------------
+        // 🟢 CREATE SHIFT (FULL OLD STRUCTURE)
+        // --------------------------------------------------
+        $newShift = Shift::create([
+            'series_uuid' => $seriesUuid,
+            'company_id'  => $companyId,
 
-    $billingRecordForClient = BillingReport::create([
-        'date'            => $shiftDate->toDateString(),
-        'shift_id'        => $newShift->id,
-        'staff'           => data_get($data, 'carer_section.user_id'),
-        'start_time'      => $shiftStart->format('H:i'),
-        'end_time'        => $shiftEnd->format('H:i'),
-        'hours_x_rate'    => $hoursXRate,
-        'additional_cost' => 0.0,
-        'distance_x_rate' => $distanceXRate,
-        'total_cost'      => $totalCost,
-        'running_total'   => null,
-        'price_book_id'   => $priceBookId,
-        'client_id'       => data_get($data, 'client_section.client_id'),
-    ]);
+            'client_section' => [
+                'client_id'     => data_get($data, 'client_section.client_id'),
+                'price_book_id' => data_get($data, 'client_section.price_book_id'),
+                'funds'         => data_get($data, 'client_section.funds'),
+            ],
 
+            'shift_section' => [
+                'shift_type_id'          => data_get($data, 'shift_section.shift_type_id'),
+                'additional_shift_types' => data_get($data, 'shift_section.additional_shift_types', []),
+                'allowance_id'           => data_get($data, 'shift_section.allowance_id', []),
+            ],
 
-        $TimesheetReportForStaff = TimesheetReport::create([
-            'user_id'    => data_get($data, 'carer_section.user_id'),
-            'shift_id'   => $newShift->id,
-            'date'       => $shiftDate->toDateString(),
-            'clients'    => json_encode($newShift->client_section), // ensure stored as JSON
-            'start_time' => $shiftStart->format('H:i:s'),
-            'end_time'   => $shiftEnd->format('H:i:s'),
-            'break_time' => 0,
-            'hours'      => $hours,
-            'distance'   => null,
-            'expense'    => null,
-            'allowances' => json_encode(data_get($data, 'shift_section.allowance_id', [])),
-            'clockin'    => null,
-            'clockout'   => null,
+            'time_and_location' => [
+                'start_date'              => $shiftDate->toDateString(),
+                'shift_finishes_next_day' => data_get($data, 'time_and_location.shift_finishes_next_day', false),
+                'start_time'              => data_get($data, 'time_and_location.start_time'),
+                'end_time'                => data_get($data, 'time_and_location.end_time'),
+                'repeat'                  => false,        // 🔒 already expanded
+                'recurrance'              => null,
+                'repeat_every_daily'      => null,
+                'repeat_every_weekly'     => null,
+                'repeat_every_monthly'    => null,
+                'occurs_on_monthly'       => null,
+                'occurs_on_weekly'        => null,
+                'end_date'                => null,
+                'address'                 => data_get($data, 'time_and_location.address'),
+                'unit_apartment_number'   => data_get($data, 'time_and_location.unit_apartment_number'),
+            ],
+
+            'add_to_job_board' => data_get($data, 'add_to_job_board', false),
+            'carer_section'    => $carerSection,
+
+            'job_section' => !empty($data['add_to_job_board']) ? [
+                'team_id'          => data_get($data, 'job_section.team_id', []),
+                'shift_assignment' => data_get($data, 'job_section.shift_assignment'),
+            ] : null,
+
+            'status' => !empty($data['add_to_job_board']) ? 'Job Board' : 'Pending',
+
+            'instruction' => [
+                'description' => data_get($data, 'instruction.description'),
+            ],
+
+            'is_vacant' => $isVacant,
         ]);
+
+        // --------------------------------------------------
+        // 🧾 BILLING + TIMESHEET (OLD LOGIC 100%)
+        // --------------------------------------------------
+        if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
+
+           // ✅ IMPORTANT FIX: use loop date, NOT original start_date
+            $shiftDate = Carbon::parse($shiftDate); // 🔥 THIS FIXES EVERYTHING
+
+            $shiftStart  = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.start_time'));
+            $shiftEnd    = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.end_time'));
+            $priceBookId = data_get($data, 'client_section.price_book_id');
+
+            // Overnight shift handling
+            if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+                $shiftEnd = $shiftEnd->addDay();
+            }
+
+            $hours = $shiftStart->floatDiffInHours($shiftEnd);
+
+            // -------------------------------------------------
+            // 📅 Day type
+            // -------------------------------------------------
+            $dayOfWeek = $shiftDate->format('l');
+            $dayType = match ($dayOfWeek) {
+                'Saturday' => 'Saturday',
+                'Sunday'   => 'Sunday',
+                default    => 'Weekdays - I',
+            };
+
+            // -------------------------------------------------
+            // 💰 Price book logic (UNCHANGED)
+            // -------------------------------------------------
+            $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+                ->where('day_of_week', $dayType)
+                ->where(function ($q) use ($shiftEnd) {
+                    $endTime = $shiftEnd->format('H:i:s');
+
+                    $q->where(function ($sub) use ($endTime) {
+                        $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
+                            ->whereColumn('end_time', '>', 'start_time');
+                    })
+                    ->orWhere(function ($sub) use ($endTime) {
+                        $sub->whereColumn('end_time', '<', 'start_time')
+                            ->where(function ($wrap) use ($endTime) {
+                                $wrap->where('start_time', '<=', $endTime)
+                                    ->orWhere('end_time', '>=', $endTime);
+                            });
+                    })
+                    ->orWhere(function ($sub) {
+                        $sub->whereTime('start_time', '00:00:00')
+                            ->whereTime('end_time', '00:00:00');
+                    });
+                })
+                ->orderBy('start_time')
+                ->first();
+
+            $rate = $priceDetail?->per_hour ?? 0;
+            $per_km_price = $priceDetail?->per_km ?? 0;
+
+            $totalCost = $hours * $rate;
+
+            $hoursXRate     = number_format($hours, 1) . ' x $' . number_format($rate, 2);
+            $distanceXRate  = 0.0 . ' x $' . number_format($per_km_price, 2);
+
+            // -------------------------------------------------
+            // 🧾 Billing Report
+            // -------------------------------------------------
+            $billingRecordForClient = BillingReport::create([
+                'date'            => $shiftDate->toDateString(), // ✅ FIXED
+                'shift_id'        => $newShift->id,
+                'staff'           => data_get($data, 'carer_section.user_id'),
+                'start_time'      => $shiftStart->format('H:i'),
+                'end_time'        => $shiftEnd->format('H:i'),
+                'hours_x_rate'    => $hoursXRate,
+                'additional_cost' => 0.0,
+                'distance_x_rate' => $distanceXRate,
+                'total_cost'      => $totalCost,
+                'running_total'   => null,
+                'price_book_id'   => $priceBookId,
+                'client_id'       => data_get($data, 'client_section.client_id'),
+            ]);
+
+            // -------------------------------------------------
+            // 🧑‍⚕️ Timesheet Report
+            // -------------------------------------------------
+            $TimesheetReportForStaff = TimesheetReport::create([
+                'user_id'    => data_get($data, 'carer_section.user_id'),
+                'shift_id'   => $newShift->id,
+                'date'       => $shiftDate->toDateString(), // ✅ FIXED
+                'clients'    => json_encode($newShift->client_section),
+                'start_time' => $shiftStart->format('H:i:s'),
+                'end_time'   => $shiftEnd->format('H:i:s'),
+                'break_time' => 0,
+                'hours'      => $hours,
+                'distance'   => null,
+                'expense'    => null,
+                'allowances' => json_encode(data_get($data, 'shift_section.allowance_id', [])),
+                'clockin'    => null,
+                'clockout'   => null,
+            ]);
 
 
 
@@ -1349,38 +1465,30 @@ $newShift = Shift::create([
             'expense'             => 0,
             'sleepover'           => 0,
         ]);
+        }
 
-
-
-    //    dd([
-    //         'TIMESHEET REPORT' => $TimesheetReportForStaff,
-    //         'TIMESHEET' => $timesheet,
-    //     ]);
-
-
-}
-
-
-
-    Event::create([
-        'shift_id' => $newShift->id,
-        'title'    => $authUser->name . ' Created Shift',
-        'from'     => 'Create',
-        'body'     => 'Shift created',
-    ]);
-
-    if (!empty($data['add_to_job_board'])) {
+        // --------------------------------------------------
+        // 📝 EVENTS (UNCHANGED)
+        // --------------------------------------------------
         Event::create([
             'shift_id' => $newShift->id,
-            'title'    => 'Job Listed',
-            'from'     => 'Job',
-            'body'     => 'Job listed by ' . $authUser->name,
+            'title'    => $authUser->name . ' Created Shift',
+            'from'     => 'Create',
+            'body'     => 'Shift created',
         ]);
+
+        if (!empty($data['add_to_job_board'])) {
+            Event::create([
+                'shift_id' => $newShift->id,
+                'title'    => 'Job Listed',
+                'from'     => 'Job',
+                'body'     => 'Job listed by ' . $authUser->name,
+            ]);
+        }
     }
 
-
     Notification::make()
-        ->title('New shift created successfully')
+        ->title('Shift series created successfully')
         ->success()
         ->send();
 

@@ -128,7 +128,8 @@ class StaffFormPage extends Page implements HasForms
 
                         Forms\Components\DatePicker::make('dob')
                             ->label('Date Of Birth')
-                            ->extraInputAttributes(['id' => 'date-of-birth']) // <-- UNIQUE ID
+                            ->extraInputAttributes(['id' => 'date-of-birth',
+                                                'wire:ignore' => true,]) // <-- UNIQUE ID
                             ->columnSpan(1),
 
 

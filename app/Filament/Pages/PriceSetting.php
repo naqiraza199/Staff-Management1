@@ -12,6 +12,7 @@ use App\Models\Price;
 use App\Models\User;
 use App\Models\Company;
 use Filament\Facades\Filament;
+use Carbon\Carbon;
 
 class PriceSetting extends Page
 {
@@ -125,22 +126,33 @@ class PriceSetting extends Page
         $this->priceData = [];
     }
 
+  
+
     public function savePriceRow(): void
     {
         if (! $this->selectedPriceBookId) {
             return;
         }
 
+        $effectiveDate = null;
+
+        if (!empty($this->priceData['effective_date'])) {
+            $effectiveDate = Carbon::createFromFormat(
+                'd-m-Y',
+                $this->priceData['effective_date']
+            )->format('Y-m-d');
+        }
+
         PriceBookDetail::create([
-            'price_book_id' => $this->selectedPriceBookId,
-            'day_of_week' => $this->priceData['day_of_week'] ?? '',
-            'start_time' => $this->priceData['start_time'] ?? '',
-            'end_time' => $this->priceData['end_time'] ?? '',
-            'per_hour' => $this->priceData['per_hour'] ?? 0,
-            'ref_hour' => $this->priceData['ref_hour'] ?? '',
-            'per_km' => $this->priceData['per_km'] ?? 0,
-            'ref_km' => $this->priceData['ref_km'] ?? '',
-            'effective_date' => $this->priceData['effective_date'] ?? '',
+            'price_book_id'   => $this->selectedPriceBookId,
+            'day_of_week'     => $this->priceData['day_of_week'] ?? '',
+            'start_time'      => $this->priceData['start_time'] ?? '',
+            'end_time'        => $this->priceData['end_time'] ?? '',
+            'per_hour'        => $this->priceData['per_hour'] ?? 0,
+            'ref_hour'        => $this->priceData['ref_hour'] ?? '',
+            'per_km'          => $this->priceData['per_km'] ?? 0,
+            'ref_km'          => $this->priceData['ref_km'] ?? '',
+            'effective_date'  => $effectiveDate,
         ]);
 
         Notification::make()
@@ -150,6 +162,7 @@ class PriceSetting extends Page
 
         $this->closeNewPriceModal();
     }
+
 
         // Make sure these properties exist:
 public ?int $editingPriceDetailId = null;
@@ -194,6 +207,14 @@ public function updatePriceRow(): void
 
     $detail = PriceBookDetail::findOrFail($this->editingPriceDetailId);
 
+    $effectiveDate = null;
+
+    if (!empty($this->editingPriceData['effective_date'])) {
+        $effectiveDate = Carbon::parse(
+            $this->editingPriceData['effective_date']
+        )->format('Y-m-d');
+    }
+
     $detail->update([
         'day_of_week'    => $this->editingPriceData['day_of_week'] ?? '',
         'start_time'     => $this->editingPriceData['start_time'] ?? '',
@@ -202,7 +223,7 @@ public function updatePriceRow(): void
         'ref_hour'       => $this->editingPriceData['ref_hour'] ?? '',
         'per_km'         => $this->editingPriceData['per_km'] ?? 0,
         'ref_km'         => $this->editingPriceData['ref_km'] ?? '',
-        'effective_date' => $this->editingPriceData['effective_date'] ?? '',
+        'effective_date' => $effectiveDate,
     ]);
 
     \Filament\Notifications\Notification::make()

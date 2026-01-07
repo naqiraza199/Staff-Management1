@@ -14,8 +14,9 @@ use App\Models\User;
 use App\Models\Company;
 use App\Models\PayGroupDetail;
 use Filament\Facades\Filament;
+use Carbon\Carbon;
 
-class PayGroupSetting extends Page
+   class PayGroupSetting extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-s-credit-card';
     protected static ?string $title = 'Pay Group';
@@ -98,28 +99,38 @@ class PayGroupSetting extends Page
         $this->payItemData = [];
     }
 
-    public function savePriceItemRow(): void
-    {
-        if (! $this->selectedPayGroupId) {
-            return;
-        }
 
-        PayGroupDetail::create([
-            'pay_group_id'   => $this->selectedPayGroupId,
-            'day_of_week'    => $this->payItemData['day_of_week'] ?? 'monday', 
-            'start_time'     => $this->payItemData['start_time'] ?? '00:00:00',  
-            'end_time'       => $this->payItemData['end_time'] ?? '00:00:00',  
-            'effective_date' => $this->payItemData['effective_date'] ?? now()->toDateString(),  
-            'price' => $this->payItemData['price'] ?? null,  
-        ]);
-
-        Notification::make()
-            ->title('Pay Item saved')
-            ->success()
-            ->send();
-
-        $this->closeNewPayItemModal();
+public function savePriceItemRow(): void
+{
+    if (! $this->selectedPayGroupId) {
+        return;
     }
+
+    $effectiveDate = now()->toDateString();
+
+    if (!empty($this->payItemData['effective_date'])) {
+        $effectiveDate = Carbon::parse(
+            $this->payItemData['effective_date']
+        )->format('Y-m-d');
+    }
+
+    PayGroupDetail::create([
+        'pay_group_id'   => $this->selectedPayGroupId,
+        'day_of_week'    => $this->payItemData['day_of_week'] ?? 'monday',
+        'start_time'     => $this->payItemData['start_time'] ?? '00:00:00',
+        'end_time'       => $this->payItemData['end_time'] ?? '00:00:00',
+        'effective_date' => $effectiveDate,
+        'price'          => $this->payItemData['price'] ?? null,
+    ]);
+
+    Notification::make()
+        ->title('Pay Item saved')
+        ->success()
+        ->send();
+
+    $this->closeNewPayItemModal();
+}
+
 
 
         // Make sure these properties exist:
@@ -153,7 +164,7 @@ public function closeEditPayItemModal(): void
     $this->editingpayItemData = [];
 }
 
-// UPDATE the record
+
 public function updatePayItemRow(): void
 {
     if (! $this->editingPayGroupDetailId) {
@@ -162,12 +173,20 @@ public function updatePayItemRow(): void
 
     $detail = PayGroupDetail::findOrFail($this->editingPayGroupDetailId);
 
+    $effectiveDate = null;
+
+    if (!empty($this->editingpayItemData['effective_date'])) {
+        $effectiveDate = Carbon::parse(
+            $this->editingpayItemData['effective_date']
+        )->format('Y-m-d');
+    }
+
     $detail->update([
         'day_of_week'    => $this->editingpayItemData['day_of_week'] ?? '',
         'start_time'     => $this->editingpayItemData['start_time'] ?? '',
         'end_time'       => $this->editingpayItemData['end_time'] ?? '',
-        'effective_date' => $this->editingpayItemData['effective_date'] ?? '',
-        'price' => $this->editingpayItemData['price'] ?? '',
+        'effective_date' => $effectiveDate,
+        'price'          => $this->editingpayItemData['price'] ?? '',
     ]);
 
     \Filament\Notifications\Notification::make()

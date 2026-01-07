@@ -146,7 +146,8 @@ public static function getEloquentQuery(): Builder
                             DatePicker::make('expired_at')
                                 ->label('Expires At')
                                 ->required()
-                                ->extraInputAttributes(['id' => 'expired-input-create']) // <-- Unique ID is required!
+                                ->extraInputAttributes(['id' => 'expired-input-create',
+                                                'wire:ignore' => true,]) // <-- Unique ID is required!
                                 ->columnSpan(6),
 
                                 View::make('js-initializer')
@@ -267,7 +268,8 @@ public static function getEloquentQuery(): Builder
                                 ->label('Expires At')
                                 ->required()
                                 ->default($record->expired_at)
-                                ->extraInputAttributes(['id' => 'expired-input']) // <-- Unique ID is required!
+                                ->extraInputAttributes(['id' => 'expired-input',
+                                                'wire:ignore' => true,]) // <-- Unique ID is required!
                                 ->columnSpan(6),
 
                                  View::make('js-initializer')

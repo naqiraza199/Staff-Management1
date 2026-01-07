@@ -173,7 +173,8 @@ class ClientResource extends Resource
                                             'Other' => 'Other',
                                         ])->columnSpan(1),
                                         Forms\Components\DatePicker::make('dob')->label('Date Of Birth')->columnSpan(1)
-                                    ->extraInputAttributes(['id' => 'dob-input-client']), // <-- Unique ID is required!
+                                    ->extraInputAttributes(['id' => 'dob-input-client',
+                                                'wire:ignore' => true,]), // <-- Unique ID is required!
 
                                         Forms\Components\Select::make('marital_status')->options([
                                             'Single' => 'Single',

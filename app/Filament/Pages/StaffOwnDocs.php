@@ -193,7 +193,8 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->label('Expires At')
                             ->required(fn (callable $get) => ! $get('no_expiration')) // required only if unchecked
                             ->hidden(fn (callable $get) => $get('no_expiration')) // hide if checked
-                            ->extraInputAttributes(['id' => 'expired-input-create']) // <-- Unique ID is required!
+                            ->extraInputAttributes(['id' => 'expired-input-create',
+                                                'wire:ignore' => true,]) // <-- Unique ID is required!
                             ->columnSpan(6),
 
 
@@ -424,7 +425,8 @@ class StaffOwnDocs extends Page implements Tables\Contracts\HasTable
                                 ->default($record->expired_at)
                                 ->required(fn (callable $get) => ! $get('no_expiration')) 
                                 ->hidden(fn (callable $get) => $get('no_expiration'))
-                                ->extraInputAttributes(['id' => 'expired-input']) // <-- Unique ID is required!
+                                ->extraInputAttributes(['id' => 'expired-input',
+                                                'wire:ignore' => true,]) // <-- Unique ID is required!
                                 ->columnSpan(6),
 
                                  View::make('js-initializer')
