@@ -131,8 +131,8 @@
         .client-avatar {
             width: 24px;
             height: 24px;
-            background-color: #e5e7eb;
-            color: #f96a04;
+            background-color: #10b981;
+            color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -1396,16 +1396,29 @@ relevant.forEach(shift => {
         else if (shift.is_advanced_shift) cls = 'task task-advanced';
         div.className = cls;
 
-        const clientName = clientNames[String(shift.client_id)] || '';
         const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
         const timeRange = shift.start_time && shift.end_time
             ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
             : 'No Time';
 
+        let clientHtml = '';
+        if (shift.is_advanced_shift) {
+            let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
+            clientIds.forEach(id => {
+                const clientName = clientNames[String(id)] || 'Unknown Client';
+                const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
+                clientHtml += `<div class="client-avatar">${initials}</div>`;
+            });
+            clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+        } else {
+            const clientName = clientNames[String(shift.client_id)] || '';
+            clientHtml = `<small>${clientName}</small>`;
+        }
+
         div.innerHTML = `
             <strong>${timeRange}</strong><br>
             ${shiftType}<br>
-            <small>${clientName}</small>
+            ${clientHtml}
         `;
 
         div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
@@ -1422,11 +1435,27 @@ relevant.forEach(shift => {
     else if (shift.is_advanced_shift) cls1 = 'task task-advanced';
     part1.className = cls1 + ' overnight-start';
 
+    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+
+    let clientHtml = '';
+    if (shift.is_advanced_shift) {
+        let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
+        clientIds.forEach(id => {
+            const clientName = clientNames[String(id)] || 'Unknown Client';
+            const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
+            clientHtml += `<div class="client-avatar">${initials}</div>`;
+        });
+        clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+    } else {
+        const clientName = clientNames[String(shift.client_id)] || '';
+        clientHtml = `<small>${clientName}</small>`;
+    }
+
     part1.innerHTML = `
         <strong>NEXT DAY</strong><br>
         <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
-        ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
-        <small>${clientNames[String(shift.client_id)] || ''}</small>
+        ${shiftType}<br>
+        ${clientHtml}
     `;
     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
     dayCell.appendChild(part1);
@@ -1494,16 +1523,29 @@ calendar.appendChild(dayCell);
                         else if (shift.is_advanced_shift) cls = 'task task-advanced';
                         div.className = cls;
 
-                        const clientName = clientNames[String(shift.client_id)] || '';
                         const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
                         const timeRange = shift.start_time && shift.end_time
                             ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                             : 'No Time';
 
+                        let clientHtml = '';
+                        if (shift.is_advanced_shift) {
+                            let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
+                            clientIds.forEach(id => {
+                                const clientName = clientNames[String(id)] || 'Unknown Client';
+                                const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
+                                clientHtml += `<div class="client-avatar">${initials}</div>`;
+                            });
+                            clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+                        } else {
+                            const clientName = clientNames[String(shift.client_id)] || '';
+                            clientHtml = `<small>${clientName}</small>`;
+                        }
+
                         div.innerHTML = `
                             <strong>${timeRange}</strong><br>
                             ${shiftType}<br>
-                            <small>${clientName}</small>
+                            ${clientHtml}
                         `;
 
                         div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
@@ -1519,11 +1561,27 @@ calendar.appendChild(dayCell);
                     else if (shift.is_advanced_shift) cls1 = 'task task-advanced';
                     part1.className = cls1 + ' overnight-start';
 
+                    const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+
+                    let clientHtml = '';
+                    if (shift.is_advanced_shift) {
+                        let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
+                        clientIds.forEach(id => {
+                            const clientName = clientNames[String(id)] || 'Unknown Client';
+                            const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
+                            clientHtml += `<div class="client-avatar">${initials}</div>`;
+                        });
+                        clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+                    } else {
+                        const clientName = clientNames[String(shift.client_id)] || '';
+                        clientHtml = `<small>${clientName}</small>`;
+                    }
+
                     part1.innerHTML = `
-                          <strong>NEXT DAY</strong><br>
+                        <strong>NEXT DAY</strong><br>
                         <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
-                        ${shiftTypeNames[String(shift.shift_type_id)] || 'Shift'}<br>
-                        <small>${clientNames[String(shift.client_id)] || ''}</small>
+                        ${shiftType}<br>
+                        ${clientHtml}
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
@@ -1625,12 +1683,18 @@ function renderClientCalendar(filteredShifts = shifts) {
                 ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                 : 'No Time';
             const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+
+            let staffHtml = '';
             const staffName = users[String(shift.user_id)] || '';
+            if (staffName) {
+                const initials = staffName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
+                staffHtml = `<div class="client-avatar">${initials}</div>`;
+            }
 
             div.innerHTML = `
                 <strong>${timeRange}</strong>
                 <div>${shiftType}</div>
-                <div class="small-text">${staffName}</div>
+                <div style="display: flex; align-items: center; margin-top: 4px;">${staffHtml}</div>
             `;
             div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
 
@@ -1666,7 +1730,7 @@ function renderClientCalendar(filteredShifts = shifts) {
             timelineCell.appendChild(wrapper);
 
             const clientShifts = filteredShifts.filter(
-                s => String(s.client_id) === String(clientId) && isShiftInDateRange(s, dateKey)
+                s => ((String(s.client_id) === String(clientId)) || (s.is_advanced_shift && s.clientIds && s.clientIds.includes(String(clientId)))) && isShiftInDateRange(s, dateKey)
             );
 
             clientShifts.forEach(shift => {
@@ -1748,16 +1812,22 @@ function renderClientCalendar(filteredShifts = shifts) {
                     const div = document.createElement('div');
                     div.className = 'task task-vacant';
 
-                    const staffName = users[String(shift.user_id)] || '';
                     const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
                     const timeRange = shift.start_time && shift.end_time
                         ? `${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}`
                         : 'No Time';
 
+                    let staffHtml = '';
+                    const staffName = users[String(shift.user_id)] || '';
+                    if (staffName) {
+                        const initials = staffName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
+                        staffHtml = `<div class="client-avatar">${initials}</div>`;
+                    }
+
                     div.innerHTML = `
                         <strong>${timeRange}</strong><br>
                         ${shiftType}<br>
-                        <small>${staffName}</small>
+                        <div style="display: flex; align-items: center; margin-top: 4px;">${staffHtml}</div>
                     `;
                     div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     cell.appendChild(div);
@@ -1765,14 +1835,20 @@ function renderClientCalendar(filteredShifts = shifts) {
                     // Overnight start part
                     const part1 = document.createElement('div');
                     part1.className = 'task task-vacant overnight-start';
-                    const staffName = users[String(shift.user_id)] || '';
                     const shiftType = shiftTypeNames[String(shift.shift_type_id)] || 'Shift';
+
+                    let staffHtml = '';
+                    const staffName = users[String(shift.user_id)] || '';
+                    if (staffName) {
+                        const initials = staffName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
+                        staffHtml = `<div class="client-avatar">${initials}</div>`;
+                    }
 
                     part1.innerHTML = `
                         <strong>NEXT DAY</strong><br>
                         <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
                         ${shiftType}<br>
-                        <small>${staffName}</small>
+                        <div style="display: flex; align-items: center; margin-top: 4px;">${staffHtml}</div>
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     cell.appendChild(part1);
@@ -1819,7 +1895,7 @@ function renderClientCalendar(filteredShifts = shifts) {
                 cell.setAttribute('data-row', `client__${clientId}`);
 
                 const clientShifts = filteredShifts.filter(
-                    s => String(s.client_id) === String(clientId) && isShiftInDateRange(s, dateKey)
+                    s => ((String(s.client_id) === String(clientId)) || (s.is_advanced_shift && s.clientIds && s.clientIds.includes(String(clientId)))) && isShiftInDateRange(s, dateKey)
                 );
 
                 clientShifts.forEach(shift => {

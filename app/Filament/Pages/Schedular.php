@@ -1197,7 +1197,24 @@ public function createShift()
     // --------------------------------------------------
     // 🔂 CREATE SHIFTS + ALL RELATED RECORDS
     // --------------------------------------------------
+    $skippedCount = 0;
     foreach ($repeatDates as $shiftDate) {
+
+        // Check for duplicate shift for the same staff on same date and time
+        $userId = $carerSection['user_id'] ?? null;
+        if ($userId && !is_array($userId)) {
+            $existingShift = Shift::where('company_id', $companyId)
+                ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userId])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$shiftDate->toDateString()])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [data_get($data, 'time_and_location.start_time')])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [data_get($data, 'time_and_location.end_time')])
+                ->exists();
+
+            if ($existingShift) {
+                $skippedCount++;
+                continue;
+            }
+        }
 
         // --------------------------------------------------
         // 🟢 CREATE SHIFT (FULL OLD STRUCTURE)
@@ -1487,10 +1504,17 @@ public function createShift()
         }
     }
 
-    Notification::make()
-        ->title('Shift series created successfully')
-        ->success()
-        ->send();
+    if ($skippedCount > 0) {
+        Notification::make()
+            ->title('Some shifts were not created because the staff already has shifts at those times. Please change the time or date if you want to create the record with this staff.')
+            ->warning()
+            ->send();
+    } else {
+        Notification::make()
+            ->title('Shift series created successfully')
+            ->success()
+            ->send();
+    }
 
     $this->redirect('/admin/schedular');
 }

@@ -1329,7 +1329,38 @@ public function createShift()
     | 🔁 CREATE SHIFT + ALL RELATED TABLES (UNCHANGED LOGIC)
     |--------------------------------------------------------------------------
     */
+    $skippedCount = 0;
     foreach ($repeatDates as $shiftDate) {
+
+        // Check for duplicate shift for the same staff on same date and time
+        $userIds = $carerSection['user_id'] ?? [];
+        if (is_array($userIds)) {
+            foreach ($userIds as $userId) {
+                $existingShift = Shift::where('company_id', $shiftCompanyID)
+                    ->whereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)])
+                    ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$shiftDate->toDateString()])
+                    ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [data_get($data, 'time_and_location.start_time')])
+                    ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [data_get($data, 'time_and_location.end_time')])
+                    ->exists();
+
+                if ($existingShift) {
+                    $skippedCount++;
+                    continue 2;
+                }
+            }
+        } elseif ($userIds) {
+            $existingShift = Shift::where('company_id', $shiftCompanyID)
+                ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userIds])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$shiftDate->toDateString()])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [data_get($data, 'time_and_location.start_time')])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [data_get($data, 'time_and_location.end_time')])
+                ->exists();
+
+            if ($existingShift) {
+                $skippedCount++;
+                continue;
+            }
+        }
 
         $newShift = Shift::create([
             'series_uuid' => $seriesUuid,
@@ -1602,10 +1633,17 @@ if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
 
     }
 
-    Notification::make()
-        ->title('New shift created successfully')
-        ->success()
-        ->send();
+    if ($skippedCount > 0) {
+        Notification::make()
+            ->title('Some shifts were not created because the staff already has shifts at those times. Please change the time or date if you want to create the record with this staff.')
+            ->warning()
+            ->send();
+    } else {
+        Notification::make()
+            ->title('New shift created successfully')
+            ->success()
+            ->send();
+    }
 
     $this->redirect('/admin/schedular');
 }

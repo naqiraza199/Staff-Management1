@@ -842,7 +842,12 @@ public function viewAllEvents()
                             })
                             ->dehydrateStateUsing(function ($state) {
                                 // convert to yyyy-mm-dd before saving to DB
-                                return $state ? \Carbon\Carbon::createFromFormat('d-m-Y', $state)->format('Y-m-d') : null;
+                                if (!$state) return null;
+                                try {
+                                    return \Carbon\Carbon::createFromFormat('d-m-Y', $state)->format('Y-m-d');
+                                } catch (\Exception $e) {
+                                    return $state; // keep as is if not d-m-Y
+                                }
                             }),
 
 
@@ -1472,7 +1477,54 @@ $updateData['status'] = !empty($data['add_to_job_board'])
     ? 'Job Board'
     : 'Pending';
 
-    // ✅ Handle BillingReport recalculation only if not vacant + not on job board
+// Check for duplicate shift for the same staff on same date and time
+$userIds = $carerSection['user_id'] ?? [];
+$startDate = data_get($data, 'time_and_location.start_date');
+$startTime = data_get($data, 'time_and_location.start_time');
+$endTime = data_get($data, 'time_and_location.end_time');
+$companyId = Company::where('user_id', Auth::id())->value('id');
+
+$conflict = false;
+if (is_array($userIds)) {
+    foreach ($userIds as $userId) {
+        $existing = Shift::where('company_id', $companyId)
+            ->where('id', '!=', $this->shift->id)
+            ->whereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)])
+            ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
+            ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [$startTime])
+            ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [$endTime])
+            ->exists();
+
+        if ($existing) {
+            $conflict = true;
+            break;
+        }
+    }
+} elseif ($userIds) {
+    $existing = Shift::where('company_id', $companyId)
+        ->where('id', '!=', $this->shift->id)
+        ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userIds])
+        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
+        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [$startTime])
+        ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [$endTime])
+        ->exists();
+
+    if ($existing) {
+        $conflict = true;
+    }
+}
+
+if ($conflict) {
+    Notification::make()
+        ->title('Record was not updated because this staff already has a shift at that time. Please change the time or date if you want to update the record with this staff.')
+        ->warning()
+        ->send();
+    $this->redirect('/admin/schedular');
+    return;
+}
+
+    if (!$conflict) {
+        // ✅ Handle BillingReport recalculation only if not vacant + not on job board
 if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
     $shiftDate   = Carbon::parse(data_get($data, 'time_and_location.start_date'));
     $shiftStart  = Carbon::parse(data_get($data, 'time_and_location.start_time'));
@@ -1613,4 +1665,5 @@ $this->shift->update($updateData);
 
 
 
+}
 }
