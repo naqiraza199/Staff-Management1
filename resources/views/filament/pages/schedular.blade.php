@@ -1046,6 +1046,11 @@ body.sidebar-collapsed .main-content-sidebar {
             const shiftTypeNames = @json($shiftTypeNames ?? []);
 
             let currentDate = new Date();
+            const urlParams = new URLSearchParams(window.location.search);
+            const dateParam = urlParams.get('date');
+            if (dateParam) {
+                currentDate = new Date(dateParam);
+            }
             let filteredShifts = shifts;
             let currentSort = 'A-Z';
             const DAY_START_HOUR = 0; // 4 AM
@@ -1416,7 +1421,7 @@ relevant.forEach(shift => {
         }
 
         div.innerHTML = `
-            <strong>${timeRange}</strong><br>
+            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}</strong><br>
             ${shiftType}<br>
             ${clientHtml}
         `;
@@ -1453,7 +1458,7 @@ relevant.forEach(shift => {
 
     part1.innerHTML = `
         <strong>NEXT DAY</strong><br>
-        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
+        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}</strong><br>
         ${shiftType}<br>
         ${clientHtml}
     `;
@@ -1546,6 +1551,7 @@ calendar.appendChild(dayCell);
                             <strong>${timeRange}</strong><br>
                             ${shiftType}<br>
                             ${clientHtml}
+                            ${shift.is_split ? '<span style="float:right; color: #13b982; font-size: 14px;">&#9986;</span>' : ''}
                         `;
 
                         div.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
@@ -1582,6 +1588,7 @@ calendar.appendChild(dayCell);
                         <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
                         ${shiftType}<br>
                         ${clientHtml}
+                        ${shift.is_split ? '<span style="float:right; color: #666; font-size: 14px;">&#9986;</span>' : ''}
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
@@ -1914,7 +1921,7 @@ function renderClientCalendar(filteredShifts = shifts) {
                             : 'No Time';
 
                         div.innerHTML = `
-                            <strong>${timeRange}</strong><br>
+                            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}</strong><br>
                             ${shiftType}<br>
                             <small>${staffName}</small>
                         `;
@@ -1934,7 +1941,7 @@ function renderClientCalendar(filteredShifts = shifts) {
 
                         part1.innerHTML = `
                             <strong>NEXT DAY</strong><br>
-                            <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}</strong><br>
+                            <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}</strong><br>
                             ${shiftType}<br>
                             <small>${staffName}</small>
                         `;
@@ -2312,4 +2319,4 @@ function handleEmptyCalendarClick(dateKey) {
         });
     });
 </script>
-    </x-filament-panels::page>
+    </x-filament-panels::page> 

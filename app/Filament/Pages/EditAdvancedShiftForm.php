@@ -275,12 +275,12 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                 TimePicker::make('client_start_time')
                                     ->seconds(false)
                                     ->label('Start Time')
-                                    ->extraInputAttributes(['id' => 'edit-client-start-time-input', 'style' => 'font-size: 12px;'])
+                                    ->extraInputAttributes(fn ($get) => ['id' => 'edit-client-start-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_start_time')), 'style' => 'font-size: 12px;'])
                                     ->default(fn ($get) => $get('client_start_time')),
                                 TimePicker::make('client_end_time')
                                     ->seconds(false)
                                     ->label('End Time')
-                                    ->extraInputAttributes(['id' => 'edit-client-end-time-input', 'style' => 'font-size: 12px;'])
+                                    ->extraInputAttributes(fn ($get) => ['id' => 'edit-client-end-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_end_time')), 'style' => 'font-size: 12px;'])
                                     ->default(fn ($get) => $get('client_end_time')),
                                 Select::make('price_book_id')
                                     ->label('Price Book')
@@ -313,9 +313,25 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                             $details = $get('../../client_details');
                                             if (!$details) return;
                                             $clientId = $record['client_id'];
-                                            $clientItems = collect($details)->where('client_id', $clientId)->sortBy('client_start_time')->values();
+                                            $clientItems = collect($details)->where('client_id', $clientId);
+                                            $startTime = Carbon::parse($clientItems->first()['client_start_time']);
+                                            $clientItems = $clientItems->map(function ($item) use ($startTime) {
+                                                $time = Carbon::parse($item['client_start_time']);
+                                                if ($time->lt($startTime)) {
+                                                    $time = $time->addDay();
+                                                }
+                                                $item['_sort_time'] = $time;
+                                                return $item;
+                                            })->sortBy('_sort_time')->map(function ($item) {
+                                                unset($item['_sort_time']);
+                                                return $item;
+                                            })->values();
                                             $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
                                             $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+                                            $timeAndLocation = $this->safeDecode($this->shift->time_and_location);
+                                            if (data_get($timeAndLocation, 'shift_finishes_next_day', false)) {
+                                                $totalEnd = $totalEnd->addDay();
+                                            }
                                             $numSections = $clientItems->count() + 1;
                                             $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
                                             $currentStart = $totalStart;
@@ -347,11 +363,27 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                             $details = $get('../../client_details');
                                             if (!$details) return;
                                             $clientId = $record['client_id'];
-                                            $clientItems = collect($details)->where('client_id', $clientId)->sortBy('client_start_time')->values();
+                                            $clientItems = collect($details)->where('client_id', $clientId);
+                                            $startTime = Carbon::parse($clientItems->first()['client_start_time']);
+                                            $clientItems = $clientItems->map(function ($item) use ($startTime) {
+                                                $time = Carbon::parse($item['client_start_time']);
+                                                if ($time->lt($startTime)) {
+                                                    $time = $time->addDay();
+                                                }
+                                                $item['_sort_time'] = $time;
+                                                return $item;
+                                            })->sortBy('_sort_time')->map(function ($item) {
+                                                unset($item['_sort_time']);
+                                                return $item;
+                                            })->values();
                                             if ($clientItems->count() > 1) {
                                                 // Redistribute time
                                                 $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
                                                 $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+                                                $timeAndLocation = $this->safeDecode($this->shift->time_and_location);
+                                                if (data_get($timeAndLocation, 'shift_finishes_next_day', false)) {
+                                                    $totalEnd = $totalEnd->addDay();
+                                                }
                                                 $totalMinutes = $totalStart->diffInMinutes($totalEnd);
                                                 $numSections = $clientItems->count() - 1;
                                                 $sectionMinutes = $totalMinutes / $numSections;
@@ -382,7 +414,12 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                             }
                                         }),
                                 ]),
-                             
+                                View::make('edit-start-time-init')
+                                    ->view('filament.forms.components.time-js-initializer')
+                                    ->viewData(fn ($get) => ['fieldId' => 'edit-client-start-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_start_time'))]),
+                                View::make('edit-end-time-init')
+                                    ->view('filament.forms.components.time-js-initializer')
+                                    ->viewData(fn ($get) => ['fieldId' => 'edit-client-end-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_end_time'))]),
                             ])
                             ->columns(6)
                             ->addable(false)
@@ -391,12 +428,6 @@ class EditAdvancedShiftForm extends Page implements HasForms
                             ->default($this->data['client_details'] ?? []),
                     ])
                     ->collapsible(),
-                     View::make('edit-start-time-init')
-                    ->view('filament.forms.components.time-js-initializer')
-                    ->viewData(['fieldId' => 'edit-client-start-time-input']),
-                       View::make('edit-end-time-init')
-                    ->view('filament.forms.components.time-js-initializer')
-                    ->viewData(['fieldId' => 'edit-client-end-time-input']),
 
                 Section::make('Time & Location')
                     ->schema([
@@ -600,13 +631,16 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                     ->label('Start Time')
                                     ->seconds(false)
                                     ->extraInputAttributes(['id' => 'edit-user-start-time-input'])
-                                    ->default(fn ($get) => $get('user_start_time')),
+                                    ->default($this->data['start_time'] ?? null),
                                 TimePicker::make('user_end_time')
                                     ->label('End Time')
                                     ->seconds(false)
                                     ->extraInputAttributes(['id' => 'edit-user-end-time-input'])
-                                    ->default(fn ($get) => $get('user_end_time')),
-
+                                    ->default($this->data['end_time'] ?? null),
+                        Select::make('pay_group_id')
+                                    ->label('Pay Group')
+                                    ->options(PayGroup::where('user_id', auth()->id())->where('is_archive', 0)->pluck('name', 'id'))
+                                    ->default(fn ($get) => $get('pay_group_id')),
                                     View::make('edit-user-start-time-init')
                                         ->view('filament.forms.components.time-js-initializer')
                                         ->viewData(['fieldId' => 'edit-user-start-time-input']),
@@ -614,10 +648,7 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                     View::make('edit-user-start-time-init')
                                     ->view('filament.forms.components.time-js-initializer')
                                     ->viewData(['fieldId' => 'edit-user-end-time-input']),
-                                Select::make('pay_group_id')
-                                    ->label('Pay Group')
-                                    ->options(PayGroup::where('user_id', auth()->id())->where('is_archive', 0)->pluck('name', 'id'))
-                                    ->default(fn ($get) => $get('pay_group_id')),
+                               
                             ])
                             ->columns(4)
                             ->addable(false)

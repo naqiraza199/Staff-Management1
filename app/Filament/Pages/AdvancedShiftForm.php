@@ -169,19 +169,23 @@ Repeater::make('client_details')
                     ->label('')
                     ->seconds(false)
                     ->default('02:00 AM')
-                    ->extraInputAttributes(['id' => 'client-start-time-input','style' => 'font-size: 12px;'])
+                    ->extraInputAttributes(fn ($get) => ['id' => 'client-start-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_start_time')), 'style' => 'font-size: 12px;'])
                     ->columnSpan(5),
 
                 TimePicker::make('client_end_time')
                     ->label('')
                     ->seconds(false)
                     ->default('03:00 AM')
-                    ->extraInputAttributes(['id' => 'client-end-time-input','style' => 'font-size: 12px;'])
+                    ->extraInputAttributes(fn ($get) => ['id' => 'client-end-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_end_time')), 'style' => 'font-size: 12px;'])
                     ->columnSpan(5),
 
-            
+                View::make('start-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(fn ($get) => ['fieldId' => 'client-start-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_start_time'))]),
 
-
+                View::make('end-time-init')
+                    ->view('filament.forms.components.time-js-initializer')
+                    ->viewData(fn ($get) => ['fieldId' => 'client-end-time-input-' . $get('client_id') . '-' . str_replace(':', '-', $get('client_end_time'))]),
 
                 Select::make('price_book_id')
                     ->label('')
@@ -191,7 +195,6 @@ Repeater::make('client_details')
                             ->pluck('name', 'id')
                     )
                     ->columnSpan(5),
-                    
 
                 Select::make('hours')
                     ->label('')
@@ -207,14 +210,7 @@ Repeater::make('client_details')
 
          
 
-    View::make('start-time-init')
-                    ->view('filament.forms.components.time-js-initializer')
-                    ->viewData(['fieldId' => 'client-start-time-input']),
-
-              
-              
-
-                      AdvancedAction::make([
+                       AdvancedAction::make([
     NewAction::make('split')
         ->icon('heroicon-m-scissors')
         ->label('')
@@ -229,13 +225,25 @@ Repeater::make('client_details')
             if (!$details) return;
 
             $clientId = $record['client_id'];
-            $clientItems = collect($details)
-                ->where('client_id', $clientId)
-                ->sortBy('client_start_time')
-                ->values();
+            $clientItems = collect($details)->where('client_id', $clientId);
+            $startTime = Carbon::parse($clientItems->first()['client_start_time']);
+            $clientItems = $clientItems->map(function ($item) use ($startTime) {
+                $time = Carbon::parse($item['client_start_time']);
+                if ($time->lt($startTime)) {
+                    $time = $time->addDay();
+                }
+                $item['_sort_time'] = $time;
+                return $item;
+            })->sortBy('_sort_time')->map(function ($item) {
+                unset($item['_sort_time']);
+                return $item;
+            })->values();
 
             $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
             $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+            if ($get('../../../shift_finishes_next_day')) {
+                $totalEnd = $totalEnd->addDay();
+            }
             $numSections = $clientItems->count() + 1;
             $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
 
@@ -276,15 +284,27 @@ Repeater::make('client_details')
             if (!$details) return;
 
             $clientId = $record['client_id'];
-            $clientItems = collect($details)
-                ->where('client_id', $clientId)
-                ->sortBy('client_start_time')
-                ->values();
+            $clientItems = collect($details)->where('client_id', $clientId);
+            $startTime = Carbon::parse($clientItems->first()['client_start_time']);
+            $clientItems = $clientItems->map(function ($item) use ($startTime) {
+                $time = Carbon::parse($item['client_start_time']);
+                if ($time->lt($startTime)) {
+                    $time = $time->addDay();
+                }
+                $item['_sort_time'] = $time;
+                return $item;
+            })->sortBy('_sort_time')->map(function ($item) {
+                unset($item['_sort_time']);
+                return $item;
+            })->values();
 
             if ($clientItems->count() > 1) {
                 // Redistribute time
                 $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
                 $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
+                if ($get('../../../shift_finishes_next_day')) {
+                    $totalEnd = $totalEnd->addDay();
+                }
                 $totalMinutes = $totalStart->diffInMinutes($totalEnd);
                 $numSections = $clientItems->count() - 1;
                 $sectionMinutes = $totalMinutes / $numSections;
@@ -327,12 +347,7 @@ Repeater::make('client_details')
 ])
                     ->columnSpan(4),
 
-   View::make('end-time-init')
-                    ->view('filament.forms.components.time-js-initializer')
-                    ->viewData(['fieldId' => 'client-end-time-input']),
-
-
-    ])
+   ])
     
             
         ])
@@ -1645,7 +1660,8 @@ if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
             ->send();
     }
 
-    $this->redirect('/admin/schedular');
+    $startDate = data_get($data, 'time_and_location.start_date');
+    $this->redirect('/admin/schedular?date=' . $startDate);
 }
 
 
@@ -1656,3 +1672,4 @@ if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
         dd($data); // Debug the form data
     }
 }
+ 

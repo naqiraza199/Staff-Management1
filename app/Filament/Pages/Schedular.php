@@ -191,6 +191,19 @@ public function mount()
                 ? json_decode($shift->carer_section, true)
                 : ($shift->carer_section ?? []);
 
+            // Check if advanced shift is split (same client has multiple times)
+            $is_split = false;
+            if ($shift->is_advanced_shift && isset($clientSection['client_details'])) {
+                $clientCounts = [];
+                foreach ($clientSection['client_details'] as $detail) {
+                    $cid = $detail['client_id'] ?? null;
+                    if ($cid) {
+                        $clientCounts[$cid] = ($clientCounts[$cid] ?? 0) + 1;
+                    }
+                }
+                $is_split = max($clientCounts) > 1;
+            }
+
             // Common fields for all shifts
             $base = [
                 'id' => $shift->id,
@@ -212,6 +225,7 @@ public function mount()
                 'is_cancelled' => (bool) $shift->is_cancelled,
                 'is_approved' => (int) $shift->is_approved,
                 'status' => $shift->status ?? 'Unknown',
+                'is_split' => $is_split,
             ];
 
             // Handle shifts based on is_advanced_shift
@@ -1516,9 +1530,11 @@ public function createShift()
             ->send();
     }
 
-    $this->redirect('/admin/schedular');
+    $startDate = data_get($data, 'time_and_location.start_date');
+    $this->redirect('/admin/schedular?date=' . $startDate);
 }
 
 
 
 }
+ 
