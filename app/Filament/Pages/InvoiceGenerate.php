@@ -65,10 +65,12 @@ class InvoiceGenerate extends Page
     protected static string $view = 'filament.pages.invoice-generate';
     protected static ?string $navigationGroup = 'Invoices';
      public ?string $group_by = 'client';
-     public array $selectedRows = [];
-    public $clients;
-    public $count;
-    public array $selectedClients = [];
+      public array $selectedRows = [];
+     public $clients;
+     public $count;
+     public array $selectedClients = [];
+     public ?string $start_date = null;
+     public ?string $end_date = null;
 
 
                        public static function canAccess(): bool
@@ -87,32 +89,76 @@ class InvoiceGenerate extends Page
     public ?array $data = [];
 
   public function mount(): void
-{
-    $authUser = auth()->user();
+  {
+      $this->loadClients();
+  }
 
-    $this->clients = Client::with([
-            // load billing reports that are NOT Paid (so JS filters those by date)
-            'billingReports' => function ($q) {
-                $q->where('status', '!=', 'Paid')
-                  ->orderBy('date', 'asc');
-            },
-        ])
-        ->withSum(
-            ['billingReports as unpaid_total_cost' => function ($query) {
-                $query->where('status', 'Unpaid');
-            }],
-            'total_cost'
-        )
-        ->withCount([
-            'billingReports as not_paid_reports_count' => function ($query) {
-                $query->where('status', '!=', 'Paid');
-            }
-        ])
-        ->where('is_archive', 'Unarchive')
-        ->where('user_id', $authUser->id)
-        ->having('unpaid_total_cost', '>', 0)
-        ->get();
-}
+  public function updatedStartDate(): void
+  {
+      $this->loadClients();
+  }
+
+  public function updatedEndDate(): void
+  {
+      $this->loadClients();
+  }
+
+  public function loadClients(): void
+  {
+      $authUser = auth()->user();
+
+      $query = Client::with([
+          'billingReports' => function ($q) {
+              $q->where('status', '!=', 'Paid')
+                ->orderBy('date', 'asc');
+          },
+          'additionalContacts'
+      ])
+      ->withSum(
+          ['billingReports as unpaid_total_cost' => function ($query) {
+              $query->where('status', 'Unpaid');
+          }],
+          'total_cost'
+      )
+      ->withCount([
+          'billingReports as not_paid_reports_count' => function ($query) {
+              $query->where('status', '!=', 'Paid');
+          }
+      ])
+      ->where('is_archive', 'Unarchive')
+      ->where('user_id', $authUser->id)
+      ->having('unpaid_total_cost', '>', 0);
+
+      // Filter clients based on date range if dates are set
+      if ($this->start_date || $this->end_date) {
+          $query->whereHas('billingReports', function ($q) {
+              if ($this->start_date) {
+                  $q->where('date', '>=', $this->start_date);
+              }
+              if ($this->end_date) {
+                  $q->where('date', '<=', $this->end_date);
+              }
+              $q->where('status', '!=', 'Paid');
+          });
+      }
+
+      $this->clients = $query->get();
+
+      // Update counts and amounts based on filtered dates
+      foreach ($this->clients as $client) {
+          $filteredReports = $client->billingReports;
+          if ($this->start_date || $this->end_date) {
+              $filteredReports = $client->billingReports->filter(function ($report) {
+                  $reportDate = $report->date instanceof \Carbon\Carbon ? $report->date : \Carbon\Carbon::parse($report->date);
+                  if ($this->start_date && $reportDate->lt(\Carbon\Carbon::parse($this->start_date))) return false;
+                  if ($this->end_date && $reportDate->gt(\Carbon\Carbon::parse($this->end_date))) return false;
+                  return true;
+              });
+          }
+          $client->filtered_reports_count = $filteredReports->count();
+          $client->filtered_total_cost = $filteredReports->sum('total_cost');
+      }
+  }
 
 
 #[On('generateInvoices')]

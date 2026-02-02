@@ -146,11 +146,11 @@
                                         <label class="block text-xs font-medium text-gray-700 mb-1">START DATE</label>
                                         <div class="relative">
                                             <input
-                                                id="shift-start-input"
+                                                wire:model.live="start_date"
                                                 type="date"
                                                 class="block w-44 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                             >
-                                         
+
                                         </div>
                                     </div>
 
@@ -158,17 +158,17 @@
                                         <label class="block text-xs font-medium text-gray-700 mb-1">END DATE</label>
                                         <div class="relative">
                                             <input
-                                                id="shift-end-input"
+                                                wire:model.live="end_date"
                                                 type="date"
                                                 class="block w-44 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                             >
-                                           
+
                                         </div>
                                     </div>
 
                                     <div class="pt-5">
                                         <button
-                                            id="clear-date-filter"
+                                            wire:click="$set('start_date', null); $set('end_date', null)"
                                             type="button"
                                             class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
                                         >
@@ -201,18 +201,10 @@
                              @foreach($this->clients as $client)
                                             {{-- Create JSON for JS: ensure date is string (Y-m-d) and amounts are numbers --}}
                                             @php
-                                                $billingForJs = $client->billingReports->map(function ($r) {
-                                                    return [
-                                                        'date' => (string) $r->date,              // e.g. "2025-09-18"
-                                                        'amount' => (float) $r->total_cost,
-                                                        'status' => $r->status,
-                                                    ];
-                                                })->values();
-                                            $amount = $client->unpaid_total_cost ?? 0;
+                                            $amount = $client->filtered_total_cost ?? $client->unpaid_total_cost ?? 0;
                                             @endphp
 
-                                            <tr data-client-id="{{ $client->id }}"
-                                                data-billing-reports='@json($billingForJs)'>
+                                            <tr data-client-id="{{ $client->id }}">
                                                                     
                                      <td class="py-4" style="text-align: center;">
                                                 <input type="checkbox" class="include-checkbox">    
@@ -225,7 +217,7 @@
                                     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
                                     <path fill-rule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-9-1a1 1 0 10-2 0v5a1 1 0 102 0V9zm0-4a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    {{ $client->not_paid_reports_count }} View Reports
+                                    <span class="reports-count">{{ $client->filtered_reports_count ?? $client->not_paid_reports_count }}</span> View Reports
                                 </span>
                                 </a>
                                 </td>
@@ -380,81 +372,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     </script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const startInput = document.getElementById('shift-start-input');
-    const endInput   = document.getElementById('shift-end-input');
-    const clearBtn   = document.getElementById('clear-date-filter');
-    const rows       = Array.from(document.querySelectorAll('#clients-table-body tr[data-billing-reports]'));
-
-    // For native <input type="date">, value is already 'YYYY-MM-DD'
-    function normalizeToYMD(value) {
-        if (!value) return null;
-        return value.trim(); // already correct
-    }
-
-    function filterRows() {
-        const startYmd = normalizeToYMD(startInput.value);
-        const endYmd   = normalizeToYMD(endInput.value);
-
-        rows.forEach(row => {
-            const raw = row.getAttribute('data-billing-reports');
-            if (!raw) {
-                row.style.display = 'none';
-                return;
-            }
-
-            let reports = [];
-            try {
-                reports = JSON.parse(raw);
-            } catch (e) {
-                console.error('Invalid JSON in data-billing-reports', e);
-                row.style.display = 'none';
-                return;
-            }
-
-            let totalAmount = 0;
-            let reportsCount = 0;
-
-            reports.forEach(rep => {
-                const repDate = rep.date; // expected 'YYYY-MM-DD'
-                if (!repDate) return;
-
-                let inRange = true;
-
-                if (startYmd && repDate < startYmd) inRange = false;
-                if (endYmd && repDate > endYmd) inRange = false;
-
-                if (inRange) {
-                    totalAmount += Number(rep.amount || 0);
-                    reportsCount++;
-                }
-            });
-
-            const amountSpan = row.querySelector('.amount');
-            if (amountSpan) amountSpan.textContent = totalAmount.toFixed(2);
-
-            const countSpan = row.querySelector('.reports-count');
-            if (countSpan) countSpan.textContent = reportsCount;
-
-            row.style.display = reportsCount > 0 ? '' : 'none';
-        });
-    }
-
-    if (startInput) startInput.addEventListener('change', filterRows);
-    if (endInput)   endInput.addEventListener('change', filterRows);
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function() {
-            startInput.value = '';
-            endInput.value = '';
-            filterRows();
-        });
-    }
-
-    // initial
-    filterRows();
-});
-</script>
 
 
 
