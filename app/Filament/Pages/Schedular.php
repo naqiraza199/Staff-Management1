@@ -1214,14 +1214,17 @@ public function createShift()
     $skippedCount = 0;
     foreach ($repeatDates as $shiftDate) {
 
-        // Check for duplicate shift for the same staff on same date and time
+        // Check for overlapping shift for the same staff on same date
         $userId = $carerSection['user_id'] ?? null;
         if ($userId && !is_array($userId)) {
+            $newStartTime = data_get($data, 'time_and_location.start_time');
+            $newEndTime = data_get($data, 'time_and_location.end_time');
+
             $existingShift = Shift::where('company_id', $companyId)
                 ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userId])
                 ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$shiftDate->toDateString()])
-                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [data_get($data, 'time_and_location.start_time')])
-                ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [data_get($data, 'time_and_location.end_time')])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
                 ->exists();
 
             if ($existingShift) {

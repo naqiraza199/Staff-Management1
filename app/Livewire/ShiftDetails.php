@@ -1477,11 +1477,11 @@ $updateData['status'] = !empty($data['add_to_job_board'])
     ? 'Job Board'
     : 'Pending';
 
-// Check for duplicate shift for the same staff on same date and time
+// Check for overlapping shift for the same staff on same date
 $userIds = $carerSection['user_id'] ?? [];
 $startDate = data_get($data, 'time_and_location.start_date');
-$startTime = data_get($data, 'time_and_location.start_time');
-$endTime = data_get($data, 'time_and_location.end_time');
+$newStartTime = data_get($data, 'time_and_location.start_time');
+$newEndTime = data_get($data, 'time_and_location.end_time');
 $companyId = Company::where('user_id', Auth::id())->value('id');
 
 $conflict = false;
@@ -1491,8 +1491,8 @@ if (is_array($userIds)) {
             ->where('id', '!=', $this->shift->id)
             ->whereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)])
             ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
-            ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [$startTime])
-            ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [$endTime])
+            ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
+            ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
             ->exists();
 
         if ($existing) {
@@ -1505,8 +1505,8 @@ if (is_array($userIds)) {
         ->where('id', '!=', $this->shift->id)
         ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userIds])
         ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [$startTime])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [$endTime])
+        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
+        ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
         ->exists();
 
     if ($existing) {

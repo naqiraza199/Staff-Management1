@@ -1347,15 +1347,18 @@ public function createShift()
     $skippedCount = 0;
     foreach ($repeatDates as $shiftDate) {
 
-        // Check for duplicate shift for the same staff on same date and time
+        // Check for overlapping shift for the same staff on same date
         $userIds = $carerSection['user_id'] ?? [];
+        $newStartTime = data_get($data, 'time_and_location.start_time');
+        $newEndTime = data_get($data, 'time_and_location.end_time');
+
         if (is_array($userIds)) {
             foreach ($userIds as $userId) {
                 $existingShift = Shift::where('company_id', $shiftCompanyID)
                     ->whereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)])
                     ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$shiftDate->toDateString()])
-                    ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [data_get($data, 'time_and_location.start_time')])
-                    ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [data_get($data, 'time_and_location.end_time')])
+                    ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
+                    ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
                     ->exists();
 
                 if ($existingShift) {
@@ -1367,8 +1370,8 @@ public function createShift()
             $existingShift = Shift::where('company_id', $shiftCompanyID)
                 ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userIds])
                 ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$shiftDate->toDateString()])
-                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") = ?', [data_get($data, 'time_and_location.start_time')])
-                ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") = ?', [data_get($data, 'time_and_location.end_time')])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
+                ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
                 ->exists();
 
             if ($existingShift) {
