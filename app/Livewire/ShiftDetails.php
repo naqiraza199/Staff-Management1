@@ -319,7 +319,15 @@ public function confirm()
         ->success()
         ->send();
 
-    $this->redirect('/admin/schedular');
+    // Get start_date for redirect
+    $startDate = $this->timeAndLocation['start_date'] ?? null;
+    
+    if ($startDate) {
+        $this->redirect('/admin/schedular?date=' . $startDate);
+    } else {
+        $this->redirect('/admin/schedular');
+    }
+    
     $this->dispatch('close-modal', id: 'approved-shift');
 }
 

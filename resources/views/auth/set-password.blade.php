@@ -75,6 +75,7 @@
 
         <form method="POST" action="{{ route('user.set-password.update', $user->id) }}" class="space-y-5">
             @csrf
+            <input type="hidden" name="token" value="{{ request('token') }}">
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>

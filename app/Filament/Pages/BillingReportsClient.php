@@ -51,6 +51,8 @@ class BillingReportsClient extends Page implements HasTable
     public ?int $client_id = null;
     public bool $actionsVisible = false;
     public bool $showWidgets = true;
+    public ?string $start_date = null;
+    public ?string $end_date = null;
   
 
 public array $records = [];
@@ -58,6 +60,8 @@ public array $records = [];
 public function mount(): void
 {
     $this->client_id = request()->query('client_id');
+    $this->start_date = request()->query('start_date');
+    $this->end_date = request()->query('end_date');
 
     // preload the records for Alpine
     $this->records = BillingReport::when($this->client_id, fn ($q) => $q->where('client_id', $this->client_id))
@@ -95,6 +99,8 @@ public function table(Table $table): Table
     return $table->query(fn (): Builder =>
             BillingReport::query()
                 ->when($this->client_id, fn ($q) => $q->where('client_id', $this->client_id))
+                ->when($this->start_date, fn ($q) => $q->where('date', '>=', $this->start_date))
+                ->when($this->end_date, fn ($q) => $q->where('date', '<=', $this->end_date))
         )
             ->recordClasses(fn (BillingReport $record): array => [
                 'paid-row' => $record->status === 'Paid',

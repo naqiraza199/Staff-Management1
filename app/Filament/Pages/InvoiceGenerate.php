@@ -174,11 +174,22 @@ $authUser = auth()->user();
         $issueDate = now()->toDateString();
         $paymentDue = $clientData['payment_due'];
         $purchaseOrder = $clientData['ref_no'] ?? null;
+        $startDate = $clientData['start_date'] ?? null;
+        $endDate = $clientData['end_date'] ?? null;
 
-        // Fetch unpaid billing reports
-        $billingReports = BillingReport::where('client_id', $clientId)
-            ->where('status', 'Unpaid')
-            ->get();
+        // Fetch unpaid billing reports with optional date filtering
+        $billingReportsQuery = BillingReport::where('client_id', $clientId)
+            ->where('status', 'Unpaid');
+        
+        // Apply date filters if provided
+        if ($startDate) {
+            $billingReportsQuery->where('date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $billingReportsQuery->where('date', '<=', $endDate);
+        }
+        
+        $billingReports = $billingReportsQuery->get();
 
         if ($billingReports->isEmpty()) {
             continue;
@@ -219,10 +230,19 @@ $authUser = auth()->user();
         // ──────────────────────────────────────────────────────────────
         // 1. FETCH + ENRICH BILLING REPORTS (CRITICAL: gets real ref codes)
         // ──────────────────────────────────────────────────────────────
-        $billingReports = BillingReport::with(['shift', 'client'])
+        $billingReportsQuery = BillingReport::with(['shift', 'client'])
             ->where('client_id', $clientId)
-            ->where('status', 'Unpaid')
-            ->get()
+            ->where('status', 'Unpaid');
+        
+        // Apply date filters if provided
+        if ($startDate) {
+            $billingReportsQuery->where('date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $billingReportsQuery->where('date', '<=', $endDate);
+        }
+        
+        $billingReports = $billingReportsQuery->get()
             ->map(function ($report) {
                 // Parse hours_x_rate (e.g., "8 x $95.00")
                 if (!empty($report->hours_x_rate) && strpos($report->hours_x_rate, 'x') !== false) {

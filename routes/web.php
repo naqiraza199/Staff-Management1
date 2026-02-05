@@ -219,7 +219,8 @@ Route::post('/pdfco/edit-custom', [PdfController::class, 'editCustom']);
 
 
 Route::get('/set-password/{user}', [SetPasswordController::class, 'show'])
-    ->name('user.set-password');
+    ->name('user.set-password')
+    ->middleware('signed');
 
 Route::post('/set-password/{user}', [SetPasswordController::class, 'update'])
     ->name('user.set-password.update');

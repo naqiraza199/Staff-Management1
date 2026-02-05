@@ -37,7 +37,9 @@ class User extends Authenticatable
         'job_title_id',
         'private_note',
         'languages',
-        'no_access'
+        'no_access',
+        'set_password_token',
+        'set_password_sent_at',
     ];
 
     /**
@@ -63,6 +65,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'languages' => 'array',
+            'set_password_sent_at' => 'datetime',
         ];
     }
 

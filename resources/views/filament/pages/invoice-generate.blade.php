@@ -92,7 +92,15 @@
 
 
   /* Tiny helper if you need very small badges */
-</style>
+
+input[type="date"] {
+    cursor: pointer;
+    width: 100%;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}</style>
 
 
 <link rel="stylesheet" href="{{asset('invoice.css')}}">
@@ -146,6 +154,7 @@
                                         <label class="block text-xs font-medium text-gray-700 mb-1">START DATE</label>
                                         <div class="relative">
                                             <input
+                                                id="filter-start-date"
                                                 wire:model.live="start_date"
                                                 type="date"
                                                 class="block w-44 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -158,6 +167,7 @@
                                         <label class="block text-xs font-medium text-gray-700 mb-1">END DATE</label>
                                         <div class="relative">
                                             <input
+                                                id="filter-end-date"
                                                 wire:model.live="end_date"
                                                 type="date"
                                                 class="block w-44 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -212,7 +222,16 @@
                                 <td class=" py-4" style="font-size:13px;">{{ $client->display_name }}</td>
 
                                 <td class=" py-4" style="font-size:13px;">
-                                <a href="{{ url('/admin/billing-reports-client') }}?client_id={{ $client->id }}" target="_blank">
+                                @php
+                                    $url = url('/admin/billing-reports-client') . '?client_id=' . $client->id;
+                                    if ($start_date) {
+                                        $url .= '&start_date=' . $start_date;
+                                    }
+                                    if ($end_date) {
+                                        $url .= '&end_date=' . $end_date;
+                                    }
+                                @endphp
+                                <a href="{{ $url }}" target="_blank">
                                     <span class="badge badge--info" role="status" aria-label="Info">
                                     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
                                     <path fill-rule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-9-1a1 1 0 10-2 0v5a1 1 0 102 0V9zm0-4a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"/>
@@ -266,9 +285,39 @@
                 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Make date inputs open calendar on click anywhere
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(function(input) {
+        input.addEventListener('click', function(e) {
+            // Use showPicker() method if available (modern browsers)
+            if (typeof input.showPicker === 'function') {
+                try {
+                    input.showPicker();
+                } catch (err) {
+                    // Fallback for browsers that don't support showPicker
+                    input.focus();
+                    input.click();
+                }
+            } else {
+                // Fallback for older browsers
+                input.focus();
+                input.click();
+            }
+        });
+    });
+});
+</script>
+<script>
 document.getElementById('generate-btn').addEventListener('click', function () {
     const rows = document.querySelectorAll("tbody tr");
     let selectedClients = [];
+
+    // Get the current date filters directly from input fields
+    const startDateInput = document.getElementById('filter-start-date');
+    const endDateInput = document.getElementById('filter-end-date');
+    const startDate = startDateInput ? startDateInput.value : null;
+    const endDate = endDateInput ? endDateInput.value : null;
 
     rows.forEach(row => {
         let include = row.querySelector(".include-checkbox")?.checked;
@@ -280,6 +329,8 @@ document.getElementById('generate-btn').addEventListener('click', function () {
                 payment_due: row.querySelector("input[type='date']").value,
                 ref_no: row.querySelector("input[type='text']").value,
                 tax_checked: row.querySelector(".tax-checkbox")?.checked,
+                start_date: startDate,
+                end_date: endDate,
             });
         }
     });

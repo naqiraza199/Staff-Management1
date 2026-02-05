@@ -36,6 +36,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\View;
+use Spatie\Permission\Models\Role;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -203,6 +204,14 @@ public static function getEloquentQuery(): Builder
                                     ])
                                     ->label('Role type')
                                     ->reactive()
+                                    ->afterStateUpdated(function (callable $set, $state) {
+                                        if ($state === 'Carer') {
+                                            $staffRole = \Spatie\Permission\Models\Role::where('name', 'Staff')->first();
+                                            if ($staffRole) {
+                                                $set('role_id', $staffRole->id);
+                                            }
+                                        }
+                                    })
                                     ->columnSpan(1),
                                 Forms\Components\Select::make('role_id')
                                         ->label('Role')
@@ -211,7 +220,7 @@ public static function getEloquentQuery(): Builder
                                             titleAttribute: 'name',
                                             modifyQueryUsing: fn ($query) => $query->whereNotIn('name', ['Admin', 'superadmin']),
                                         )
-                                        ->visible(fn ($get) => $get('role_type') === 'Office User')
+                                        ->visible(fn ($get) => in_array($get('role_type'), ['Carer', 'Office User']))
                                         ->columnSpan(1),
                             ]),
                             ]),
