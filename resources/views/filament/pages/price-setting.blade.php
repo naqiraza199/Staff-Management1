@@ -70,8 +70,8 @@
                                     <td class="px-4 py-2">${{ number_format($detail->per_km, 2) }}</td>
                                     <td class="px-4 py-2">{{ $detail->ref_km }}</td>
                                     <td class="px-4 py-2">
-                                        {{ $detail->effective_date?->format('d-m-Y') }}
-                                    </td>
+                                    {{ $detail->effective_date?->format('d-m-Y') }}
+                                     </td>
                                     <td class="px-4 py-2">
                                         <div class="flex space-x-2">
                                             <x-filament::icon-button
@@ -92,7 +92,7 @@
                                                 style="margin-right: 10px"
                                             />
 
-                                            <x-filament:    :icon-button
+                                            <x-filament::icon-button
                                                 icon="heroicon-m-trash"
                                                 color="danger"
                                                 size="sm"

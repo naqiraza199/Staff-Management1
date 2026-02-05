@@ -1555,27 +1555,26 @@ if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
         default    => 'Weekdays - I',
     };
 
-    // ✅ Use same corrected price detail query as create
+    $fetchPriceBook = PriceBook::where('id', $priceBookId)->first();
+
+    // ✅ Price book logic — now supports fixed_price = 1
     $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
         ->where('day_of_week', $dayType)
         ->where(function ($q) use ($shiftEnd) {
             $endTime = $shiftEnd->format('H:i:s');
 
             $q->where(function ($sub) use ($endTime) {
-                // normal ranges
                 $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
                     ->whereColumn('end_time', '>', 'start_time');
             })
             ->orWhere(function ($sub) use ($endTime) {
-                // over-midnight ranges
                 $sub->whereColumn('end_time', '<', 'start_time')
                     ->where(function ($wrap) use ($endTime) {
                         $wrap->where('start_time', '<=', $endTime)
-                             ->orWhere('end_time', '>=', $endTime);
+                             ->orWhere('end_time', '>=', $endTime); 
                     });
             })
             ->orWhere(function ($sub) {
-                // all-day
                 $sub->whereTime('start_time', '00:00:00')
                     ->whereTime('end_time', '00:00:00');
             });
@@ -1583,12 +1582,22 @@ if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
         ->orderBy('start_time')
         ->first();
 
-    $rate         = $priceDetail?->per_hour ?? 0;
+    $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
     $per_km_price = $priceDetail?->per_km ?? 0;
-    $totalCost    = $hours * $rate;
+    $distanceXRate = '0.0 x $' . number_format($per_km_price, 2);
 
-    $hoursXRate    = number_format($hours, 1) . ' x $' . number_format($rate, 2);
-    $distanceXRate = 0.0 . ' x $' . number_format($per_km_price, 2);
+    if ($isFixedPrice) {
+        // Fixed price shift → use the value stored in per_hour column as the fixed amount
+        $baseCost   = $priceDetail->per_hour ?? 0;
+        $hoursXRate = 'Fixed: $' . number_format($baseCost, 2);
+        $totalCost  = $baseCost;                       // base cost only (mileage/expense added later on approve)
+    } else {
+        // Normal hourly shift
+        $rate       = $priceDetail?->per_hour ?? 0;
+        $baseCost   = $hours * $rate;
+        $hoursXRate = number_format($hours, 1) . ' x $' . number_format($rate, 2);
+        $totalCost  = $baseCost;
+    }
 
     // ✅ Update or create billing record
     $billingRecord = BillingReport::where('shift_id', $this->shift->id)->first();

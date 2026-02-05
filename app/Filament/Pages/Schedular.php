@@ -226,6 +226,7 @@ public function mount()
                 'is_approved' => (int) $shift->is_approved,
                 'status' => $shift->status ?? 'Unknown',
                 'is_split' => $is_split,
+                'series_uuid' => $shift->series_uuid ?? null,
             ];
 
             // Handle shifts based on is_advanced_shift
@@ -1291,82 +1292,96 @@ public function createShift()
         // --------------------------------------------------
         if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
 
-           // ✅ IMPORTANT FIX: use loop date, NOT original start_date
-            $shiftDate = Carbon::parse($shiftDate); // 🔥 THIS FIXES EVERYTHING
+    // ✅ IMPORTANT: use loop date, NOT original start_date
+    $shiftDate = Carbon::parse($shiftDate); // already done earlier — kept for clarity
 
-            $shiftStart  = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.start_time'));
-            $shiftEnd    = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.end_time'));
-            $priceBookId = data_get($data, 'client_section.price_book_id');
+    $shiftStart  = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.start_time'));
+    $shiftEnd    = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.end_time'));
+    $priceBookId = data_get($data, 'client_section.price_book_id');
 
-            // Overnight shift handling
-            if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
-                $shiftEnd = $shiftEnd->addDay();
-            }
+    $fetchPriceBook = PriceBook::where('id', $priceBookId)->first();
 
-            $hours = $shiftStart->floatDiffInHours($shiftEnd);
+    // Overnight shift handling
+    if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
+        $shiftEnd = $shiftEnd->addDay();
+    }
 
-            // -------------------------------------------------
-            // 📅 Day type
-            // -------------------------------------------------
-            $dayOfWeek = $shiftDate->format('l');
-            $dayType = match ($dayOfWeek) {
-                'Saturday' => 'Saturday',
-                'Sunday'   => 'Sunday',
-                default    => 'Weekdays - I',
-            };
+    $hours = $shiftStart->floatDiffInHours($shiftEnd);
 
-            // -------------------------------------------------
-            // 💰 Price book logic (UNCHANGED)
-            // -------------------------------------------------
-            $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
-                ->where('day_of_week', $dayType)
-                ->where(function ($q) use ($shiftEnd) {
-                    $endTime = $shiftEnd->format('H:i:s');
+    // -------------------------------------------------
+    // 📅 Day type
+    // -------------------------------------------------
+    $dayOfWeek = $shiftDate->format('l');
+    $dayType = match ($dayOfWeek) {
+        'Saturday' => 'Saturday',
+        'Sunday'   => 'Sunday',
+        default    => 'Weekdays - I',
+    };
 
-                    $q->where(function ($sub) use ($endTime) {
-                        $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
-                            ->whereColumn('end_time', '>', 'start_time');
-                    })
-                    ->orWhere(function ($sub) use ($endTime) {
-                        $sub->whereColumn('end_time', '<', 'start_time')
-                            ->where(function ($wrap) use ($endTime) {
-                                $wrap->where('start_time', '<=', $endTime)
-                                    ->orWhere('end_time', '>=', $endTime);
-                            });
-                    })
-                    ->orWhere(function ($sub) {
-                        $sub->whereTime('start_time', '00:00:00')
-                            ->whereTime('end_time', '00:00:00');
+    // -------------------------------------------------
+    // 💰 Price book logic — now supports fixed_price
+    // -------------------------------------------------
+    $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+        ->where('day_of_week', $dayType)
+        ->where(function ($q) use ($shiftEnd) {
+            $endTime = $shiftEnd->format('H:i:s');
+
+            $q->where(function ($sub) use ($endTime) {
+                $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
+                    ->whereColumn('end_time', '>', 'start_time');
+            })
+            ->orWhere(function ($sub) use ($endTime) {
+                $sub->whereColumn('end_time', '<', 'start_time')
+                    ->where(function ($wrap) use ($endTime) {
+                        $wrap->where('start_time', '<=', $endTime)
+                             ->orWhere('end_time', '>=', $endTime);
                     });
-                })
-                ->orderBy('start_time')
-                ->first();
+            })
+            ->orWhere(function ($sub) {
+                $sub->whereTime('start_time', '00:00:00')
+                    ->whereTime('end_time', '00:00:00');
+            });
+        })
+        ->orderBy('start_time')
+        ->first();
 
-            $rate = $priceDetail?->per_hour ?? 0;
-            $per_km_price = $priceDetail?->per_km ?? 0;
+    // ────────────────────────────────────────────────
+    //          FIXED PRICE vs HOURLY LOGIC
+    // ────────────────────────────────────────────────
+    $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
 
-            $totalCost = $hours * $rate;
+    if ($isFixedPrice) {
+        $rate          = 0;                     // not used
+        $totalCost     = $priceDetail->per_hour ?? 0;   // here per_hour actually stores the fixed amount
+        $hoursXRate    = 'Fixed: $' . number_format($totalCost, 2);
+        $displayHours  = 'Fixed price';
+    } else {
+        $rate          = $priceDetail?->per_hour ?? 0;
+        $totalCost     = $hours * $rate;
+        $hoursXRate    = number_format($hours, 1) . ' x $' . number_format($rate, 2);
+        $displayHours  = number_format($hours, 1) . ' hrs';
+    }
 
-            $hoursXRate     = number_format($hours, 1) . ' x $' . number_format($rate, 2);
-            $distanceXRate  = 0.0 . ' x $' . number_format($per_km_price, 2);
+    $per_km_price = $priceDetail?->per_km ?? 0;
+    $distanceXRate = 0.0 . ' x $' . number_format($per_km_price, 2);
 
-            // -------------------------------------------------
-            // 🧾 Billing Report
-            // -------------------------------------------------
-            $billingRecordForClient = BillingReport::create([
-                'date'            => $shiftDate->toDateString(), // ✅ FIXED
-                'shift_id'        => $newShift->id,
-                'staff'           => data_get($data, 'carer_section.user_id'),
-                'start_time'      => $shiftStart->format('H:i'),
-                'end_time'        => $shiftEnd->format('H:i'),
-                'hours_x_rate'    => $hoursXRate,
-                'additional_cost' => 0.0,
-                'distance_x_rate' => $distanceXRate,
-                'total_cost'      => $totalCost,
-                'running_total'   => null,
-                'price_book_id'   => $priceBookId,
-                'client_id'       => data_get($data, 'client_section.client_id'),
-            ]);
+    // -------------------------------------------------
+    // 🧾 Billing Report — now supports fixed price
+    // -------------------------------------------------
+    $billingRecordForClient = BillingReport::create([
+        'date'            => $shiftDate->toDateString(),
+        'shift_id'        => $newShift->id,
+        'staff'           => data_get($data, 'carer_section.user_id'),
+        'start_time'      => $shiftStart->format('H:i'),
+        'end_time'        => $shiftEnd->format('H:i'),
+        'hours_x_rate'    => $hoursXRate,               // ← shows "Fixed: $xxx.xx" or "3.5 x $45.00"
+        'additional_cost' => 0.0,
+        'distance_x_rate' => $distanceXRate,
+        'total_cost'      => $totalCost,
+        'running_total'   => null,
+        'price_book_id'   => $priceBookId,
+        'client_id'       => data_get($data, 'client_section.client_id'),
+    ]);
 
             // -------------------------------------------------
             // 🧑‍⚕️ Timesheet Report

@@ -1580,6 +1580,7 @@ public function createShift()
 if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
 
     // ✅ FIX: same correct shift date
+       // ✅ FIX: same correct shift date
     $shiftDate = Carbon::parse($newShift->time_and_location['start_date']);
 
     foreach ($newShift->client_section['client_details'] as $clientDetail) {
@@ -1601,6 +1602,8 @@ if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
             'Sunday'   => 'Sunday',
             default    => 'Weekdays - I',
         };
+
+        $fetchPriceBook = PriceBook::where('id', $priceBookId)->first();
 
         $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
             ->where('day_of_week', $dayType)
@@ -1627,10 +1630,23 @@ if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
             ->orderBy('start_time')
             ->first();
 
-        $rate         = $priceDetail?->per_hour ?? 0;
+        // ────────────────────────────────────────────────
+        //          FIXED PRICE vs HOURLY LOGIC
+        // ────────────────────────────────────────────────
+        $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
         $per_km_price = $priceDetail?->per_km ?? 0;
+        $distanceXRate = '0.0 x $' . number_format($per_km_price, 2);
 
-        $totalCost = $hours * $rate;
+        if ($isFixedPrice) {
+            $baseCost   = $priceDetail->per_hour ?? 0;   // here per_hour actually stores the fixed amount
+            $hoursXRate = 'Fixed: $' . number_format($baseCost, 2);
+            $totalCost  = $baseCost;                     // base cost only (mileage/expense added later on approve)
+        } else {
+            $rate       = $priceDetail?->per_hour ?? 0;
+            $baseCost   = $hours * $rate;
+            $hoursXRate = number_format($hours, 1) . ' x $' . number_format($rate, 2);
+            $totalCost  = $baseCost;
+        }
 
         BillingReport::create([
             'date'            => $shiftDate->toDateString(),
@@ -1638,9 +1654,9 @@ if (($newShift->add_to_job_board == 0) && ($newShift->is_vacant == 0)) {
             'staff'           => implode(',', $newShift->carer_section['user_id'] ?? []),
             'start_time'      => $shiftStart->format('H:i'),
             'end_time'        => $shiftEnd->format('H:i'),
-            'hours_x_rate'    => number_format($hours, 1) . ' x $' . number_format($rate, 2),
+            'hours_x_rate'    => $hoursXRate,               // ← shows "Fixed: $xxx.xx" or "3.5 x $45.00"
             'additional_cost' => $newShift->shift_section['additional_cost'] ?? 0.0,
-            'distance_x_rate' => 0.0 . ' x $' . number_format($per_km_price, 2),
+            'distance_x_rate' => $distanceXRate,
             'total_cost'      => $totalCost,
             'running_total'   => null,
             'price_book_id'   => $priceBookId,

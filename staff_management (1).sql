@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 07, 2026 at 03:35 PM
+-- Generation Time: Feb 05, 2026 at 03:35 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -104,6 +104,20 @@ CREATE TABLE `approved_shifts` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `approved_shifts`
+--
+
+INSERT INTO `approved_shifts` (`id`, `shift_id`, `allowance`, `mileage`, `expense`, `created_at`, `updated_at`) VALUES
+(35, 196, '', '0', '0', '2026-02-03 04:05:58', '2026-02-03 04:05:58'),
+(36, 197, '', '0', '0', '2026-02-03 04:06:24', '2026-02-03 04:06:24'),
+(37, 182, '', '0', '0', '2026-02-03 04:19:00', '2026-02-03 04:19:00'),
+(38, 185, '', '0', '0', '2026-02-03 05:07:25', '2026-02-03 05:07:25'),
+(39, 198, '', '0', '0', '2026-02-04 03:50:50', '2026-02-04 03:50:50'),
+(40, 199, '', '0', '0', '2026-02-04 03:51:16', '2026-02-04 03:51:16'),
+(42, 203, '', '0', '0', '2026-02-05 06:24:11', '2026-02-05 06:24:11'),
+(43, 205, '', '0', '0', '2026-02-05 06:26:09', '2026-02-05 06:26:09');
+
 -- --------------------------------------------------------
 
 --
@@ -136,6 +150,44 @@ CREATE TABLE `billing_reports` (
   `comment` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `billing_reports`
+--
+
+INSERT INTO `billing_reports` (`id`, `date`, `shift_id`, `staff`, `start_time`, `end_time`, `hours_x_rate`, `additional_cost`, `distance_x_rate`, `total_cost`, `running_total`, `status`, `price_book_id`, `fund`, `mileage`, `expense`, `is_absent`, `is_remove`, `update_shift_time`, `created_at`, `updated_at`, `client_id`, `comment`) VALUES
+(164, '2026-01-21', 181, '27', '22:00:00', '04:00:00', '6.0 x $85.27', 0.00, '0 x $1.00', 511.62, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 02:27:30', '2026-01-19 05:01:42', 1, NULL),
+(165, '2026-01-22', 182, '27', '14:00:00', '16:00:00', '2.0 x $75.98', 0.00, '0 x $1.00', 151.96, NULL, 'Unpaid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-01-19 02:28:20', '2026-02-03 04:19:00', 1, NULL),
+(166, '2026-01-23', 183, '27', '14:00:00', '16:00:00', '2.0 x $75.98', 0.00, '0 x $1.00', 151.96, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 02:28:20', '2026-01-19 02:28:20', 1, NULL),
+(167, '2026-01-21', 184, '27', '03:00:00', '04:00:00', '1.0 x $85.27', 0.00, '0 x $1.00', 85.27, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 02:29:00', '2026-01-19 02:29:59', 1, NULL),
+(170, '2026-02-19', 186, '28', '02:00:00', '04:00:00', '2.0 x $85.27', 0.00, '0 x $1.00', 170.54, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 04:24:29', '2026-01-19 04:24:29', 2, NULL),
+(181, '2026-01-22', 185, '65', '14:00:00', '15:00:00', '1.0 x $75.98', 0.00, '0 x $1.00', 75.98, NULL, 'Unpaid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-01-19 05:29:46', '2026-02-03 05:07:25', 8, NULL),
+(182, '2026-01-22', 185, '65', '15:00:00', '16:00:00', '1.0 x $75.98', 0.00, '0 x $1.00', 75.98, NULL, 'Unpaid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-01-19 05:29:46', '2026-02-03 05:07:26', 8, NULL),
+(193, '2026-02-02', 187, '28', '14:00:00', '16:00:00', '2.0 x $75.98', 0.00, '0 x $1.00', 151.96, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 08:35:00', '2026-02-02 05:34:09', 1, NULL),
+(199, '2026-01-22', 185, '65', '02:00:00', '02:40:00', '0.7 x $85.27', 0.00, '0 x $1.00', 59.69, NULL, 'Unpaid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-01-19 08:44:08', '2026-02-03 05:07:26', 1, NULL),
+(200, '2026-01-22', 185, '65', '02:40:00', '03:20:00', '0.7 x $85.27', 0.00, '0 x $1.00', 59.69, NULL, 'Unpaid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-01-19 08:44:08', '2026-02-03 05:07:26', 1, NULL),
+(201, '2026-01-22', 185, '65', '03:20:00', '04:00:00', '0.7 x $85.27', 0.00, '0 x $1.00', 59.69, NULL, 'Unpaid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-01-19 08:44:08', '2026-02-03 05:07:26', 1, NULL),
+(205, '2026-01-20', 188, '66', '02:00:00', '15:00:00', '13.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 09:11:18', '2026-01-19 09:11:39', 2, NULL),
+(206, '2026-01-20', 188, '66', '15:00:00', '04:00:00', '13.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 09:11:18', '2026-01-19 09:11:39', 2, NULL),
+(207, '2026-01-19', 189, '1', '02:00:00', '03:00:00', '1.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 09:19:01', '2026-01-19 09:22:08', 1, NULL),
+(208, '2026-01-19', 189, '1', '03:00:00', '04:00:00', '1.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 09:19:01', '2026-01-19 09:22:08', 1, NULL),
+(209, '2026-01-19', 189, '1', '01:00:00', '03:00:00', '2.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 09:19:01', '2026-01-19 09:22:08', 3, NULL),
+(210, '2026-01-19', 189, '1', '03:00:00', '05:00:00', '2.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 09:19:01', '2026-01-19 09:22:08', 3, NULL),
+(211, '2026-01-31', 193, '27', '02:00:00', '03:30:00', '1.5 x $106.93', 0.00, '0 x $1.00', 160.40, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 10:12:09', '2026-01-19 10:13:37', 4, NULL),
+(212, '2026-01-31', 193, '27', '03:30:00', '05:00:00', '1.5 x $106.93', 0.00, '0 x $1.00', 160.40, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-01-19 10:12:09', '2026-01-19 10:13:37', 4, NULL),
+(213, '2026-01-22', 194, '22', '14:00:00', '16:00:00', '2.0 x $75.98', 0.00, '0 x $1.00', 151.96, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-02-02 05:16:34', '2026-02-02 05:16:34', 3, NULL),
+(214, '2026-01-22', 195, '27', '17:00:00', '18:00:00', '1.0 x $85.27', 0.00, '0 x $0.00', 85.27, NULL, 'Unpaid', 11, NULL, NULL, NULL, 0, 0, 0, '2026-02-02 05:17:22', '2026-02-02 05:36:29', 1, NULL),
+(215, '2026-02-03', 196, '27', '02:00:00', '04:00:00', '2.0 x $85.27', 0.00, '0 x $1.00', 170.54, NULL, 'Paid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-02-03 03:58:58', '2026-02-03 04:13:49', 1, NULL),
+(216, '2026-02-04', 197, '27', '02:00:00', '04:00:00', '2.0 x $0.00', 0.00, '0 x $1.00', 0.00, NULL, 'Paid', NULL, NULL, 0.00, 0.00, 0, 0, 0, '2026-02-03 04:00:11', '2026-02-03 04:13:49', 1, NULL),
+(217, '2026-02-05', 198, '27', '02:00:00', '04:00:00', '2.0 x $0.00', 0.00, '0 x $1.00', 0.00, NULL, 'Paid', NULL, NULL, 0.00, 0.00, 0, 0, 0, '2026-02-03 04:00:13', '2026-02-04 03:53:18', 1, NULL),
+(218, '2026-02-06', 199, '27', '02:00:00', '04:00:00', '2.0 x $0.00', 0.00, '0 x $1.00', 0.00, NULL, 'Paid', NULL, NULL, 0.00, 0.00, 0, 0, 0, '2026-02-03 04:00:13', '2026-02-04 03:53:18', 1, NULL),
+(219, '2026-02-07', 200, '27', '02:00:00', '04:00:00', '2.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-02-03 04:00:15', '2026-02-03 04:00:15', 1, NULL),
+(220, '2026-02-08', 201, '27', '02:00:00', '04:00:00', '2.0 x $0.00', 0.00, '0 x $0.00', 0.00, NULL, 'Unpaid', NULL, NULL, NULL, NULL, 0, 0, 0, '2026-02-03 04:00:16', '2026-02-03 04:00:16', 1, NULL),
+(221, '2026-02-06', 202, '71', '02:00:00', '05:00:00', '3.0 x $200.00', 0.00, '0 x $1.00', 600.00, NULL, 'Unpaid', 12, NULL, NULL, NULL, 0, 0, 0, '2026-02-05 03:48:51', '2026-02-05 03:48:51', 1, NULL),
+(222, '2026-02-05', 203, '64', '07:00:00', '10:00:00', 'Fixed: $210.00', 0.00, '0.0 x $1.00', 0.00, NULL, 'Unpaid', 12, NULL, NULL, NULL, 0, 0, 0, '2026-02-05 05:29:21', '2026-02-05 06:23:55', 2, NULL),
+(224, '2026-02-05', 205, '64', '20:00:00', '22:00:00', '2.0 x $83.72', 0.00, '0 x $1.00', 167.44, NULL, 'Unpaid', 9, NULL, 0.00, 0.00, 0, 0, 0, '2026-02-05 05:38:06', '2026-02-05 06:26:09', 2, NULL),
+(229, '2026-02-05', 206, '65', '02:00:00', '05:00:00', '3.0 x $85.27', 0.00, '0 x $1.00', 255.81, NULL, 'Unpaid', 9, NULL, NULL, NULL, 0, 0, 0, '2026-02-05 07:11:58', '2026-02-05 07:11:58', 1, NULL),
+(230, '2026-02-05', 206, '65', '02:00:00', '05:00:00', 'Fixed: $200.00', 0.00, '0 x $1.00', 200.00, NULL, 'Unpaid', 12, NULL, NULL, NULL, 0, 0, 0, '2026-02-05 07:11:58', '2026-02-05 07:11:58', 2, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -153,14 +205,14 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-356a192b7913b04c54574d18c28d46e6395428ab', 'i:1;', 1767796092),
-('laravel-cache-356a192b7913b04c54574d18c28d46e6395428ab:timer', 'i:1767796092;', 1767796092),
+('laravel-cache-356a192b7913b04c54574d18c28d46e6395428ab', 'i:1;', 1770103544),
+('laravel-cache-356a192b7913b04c54574d18c28d46e6395428ab:timer', 'i:1770103544;', 1770103544),
 ('laravel-cache-filament-clear-cache', 'i:0;', 2082625872),
-('laravel-cache-livewire-rate-limiter:a17961fa74e9275d529f489537f179c05d50c2f3', 'i:1;', 1767795747),
-('laravel-cache-livewire-rate-limiter:a17961fa74e9275d529f489537f179c05d50c2f3:timer', 'i:1767795747;', 1767795747),
-('laravel-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:4:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";s:1:\"r\";s:5:\"roles\";}s:11:\"permissions\";a:42:{i:0;a:4:{s:1:\"a\";i:5;s:1:\"b\";s:18:\"admin-panel-access\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;i:4;i:6;i:5;i:7;i:6;i:9;i:7;i:10;}}i:1;a:4:{s:1:\"a\";i:6;s:1:\"b\";s:12:\"roles-access\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:10;}}i:2;a:4:{s:1:\"a\";i:7;s:1:\"b\";s:18:\"permissions-access\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:10;}}i:3;a:4:{s:1:\"a\";i:9;s:1:\"b\";s:14:\"all-schedulers\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:4;a:4:{s:1:\"a\";i:10;s:1:\"b\";s:13:\"my-schedulers\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:8;}}i:5;a:4:{s:1:\"a\";i:11;s:1:\"b\";s:17:\"manage-schedulers\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:8;}}i:6;a:4:{s:1:\"a\";i:12;s:1:\"b\";s:13:\"manage-staffs\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:7;a:4:{s:1:\"a\";i:13;s:1:\"b\";s:17:\"can-create-staffs\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:8;a:4:{s:1:\"a\";i:14;s:1:\"b\";s:12:\"manage-teams\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:9;a:4:{s:1:\"a\";i:15;s:1:\"b\";s:16:\"can-create-teams\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:10;a:4:{s:1:\"a\";i:16;s:1:\"b\";s:21:\"manage-archive-staffs\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:11;a:4:{s:1:\"a\";i:17;s:1:\"b\";s:19:\"see-staff-documents\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:12;a:4:{s:1:\"a\";i:18;s:1:\"b\";s:26:\"see-staff-expire-documents\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:13;a:4:{s:1:\"a\";i:19;s:1:\"b\";s:14:\"manage-clients\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:14;a:4:{s:1:\"a\";i:20;s:1:\"b\";s:18:\"can-create-clients\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:15;a:4:{s:1:\"a\";i:21;s:1:\"b\";s:22:\"manage-archive-clients\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:16;a:4:{s:1:\"a\";i:22;s:1:\"b\";s:27:\"see-client-expire-documents\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:17;a:4:{s:1:\"a\";i:23;s:1:\"b\";s:17:\"manage-timesheets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:18;a:4:{s:1:\"a\";i:24;s:1:\"b\";s:15:\"manage-invoices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:19;a:4:{s:1:\"a\";i:25;s:1:\"b\";s:20:\"manage-void-invoices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:20;a:4:{s:1:\"a\";i:26;s:1:\"b\";s:17:\"generate-invoices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:21;a:4:{s:1:\"a\";i:27;s:1:\"b\";s:14:\"see-activities\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:22;a:4:{s:1:\"a\";i:28;s:1:\"b\";s:12:\"see-billings\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:23;a:4:{s:1:\"a\";i:29;s:1:\"b\";s:16:\"see-performances\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:24;a:4:{s:1:\"a\";i:30;s:1:\"b\";s:21:\"see-execption-reports\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:25;a:4:{s:1:\"a\";i:32;s:1:\"b\";s:16:\"see-competencies\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:26;a:4:{s:1:\"a\";i:33;s:1:\"b\";s:15:\"see-compliances\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:27;a:4:{s:1:\"a\";i:34;s:1:\"b\";s:18:\"see-qualifications\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:28;a:4:{s:1:\"a\";i:35;s:1:\"b\";s:20:\"manage-event-summary\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:29;a:4:{s:1:\"a\";i:36;s:1:\"b\";s:20:\"manage-event-details\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:30;a:4:{s:1:\"a\";i:37;s:1:\"b\";s:7:\"see-kpi\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:31;a:4:{s:1:\"a\";i:38;s:1:\"b\";s:15:\"manage-settings\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:32;a:4:{s:1:\"a\";i:39;s:1:\"b\";s:23:\"manage-invoice-settings\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:33;a:4:{s:1:\"a\";i:40;s:1:\"b\";s:18:\"manage-price-items\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:34;a:4:{s:1:\"a\";i:41;s:1:\"b\";s:13:\"manage-prices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:35;a:4:{s:1:\"a\";i:42;s:1:\"b\";s:17:\"manage-pay-groups\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:36;a:4:{s:1:\"a\";i:43;s:1:\"b\";s:17:\"manage-allowances\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:37;a:4:{s:1:\"a\";i:44;s:1:\"b\";s:20:\"manage-media-manager\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:38;a:4:{s:1:\"a\";i:45;s:1:\"b\";s:22:\"manage-profile-setting\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:39;a:4:{s:1:\"a\";i:46;s:1:\"b\";s:13:\"my-timesheets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:40;a:4:{s:1:\"a\";i:47;s:1:\"b\";s:14:\"all-timesheets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:41;a:4:{s:1:\"a\";i:48;s:1:\"b\";s:23:\"admin-dashboard-widgets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}}s:5:\"roles\";a:9:{i:0;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:5:\"Admin\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:11:\"Coordinator\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:2:\"HR\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:5;s:1:\"b\";s:14:\"Office Support\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:3:\"Ops\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:5:\"Kiosk\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:9;s:1:\"b\";s:5:\"Other\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:10;s:1:\"b\";s:10:\"superadmin\";s:1:\"c\";s:3:\"web\";}i:8;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:5:\"Staff\";s:1:\"c\";s:3:\"web\";}}}', 1767882088),
-('laravel-cache-user:1:company_id', 'i:5;', 1767796296),
-('laravel-cache-user:1:company:min', 'a:4:{s:2:\"id\";i:5;s:4:\"name\";s:16:\"My Admin Company\";s:13:\"is_subscribed\";i:1;s:20:\"subscription_plan_id\";i:2;}', 1767796338);
+('laravel-cache-livewire-rate-limiter:a17961fa74e9275d529f489537f179c05d50c2f3', 'i:1;', 1770276205),
+('laravel-cache-livewire-rate-limiter:a17961fa74e9275d529f489537f179c05d50c2f3:timer', 'i:1770276205;', 1770276205),
+('laravel-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:4:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";s:1:\"r\";s:5:\"roles\";}s:11:\"permissions\";a:42:{i:0;a:4:{s:1:\"a\";i:5;s:1:\"b\";s:18:\"admin-panel-access\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;i:4;i:6;i:5;i:7;i:6;i:9;i:7;i:10;}}i:1;a:4:{s:1:\"a\";i:6;s:1:\"b\";s:12:\"roles-access\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:10;}}i:2;a:4:{s:1:\"a\";i:7;s:1:\"b\";s:18:\"permissions-access\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:10;}}i:3;a:4:{s:1:\"a\";i:9;s:1:\"b\";s:14:\"all-schedulers\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:4;a:4:{s:1:\"a\";i:10;s:1:\"b\";s:13:\"my-schedulers\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:8;}}i:5;a:4:{s:1:\"a\";i:11;s:1:\"b\";s:17:\"manage-schedulers\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:8;}}i:6;a:4:{s:1:\"a\";i:12;s:1:\"b\";s:13:\"manage-staffs\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:7;a:4:{s:1:\"a\";i:13;s:1:\"b\";s:17:\"can-create-staffs\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:8;a:4:{s:1:\"a\";i:14;s:1:\"b\";s:12:\"manage-teams\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:9;a:4:{s:1:\"a\";i:15;s:1:\"b\";s:16:\"can-create-teams\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:10;a:4:{s:1:\"a\";i:16;s:1:\"b\";s:21:\"manage-archive-staffs\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:11;a:4:{s:1:\"a\";i:17;s:1:\"b\";s:19:\"see-staff-documents\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:12;a:4:{s:1:\"a\";i:18;s:1:\"b\";s:26:\"see-staff-expire-documents\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:13;a:4:{s:1:\"a\";i:19;s:1:\"b\";s:14:\"manage-clients\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:14;a:4:{s:1:\"a\";i:20;s:1:\"b\";s:18:\"can-create-clients\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:15;a:4:{s:1:\"a\";i:21;s:1:\"b\";s:22:\"manage-archive-clients\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:16;a:4:{s:1:\"a\";i:22;s:1:\"b\";s:27:\"see-client-expire-documents\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:17;a:4:{s:1:\"a\";i:23;s:1:\"b\";s:17:\"manage-timesheets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:18;a:4:{s:1:\"a\";i:24;s:1:\"b\";s:15:\"manage-invoices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:19;a:4:{s:1:\"a\";i:25;s:1:\"b\";s:20:\"manage-void-invoices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:20;a:4:{s:1:\"a\";i:26;s:1:\"b\";s:17:\"generate-invoices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:21;a:4:{s:1:\"a\";i:27;s:1:\"b\";s:14:\"see-activities\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:22;a:4:{s:1:\"a\";i:28;s:1:\"b\";s:12:\"see-billings\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:23;a:4:{s:1:\"a\";i:29;s:1:\"b\";s:16:\"see-performances\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:24;a:4:{s:1:\"a\";i:30;s:1:\"b\";s:21:\"see-execption-reports\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:25;a:4:{s:1:\"a\";i:32;s:1:\"b\";s:16:\"see-competencies\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:26;a:4:{s:1:\"a\";i:33;s:1:\"b\";s:15:\"see-compliances\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:27;a:4:{s:1:\"a\";i:34;s:1:\"b\";s:18:\"see-qualifications\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:28;a:4:{s:1:\"a\";i:35;s:1:\"b\";s:20:\"manage-event-summary\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:29;a:4:{s:1:\"a\";i:36;s:1:\"b\";s:20:\"manage-event-details\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:30;a:4:{s:1:\"a\";i:37;s:1:\"b\";s:7:\"see-kpi\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:31;a:4:{s:1:\"a\";i:38;s:1:\"b\";s:15:\"manage-settings\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:32;a:4:{s:1:\"a\";i:39;s:1:\"b\";s:23:\"manage-invoice-settings\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:33;a:4:{s:1:\"a\";i:40;s:1:\"b\";s:18:\"manage-price-items\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:34;a:4:{s:1:\"a\";i:41;s:1:\"b\";s:13:\"manage-prices\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:35;a:4:{s:1:\"a\";i:42;s:1:\"b\";s:17:\"manage-pay-groups\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:36;a:4:{s:1:\"a\";i:43;s:1:\"b\";s:17:\"manage-allowances\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:37;a:4:{s:1:\"a\";i:44;s:1:\"b\";s:20:\"manage-media-manager\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:38;a:4:{s:1:\"a\";i:45;s:1:\"b\";s:22:\"manage-profile-setting\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:39;a:4:{s:1:\"a\";i:46;s:1:\"b\";s:13:\"my-timesheets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:40;a:4:{s:1:\"a\";i:47;s:1:\"b\";s:14:\"all-timesheets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}i:41;a:4:{s:1:\"a\";i:48;s:1:\"b\";s:23:\"admin-dashboard-widgets\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:2;}}}s:5:\"roles\";a:9:{i:0;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:5:\"Admin\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:11:\"Coordinator\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:2:\"HR\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:5;s:1:\"b\";s:14:\"Office Support\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:3:\"Ops\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:5:\"Kiosk\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:9;s:1:\"b\";s:5:\"Other\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:10;s:1:\"b\";s:10:\"superadmin\";s:1:\"c\";s:3:\"web\";}i:8;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:5:\"Staff\";s:1:\"c\";s:3:\"web\";}}}', 1770362549),
+('laravel-cache-user:1:company_id', 'i:5;', 1770287826),
+('laravel-cache-user:1:company:min', 'a:4:{s:2:\"id\";i:5;s:4:\"name\";s:16:\"My Admin Company\";s:13:\"is_subscribed\";i:1;s:20:\"subscription_plan_id\";i:2;}', 1770301842);
 
 -- --------------------------------------------------------
 
@@ -534,7 +586,64 @@ INSERT INTO `events` (`id`, `shift_id`, `title`, `from`, `body`, `status`, `crea
 (201, NULL, 'Mr Admin Updated Invoice', 'Invoice', 'Invoice details and description updated', 1, '2025-11-28 07:34:14', '2025-11-28 07:34:14', NULL, 68, NULL),
 (202, NULL, 'Mr Admin Updated Invoice', 'Invoice', 'Invoice details and description updated', 1, '2025-11-28 07:35:25', '2025-11-28 07:35:25', NULL, 68, NULL),
 (203, NULL, 'Mr Admin Updated Invoice', 'Invoice', 'Invoice details and description updated', 1, '2025-11-28 07:35:57', '2025-11-28 07:35:57', NULL, 68, NULL),
-(205, NULL, 'Mr Admin Updated Invoice', 'Invoice', 'Invoice details and description updated', 1, '2025-11-28 07:43:52', '2025-11-28 07:43:52', NULL, 82, NULL);
+(205, NULL, 'Mr Admin Updated Invoice', 'Invoice', 'Invoice details and description updated', 1, '2025-11-28 07:43:52', '2025-11-28 07:43:52', NULL, 82, NULL),
+(286, 181, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-01-19 02:27:30', '2026-01-19 02:27:30', NULL, NULL, NULL),
+(287, 182, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-01-19 02:28:20', '2026-01-19 02:28:20', NULL, NULL, NULL),
+(288, 183, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-01-19 02:28:20', '2026-01-19 02:28:20', NULL, NULL, NULL),
+(289, 184, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-01-19 02:29:00', '2026-01-19 02:29:00', NULL, NULL, NULL),
+(290, 186, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-01-19 04:24:30', '2026-01-19 04:24:30', NULL, NULL, NULL),
+(291, 185, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 04:36:38', '2026-01-19 04:36:38', NULL, NULL, NULL),
+(292, 181, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 05:01:42', '2026-01-19 05:01:42', NULL, NULL, NULL),
+(293, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 05:14:49', '2026-01-19 05:14:49', NULL, NULL, NULL),
+(294, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 05:15:19', '2026-01-19 05:15:19', NULL, NULL, NULL),
+(295, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 05:27:37', '2026-01-19 05:27:37', NULL, NULL, NULL),
+(296, 185, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 05:28:41', '2026-01-19 05:28:41', NULL, NULL, NULL),
+(297, 185, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 05:29:23', '2026-01-19 05:29:23', NULL, NULL, NULL),
+(298, 185, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 05:29:46', '2026-01-19 05:29:46', NULL, NULL, NULL),
+(299, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 06:29:26', '2026-01-19 06:29:26', NULL, NULL, NULL),
+(300, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 06:30:17', '2026-01-19 06:30:17', NULL, NULL, NULL),
+(301, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 06:46:17', '2026-01-19 06:46:17', NULL, NULL, NULL),
+(302, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 06:46:46', '2026-01-19 06:46:46', NULL, NULL, NULL),
+(303, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 07:50:07', '2026-01-19 07:50:07', NULL, NULL, NULL),
+(304, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 07:50:28', '2026-01-19 07:50:28', NULL, NULL, NULL),
+(305, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 08:35:00', '2026-01-19 08:35:00', NULL, NULL, NULL),
+(306, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 08:35:30', '2026-01-19 08:35:30', NULL, NULL, NULL),
+(307, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 08:40:42', '2026-01-19 08:40:42', NULL, NULL, NULL),
+(308, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 08:43:03', '2026-01-19 08:43:03', NULL, NULL, NULL),
+(309, 185, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 08:44:08', '2026-01-19 08:44:08', NULL, NULL, NULL),
+(310, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 09:10:37', '2026-01-19 09:10:37', NULL, NULL, NULL),
+(311, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 09:11:18', '2026-01-19 09:11:18', NULL, NULL, NULL),
+(312, 188, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 09:11:39', '2026-01-19 09:11:39', NULL, NULL, NULL),
+(313, 189, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 09:22:08', '2026-01-19 09:22:08', NULL, NULL, NULL),
+(314, 185, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 10:11:07', '2026-01-19 10:11:07', NULL, NULL, NULL),
+(315, 193, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-01-19 10:13:37', '2026-01-19 10:13:37', NULL, NULL, NULL),
+(316, 194, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-02 05:16:35', '2026-02-02 05:16:35', NULL, NULL, NULL),
+(317, 195, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-02 05:17:22', '2026-02-02 05:17:22', NULL, NULL, NULL),
+(318, 195, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-02-02 05:31:07', '2026-02-02 05:31:07', NULL, NULL, NULL),
+(319, 187, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-02-02 05:34:09', '2026-02-02 05:34:09', NULL, NULL, NULL),
+(320, 196, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-03 03:58:58', '2026-02-03 03:58:58', NULL, NULL, NULL),
+(321, 197, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-03 04:00:12', '2026-02-03 04:00:12', NULL, NULL, NULL),
+(322, 198, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-03 04:00:13', '2026-02-03 04:00:13', NULL, NULL, NULL),
+(323, 199, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-03 04:00:15', '2026-02-03 04:00:15', NULL, NULL, NULL),
+(324, 200, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-03 04:00:16', '2026-02-03 04:00:16', NULL, NULL, NULL),
+(325, 201, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-03 04:00:17', '2026-02-03 04:00:17', NULL, NULL, NULL),
+(326, 196, 'Mr Admin approved timesheet', 'Approved', 'Scheduled time approved for: Mr Admin. Mileage: 0 km. Expense: $0. Allowance: . Comment:', 1, '2026-02-03 04:05:59', '2026-02-03 04:05:59', NULL, NULL, NULL),
+(327, 197, 'Mr Admin approved timesheet', 'Approved', 'Scheduled time approved for: Mr Admin. Mileage: 0 km. Expense: $0. Allowance: . Comment:', 1, '2026-02-03 04:06:25', '2026-02-03 04:06:25', NULL, NULL, NULL),
+(328, NULL, 'Mr Admin Created Invoice', 'Invoice', 'Invoice created', 1, '2026-02-03 04:13:49', '2026-02-03 04:13:49', NULL, 83, NULL),
+(329, 182, 'Mr Admin approved timesheet', 'Approved', 'Scheduled time approved for: Mr Admin. Mileage: 0 km. Expense: $0. Allowance: . Comment:', 1, '2026-02-03 04:19:00', '2026-02-03 04:19:00', NULL, NULL, NULL),
+(330, 185, 'Mr Admin approved timesheet', 'Approved', 'Scheduled time approved for: Mr Admin. Mileage: 0 km. Expense: $0. Allowance: . Comment:', 1, '2026-02-03 05:07:26', '2026-02-03 05:07:26', NULL, NULL, NULL),
+(331, 198, 'Mr Admin approved timesheet', 'Approved', 'Scheduled time approved for: Mr Admin. Mileage: 0 km. Expense: $0. Allowance: . Comment:', 1, '2026-02-04 03:50:50', '2026-02-04 03:50:50', NULL, NULL, NULL),
+(332, 199, 'Mr Admin approved timesheet', 'Approved', 'Scheduled time approved for: Mr Admin. Mileage: 0 km. Expense: $0. Allowance: . Comment:', 1, '2026-02-04 03:51:16', '2026-02-04 03:51:16', NULL, NULL, NULL),
+(333, NULL, 'Mr Admin Created Invoice', 'Invoice', 'Invoice created', 1, '2026-02-04 03:53:19', '2026-02-04 03:53:19', NULL, 84, NULL),
+(334, 202, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-05 03:48:51', '2026-02-05 03:48:51', NULL, NULL, NULL),
+(335, 203, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-05 05:29:21', '2026-02-05 05:29:21', NULL, NULL, NULL),
+(337, 205, 'Mr Admin Created Shift', 'Create', 'Shift created', 1, '2026-02-05 05:38:06', '2026-02-05 05:38:06', NULL, NULL, NULL),
+(338, 205, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-02-05 05:58:22', '2026-02-05 05:58:22', NULL, NULL, NULL),
+(339, 205, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-02-05 05:58:51', '2026-02-05 05:58:51', NULL, NULL, NULL),
+(340, 203, 'Mr Admin unapproved timesheet', 'Unapproved', 'Timesheet verification cancelled for: Mr Admin. Comment:', 1, '2026-02-05 06:23:55', '2026-02-05 06:23:55', NULL, NULL, NULL),
+(341, 205, 'Mr Admin approved timesheet', 'Approved', 'Scheduled time approved for: Mr Admin. Mileage: 0 km. Expense: $0. Allowance: . Comment:', 1, '2026-02-05 06:26:09', '2026-02-05 06:26:09', NULL, NULL, NULL),
+(342, 206, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-02-05 07:10:14', '2026-02-05 07:10:14', NULL, NULL, NULL),
+(343, 206, 'Mr Admin Updated Shift', 'Update', 'Shift updated', 1, '2026-02-05 07:11:58', '2026-02-05 07:11:58', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2650,7 +2759,9 @@ CREATE TABLE `invoices` (
 
 INSERT INTO `invoices` (`id`, `invoice_sequence`, `company_id`, `client_id`, `additional_contact_id`, `billing_reports_ids`, `invoice_no`, `purchase_order`, `issue_date`, `payment_due`, `NDIS`, `ref_no`, `status`, `amount`, `tax`, `balance`, `created_at`, `updated_at`, `is_void`, `send_mail`, `description`) VALUES
 (68, 1, 5, 1, NULL, '\"[\\\"38\\\"]\"', '0000001', NULL, '2025-11-20', '2025-12-04', '697661313', '697661313', 'Unpaid/Overdue', 115.27, 11.53, 76.80, '2025-11-20 09:21:15', '2025-11-28 07:35:57', 0, 0, '{\"hour_shift\":{\"38\":\"Maile Koch (25\\/11\\/2025 03:00 pm - 06:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_400_0104_1_1]\"},\"km_shift\":{\"38\":\"Maile Koch (25\\/11\\/2025 03:00 pm - 06:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_799_0104_1_1]\"}}'),
-(82, 2, 5, 7, NULL, '[68,69]', '0000002', '2353176246', '2025-11-28', '2025-12-14', '983525676', '2796209854', 'Unpaid/Overdue', 686.54, 0.00, 686.54, '2025-11-28 04:01:20', '2025-11-28 07:43:52', 0, 0, '{\"hour_shift\":{\"68\":\"Clark Moreno Potts (25\\/11\\/2025 03:00 pm - 06:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_400_0104_1_1]\",\"69\":\"Clark Moreno Potts (27\\/11\\/2025 06:00 pm - 11:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_401_0104_1_1]\"},\"km_shift\":{\"68\":\"Clark Moreno Potts (25\\/11\\/2025 03:00 pm - 06:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_799_0104_1_1]\",\"69\":\"Clark Moreno Potts (27\\/11\\/2025 06:00 pm - 11:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_799_0104_1_1]\"}}');
+(82, 2, 5, 7, NULL, '[68,69]', '0000002', '2353176246', '2025-11-28', '2025-12-14', '983525676', '2796209854', 'Unpaid/Overdue', 686.54, 0.00, 686.54, '2025-11-28 04:01:20', '2025-11-28 07:43:52', 0, 0, '{\"hour_shift\":{\"68\":\"Clark Moreno Potts (25\\/11\\/2025 03:00 pm - 06:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_400_0104_1_1]\",\"69\":\"Clark Moreno Potts (27\\/11\\/2025 06:00 pm - 11:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_401_0104_1_1]\"},\"km_shift\":{\"68\":\"Clark Moreno Potts (25\\/11\\/2025 03:00 pm - 06:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_799_0104_1_1]\",\"69\":\"Clark Moreno Potts (27\\/11\\/2025 06:00 pm - 11:00 pm) [01 Assistance With Self Care Activities High Intensity] [01_799_0104_1_1]\"}}'),
+(83, 3, 5, 1, NULL, '[215,216]', '0000003', NULL, '2026-02-03', '2026-02-17', '956055541', '956055541', 'Unpaid/Overdue', 170.54, 0.00, 170.54, '2026-02-03 04:13:49', '2026-02-03 04:13:49', 0, 0, '{\"hour_shift\":{\"215\":\"Maile Koch (03\\/02\\/2026 02:00 am - 04:00 am) [01 Assistance With Self Care Activities High Intensity] [01_405_0104_1_1]\"},\"km_shift\":{\"215\":\"Maile Koch (03\\/02\\/2026 02:00 am - 04:00 am) [01 Assistance With Self Care Activities High Intensity] [01_799_0104_1_1]\"}}'),
+(84, 4, 5, 1, NULL, '[217,218]', '0000004', NULL, '2026-02-04', '2026-02-18', '668104865', '668104865', 'Unpaid/Overdue', 0.00, 0.00, 0.00, '2026-02-04 03:53:18', '2026-02-04 03:53:18', 0, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -3124,7 +3235,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (114, '2025_11_26_154013_add_column_to_invoices_table', 92),
 (115, '2025_11_27_134429_add_column_to_invoices_table', 93),
 (116, '2025_12_02_131313_remove_unique_email_from_users_table', 94),
-(117, '2025_12_30_140357_add_series_uuid_and_parent_shift_id_to_shifts_table', 95);
+(117, '2025_12_30_140357_add_series_uuid_and_parent_shift_id_to_shifts_table', 95),
+(118, '2026_02_03_add_set_password_token_to_users', 96);
 
 -- --------------------------------------------------------
 
@@ -3203,6 +3315,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (8, 'App\\Models\\User', 66),
 (8, 'App\\Models\\User', 67),
 (8, 'App\\Models\\User', 68),
+(8, 'App\\Models\\User', 69),
+(8, 'App\\Models\\User', 71),
 (10, 'App\\Models\\User', 2);
 
 -- --------------------------------------------------------
@@ -4079,10 +4193,11 @@ CREATE TABLE `price_books` (
 --
 
 INSERT INTO `price_books` (`id`, `name`, `external_id`, `xero_invoice_prefix`, `fixed_price`, `provider_travel`, `national_pricing`, `is_archive`, `status`, `created_at`, `updated_at`, `company_id`) VALUES
-(5, 'Assistance With Self Care Activities High Intensity', 'Et irure eum sint m', 'Officia magni volupt', 1, 1, 0, 'Unarchive', 'Active', '2025-08-13 21:07:19', '2025-09-22 20:35:28', 5),
+(5, 'Assistance With Self Care Activities High Intensity', 'Et irure eum sint m', 'Officia magni volupt', 0, 1, 0, 'Unarchive', 'Active', '2025-08-13 21:07:19', '2025-09-22 20:35:28', 5),
 (6, 'Access Community Social And Rec Activ Standard', 'Repudiandae sapiente', 'Lorem culpa maxime ', 0, 0, 0, 'Unarchive', 'Active', '2025-08-13 21:07:49', '2025-09-22 20:30:41', 5),
-(9, '01 Assistance With Self Care Activities High Intensity', 'Elit soluta irure o', 'Repudiandae ut repud', 1, 0, 0, 'Unarchive', 'Active', '2025-08-14 18:21:20', '2025-09-22 20:23:53', 5),
-(11, 'High Intensty Services', NULL, NULL, 0, 0, 0, 'Unarchive', 'Active', '2026-01-07 09:31:59', '2026-01-07 09:31:59', 5);
+(9, '01 Assistance With Self Care Activities High Intensity', 'Elit soluta irure o', 'Repudiandae ut repud', 0, 0, 0, 'Unarchive', 'Active', '2025-08-14 18:21:20', '2025-09-22 20:23:53', 5),
+(11, 'High Intensty Services', NULL, NULL, 0, 0, 0, 'Unarchive', 'Active', '2026-01-07 09:31:59', '2026-01-07 09:31:59', 5),
+(12, 'Sleepover', NULL, NULL, 1, 0, 0, 'Unarchive', 'Active', '2026-02-05 02:49:13', '2026-02-05 02:49:13', 5);
 
 -- --------------------------------------------------------
 
@@ -4129,7 +4244,12 @@ INSERT INTO `price_book_details` (`id`, `price_book_id`, `day_of_week`, `start_t
 (30, 5, 'Public Holidays', '00:00:00', '00:00:00', 168.81, '01_404_0104_1_1', 1.00, '01_799_0104_1_1', '2025-01-07', '2025-09-22 20:57:04', '2025-09-22 20:57:04'),
 (39, 11, 'Weekdays - I', '00:00:00', '06:00:00', 85.27, '01_405_0104_1_1', 0.00, '', '2025-12-29', '2026-01-07 09:32:50', '2026-01-07 09:32:50'),
 (40, 11, 'Weekdays - I', '06:00:00', '20:00:00', 85.27, '01_405_0104_1_1', 0.00, '', '2025-12-29', '2026-01-07 09:32:57', '2026-01-07 09:33:23'),
-(41, 11, 'Weekdays - I', '00:00:00', '06:00:00', 85.27, '01_405_0104_1_1', 0.00, '', '2025-12-29', '2026-01-07 09:33:00', '2026-01-07 09:33:00');
+(41, 11, 'Weekdays - I', '00:00:00', '06:00:00', 85.27, '01_405_0104_1_1', 0.00, '', '2025-12-29', '2026-01-07 09:33:00', '2026-01-07 09:33:00'),
+(42, 12, 'Weekdays - I', '00:00:00', '06:00:00', 200.00, '01_010_0107_1_1', 1.00, '01_010_0107_1_1', '2026-02-13', '2026-02-05 02:55:47', '2026-02-05 02:55:47'),
+(43, 12, 'Weekdays - I', '06:00:00', '20:00:00', 210.00, '01_010_0107_1_1', 1.00, '01_010_0107_1_1', '2026-02-13', '2026-02-05 02:56:15', '2026-02-05 02:56:15'),
+(44, 12, 'Weekdays - I', '20:00:00', '00:00:00', 220.00, '01_010_0107_1_1', 1.00, '01_010_0107_1_1', '2026-02-13', '2026-02-05 02:56:39', '2026-02-05 02:56:39'),
+(45, 12, 'Saturday', '00:00:00', '00:00:00', 297.60, '01_010_0107_1_1', 1.00, '01_010_0107_1_1', '2026-02-13', '2026-02-05 02:57:18', '2026-02-05 02:57:18'),
+(46, 12, 'Sunday', '00:00:00', '00:00:00', 297.60, '01_010_0107_1_1', 1.00, '01_010_0107_1_1', '2026-02-13', '2026-02-05 02:57:28', '2026-02-05 02:57:35');
 
 -- --------------------------------------------------------
 
@@ -4281,7 +4401,8 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('ZjDHM3TFEg8iLqCXBWNAsrrRZJmRcseCqxg5SMOE', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0', 'YTo3OntzOjY6Il90b2tlbiI7czo0MDoiT3FVaUlxZUVFSWZidGJYNnlGek1jOFE3SXNSSUdJZHJMVkQyb1lTeCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQxOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYWRtaW4vcHJpY2Utc2V0dGluZyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7czoxNzoicGFzc3dvcmRfaGFzaF93ZWIiO3M6NjA6IiQyeSQxMiRkY0ZwUmxITDhrejhUdWtTenliLlR1S1B4M3pZRmxTb3I1YXZSdWkzQU0yeFQ4VWJKNUpBaSI7czo4OiJmaWxhbWVudCI7YTowOnt9fQ==', 1767796532);
+('F277y7g0UuIPklQS7Smu3Kuv7eR8JLhNVEbCyQmq', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiREszWE5xaE9iYmhHc2hZWTc1eDZNWFI2TzQwc2ZjNEFET1FiSUhtViI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzM6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1770301370),
+('vLKr5AdkFUF55HjdYBRYHw9EoPSuP1X20RMfE3eG', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0', 'YTo3OntzOjY6Il90b2tlbiI7czo0MDoiUW9xSWhnYWRjYU1FQ0VJZUNZQjRoUWhLR0twaWIyS0ZTclc2VG1IVSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mzc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9zY2hlZHVsYXIiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO3M6MTc6InBhc3N3b3JkX2hhc2hfd2ViIjtzOjYwOiIkMnkkMTIkZGNGcFJsSEw4a3o4VHVrU3p5Yi5UdUtQeDN6WUZsU29yNWF2UnVpM0FNMnhUOFViSjVKQWkiO3M6ODoiZmlsYW1lbnQiO2E6MDp7fXM6MTM6InNlbGVjdGVkX2RhdGUiO3M6MTA6IjIwMjYtMDItMDUiO30=', 1770302027);
 
 -- --------------------------------------------------------
 
@@ -4310,6 +4431,34 @@ CREATE TABLE `shifts` (
   `is_cancelled` tinyint(1) NOT NULL DEFAULT 0,
   `status` enum('Job Board','Pending','Cancelled','Booked','Approved','Rejected','Invoiced') NOT NULL DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `shifts`
+--
+
+INSERT INTO `shifts` (`id`, `series_uuid`, `parent_shift_id`, `client_section`, `shift_section`, `time_and_location`, `carer_section`, `job_section`, `instruction`, `created_at`, `updated_at`, `add_to_job_board`, `company_id`, `task_section`, `is_advanced_shift`, `is_vacant`, `is_approved`, `is_cancelled`, `status`) VALUES
+(181, '93061390-7bf6-484d-a245-7c1189a5e8a9', NULL, '{\"client_id\":\"1\",\"price_book_id\":\"9\"}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[]}', '{\"start_date\":\"2026-01-21\",\"shift_finishes_next_day\":true,\"start_time\":\"22:00\",\"end_time\":\"04:00\",\"repeat\":false,\"occurs_on_weekly\":[],\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":false}', NULL, '{\"description\":null}', '2026-01-19 02:27:30', '2026-01-19 05:01:42', 0, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(182, 'bb75d39f-6c3e-446a-ada2-d18ad25b7c79', NULL, '{\"client_id\":\"1\",\"price_book_id\":\"9\",\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":null}', '{\"start_date\":\"2026-01-22\",\"shift_finishes_next_day\":null,\"start_time\":\"14:00\",\"end_time\":\"16:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-01-19 02:28:20', '2026-02-03 04:19:00', NULL, 5, NULL, 0, 0, 1, 0, 'Booked'),
+(183, 'bb75d39f-6c3e-446a-ada2-d18ad25b7c79', NULL, '{\"client_id\":\"1\",\"price_book_id\":\"9\",\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":null}', '{\"start_date\":\"2026-01-23\",\"shift_finishes_next_day\":null,\"start_time\":\"14:00\",\"end_time\":\"16:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-01-19 02:28:20', '2026-01-19 02:28:20', NULL, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(184, '116e2e06-e7e7-4a58-9c18-e5b8871852ba', NULL, '{\"client_id\":\"1\",\"price_book_id\":\"9\",\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-01-21\",\"shift_finishes_next_day\":null,\"start_time\":\"03:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-01-19 02:29:00', '2026-01-19 02:29:00', NULL, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(185, '61b826ec-7b85-4e72-92c4-b795436b0cda', NULL, '\"{\\\"client_id\\\":[\\\"1\\\",\\\"8\\\"],\\\"client_details\\\":[{\\\"client_id\\\":1,\\\"client_start_time\\\":\\\"02:00\\\",\\\"client_end_time\\\":\\\"02:40\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":1,\\\"client_start_time\\\":\\\"02:40\\\",\\\"client_end_time\\\":\\\"03:20\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":1,\\\"client_start_time\\\":\\\"03:20\\\",\\\"client_end_time\\\":\\\"04:00\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":8,\\\"client_start_time\\\":\\\"14:00\\\",\\\"client_end_time\\\":\\\"15:00\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"hours\\\":\\\"1:2\\\"},{\\\"client_id\\\":8,\\\"client_start_time\\\":\\\"15:00\\\",\\\"client_end_time\\\":\\\"16:00\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"hours\\\":\\\"1:2\\\"}]}\"', '\"{\\\"shift_type_id\\\":\\\"1\\\",\\\"additional_shift_types\\\":[\\\"1\\\"],\\\"allowance_id\\\":[\\\"2\\\"],\\\"invoice_mileage\\\":[\\\"1\\\",\\\"8\\\"],\\\"mileage\\\":null,\\\"additional_cost\\\":null,\\\"ignore_staff_count\\\":false,\\\"confirmation_required\\\":false}\"', '\"{\\\"start_date\\\":\\\"2026-01-22\\\",\\\"shift_finishes_next_day\\\":false,\\\"start_time\\\":\\\"02:00\\\",\\\"end_time\\\":\\\"06:00\\\",\\\"break_time\\\":null,\\\"repeat\\\":false,\\\"recurrance\\\":null,\\\"repeat_every_daily\\\":null,\\\"repeat_every_weekly\\\":null,\\\"repeat_every_monthly\\\":null,\\\"occurs_on_monthly\\\":null,\\\"occurs_on_weekly\\\":[],\\\"end_date\\\":null,\\\"address\\\":null,\\\"unit_apartment_number\\\":null,\\\"drop_off_address\\\":false,\\\"drop_address\\\":null,\\\"drop_unit_apartment_number\\\":null}\"', '\"{\\\"user_id\\\":[\\\"65\\\"],\\\"notify\\\":false,\\\"user_details\\\":[{\\\"user_id\\\":65,\\\"user_start_time\\\":\\\"02:00\\\",\\\"user_end_time\\\":\\\"06:00\\\",\\\"pay_group_id\\\":\\\"1\\\"}]}\"', NULL, '\"{\\\"description\\\":null}\"', '2026-01-19 02:31:48', '2026-02-03 05:07:25', 0, 5, '\"[{\\\"task_description\\\":null,\\\"mandatory\\\":false}]\"', 1, 0, 1, 0, 'Booked'),
+(186, '87e78b81-7dbe-42e5-bec9-ebe61ac631e7', NULL, '{\"client_id\":\"2\",\"price_book_id\":\"9\",\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-02-19\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":\"Karachi\",\"unit_apartment_number\":\"888\"}', '{\"user_id\":\"28\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":\"<p>Testing<\\/p>\"}', '2026-01-19 04:24:29', '2026-01-19 04:24:29', NULL, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(187, '7ad553ac-7332-4a81-8bd4-e6c94215a759', NULL, '\"{\\\"client_id\\\":[\\\"1\\\"],\\\"client_details\\\":[{\\\"client_id\\\":1,\\\"client_start_time\\\":\\\"14:00\\\",\\\"client_end_time\\\":\\\"16:00\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"hours\\\":\\\"1:1\\\"}]}\"', '\"{\\\"shift_type_id\\\":\\\"1\\\",\\\"additional_shift_types\\\":[\\\"1\\\"],\\\"allowance_id\\\":[],\\\"invoice_mileage\\\":[\\\"1\\\"],\\\"mileage\\\":null,\\\"additional_cost\\\":null,\\\"ignore_staff_count\\\":false,\\\"confirmation_required\\\":false}\"', '\"{\\\"start_date\\\":\\\"2026-02-02\\\",\\\"shift_finishes_next_day\\\":true,\\\"start_time\\\":\\\"15:00\\\",\\\"end_time\\\":\\\"22:00\\\",\\\"break_time\\\":null,\\\"repeat\\\":false,\\\"recurrance\\\":null,\\\"repeat_every_daily\\\":null,\\\"repeat_every_weekly\\\":null,\\\"repeat_every_monthly\\\":null,\\\"occurs_on_monthly\\\":null,\\\"occurs_on_weekly\\\":[],\\\"end_date\\\":null,\\\"address\\\":\\\"Karachi\\\",\\\"unit_apartment_number\\\":\\\"888\\\",\\\"drop_off_address\\\":false,\\\"drop_address\\\":null,\\\"drop_unit_apartment_number\\\":null}\"', '\"{\\\"user_id\\\":[\\\"28\\\"],\\\"notify\\\":false,\\\"user_details\\\":[{\\\"user_id\\\":28,\\\"user_start_time\\\":\\\"02:00\\\",\\\"user_end_time\\\":\\\"04:00\\\",\\\"pay_group_id\\\":\\\"1\\\"}]}\"', NULL, '\"{\\\"description\\\":\\\"<p>Testing.<\\\\\\/p>\\\"}\"', '2026-01-19 04:26:41', '2026-02-02 05:34:09', 0, 5, '\"[{\\\"task_description\\\":null,\\\"mandatory\\\":false}]\"', 1, 0, 0, 0, 'Pending'),
+(188, '01acff22-e06d-499a-b2ec-cc445c0e795c', NULL, '\"{\\\"client_id\\\":[\\\"3\\\",\\\"2\\\"],\\\"client_details\\\":[{\\\"client_id\\\":2,\\\"client_start_time\\\":\\\"02:00\\\",\\\"client_end_time\\\":\\\"15:00\\\",\\\"price_book_id\\\":null,\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":2,\\\"client_start_time\\\":\\\"15:00\\\",\\\"client_end_time\\\":\\\"04:00\\\",\\\"price_book_id\\\":null,\\\"hours\\\":\\\"1:1\\\"}]}\"', '\"{\\\"shift_type_id\\\":\\\"1\\\",\\\"additional_shift_types\\\":[\\\"1\\\"],\\\"allowance_id\\\":[],\\\"invoice_mileage\\\":[\\\"3\\\"],\\\"mileage\\\":null,\\\"additional_cost\\\":null,\\\"ignore_staff_count\\\":false,\\\"confirmation_required\\\":false}\"', '\"{\\\"start_date\\\":\\\"2026-01-20\\\",\\\"shift_finishes_next_day\\\":true,\\\"start_time\\\":\\\"01:00\\\",\\\"end_time\\\":\\\"05:00\\\",\\\"break_time\\\":null,\\\"repeat\\\":false,\\\"recurrance\\\":null,\\\"repeat_every_daily\\\":null,\\\"repeat_every_weekly\\\":null,\\\"repeat_every_monthly\\\":null,\\\"occurs_on_monthly\\\":null,\\\"occurs_on_weekly\\\":[],\\\"end_date\\\":null,\\\"address\\\":\\\"Karachi\\\",\\\"unit_apartment_number\\\":\\\"888\\\",\\\"drop_off_address\\\":false,\\\"drop_address\\\":null,\\\"drop_unit_apartment_number\\\":null}\"', '\"{\\\"user_id\\\":[\\\"66\\\"],\\\"notify\\\":false,\\\"user_details\\\":[{\\\"user_id\\\":66,\\\"user_start_time\\\":\\\"01:00\\\",\\\"user_end_time\\\":\\\"05:00\\\",\\\"pay_group_id\\\":\\\"4\\\"}]}\"', NULL, '\"{\\\"description\\\":\\\"<p>Hello World.<\\\\\\/p>\\\"}\"', '2026-01-19 04:40:28', '2026-01-19 09:11:18', 0, 5, '\"[{\\\"task_description\\\":null,\\\"mandatory\\\":false}]\"', 1, 0, 0, 0, 'Pending'),
+(189, 'ee526a58-93bc-41c7-a828-b19c06fb06c7', NULL, '\"{\\\"client_id\\\":[\\\"1\\\",\\\"3\\\"],\\\"client_details\\\":[{\\\"client_id\\\":1,\\\"client_start_time\\\":\\\"02:00\\\",\\\"client_end_time\\\":\\\"03:00\\\",\\\"price_book_id\\\":null,\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":1,\\\"client_start_time\\\":\\\"03:00\\\",\\\"client_end_time\\\":\\\"04:00\\\",\\\"price_book_id\\\":null,\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":3,\\\"client_start_time\\\":\\\"01:00\\\",\\\"client_end_time\\\":\\\"03:00\\\",\\\"price_book_id\\\":null,\\\"hours\\\":\\\"1:2\\\"},{\\\"client_id\\\":3,\\\"client_start_time\\\":\\\"03:00\\\",\\\"client_end_time\\\":\\\"05:00\\\",\\\"price_book_id\\\":null,\\\"hours\\\":\\\"1:2\\\"}]}\"', '\"{\\\"shift_type_id\\\":\\\"1\\\",\\\"additional_shift_types\\\":[\\\"1\\\"],\\\"allowance_id\\\":[],\\\"invoice_mileage\\\":[\\\"1\\\",\\\"3\\\"],\\\"mileage\\\":null,\\\"additional_cost\\\":null,\\\"ignore_staff_count\\\":false,\\\"confirmation_required\\\":false}\"', '\"{\\\"start_date\\\":\\\"2026-01-19\\\",\\\"shift_finishes_next_day\\\":false,\\\"start_time\\\":\\\"01:00\\\",\\\"end_time\\\":\\\"05:00\\\",\\\"break_time\\\":null,\\\"repeat\\\":false,\\\"recurrance\\\":null,\\\"repeat_every_daily\\\":null,\\\"repeat_every_weekly\\\":null,\\\"repeat_every_monthly\\\":null,\\\"occurs_on_monthly\\\":null,\\\"occurs_on_weekly\\\":[],\\\"end_date\\\":null,\\\"address\\\":null,\\\"unit_apartment_number\\\":null,\\\"drop_off_address\\\":false,\\\"drop_address\\\":null,\\\"drop_unit_apartment_number\\\":null}\"', '\"{\\\"user_id\\\":[\\\"1\\\"],\\\"notify\\\":false,\\\"user_details\\\":[{\\\"user_id\\\":1,\\\"user_start_time\\\":\\\"01:00\\\",\\\"user_end_time\\\":\\\"05:00\\\",\\\"pay_group_id\\\":\\\"1\\\"}]}\"', NULL, '\"{\\\"description\\\":null}\"', '2026-01-19 09:19:00', '2026-01-19 09:22:08', 0, 5, '\"[{\\\"task_description\\\":null,\\\"mandatory\\\":false}]\"', 1, 0, 0, 0, 'Pending'),
+(193, 'bfe7ed1c-69e3-42c0-8bb2-95cb0e04ef19', NULL, '\"{\\\"client_id\\\":[\\\"4\\\"],\\\"client_details\\\":[{\\\"client_id\\\":4,\\\"client_start_time\\\":\\\"02:00\\\",\\\"client_end_time\\\":\\\"03:30\\\",\\\"price_book_id\\\":9,\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":4,\\\"client_start_time\\\":\\\"03:30\\\",\\\"client_end_time\\\":\\\"05:00\\\",\\\"price_book_id\\\":9,\\\"hours\\\":\\\"1:1\\\"}]}\"', '\"{\\\"shift_type_id\\\":\\\"3\\\",\\\"additional_shift_types\\\":[\\\"1\\\"],\\\"allowance_id\\\":[],\\\"invoice_mileage\\\":[\\\"4\\\"],\\\"mileage\\\":null,\\\"additional_cost\\\":null,\\\"ignore_staff_count\\\":false,\\\"confirmation_required\\\":false}\"', '\"{\\\"start_date\\\":\\\"2026-01-31\\\",\\\"shift_finishes_next_day\\\":false,\\\"start_time\\\":\\\"02:00\\\",\\\"end_time\\\":\\\"05:00\\\",\\\"break_time\\\":null,\\\"repeat\\\":false,\\\"recurrance\\\":null,\\\"repeat_every_daily\\\":null,\\\"repeat_every_weekly\\\":null,\\\"repeat_every_monthly\\\":null,\\\"occurs_on_monthly\\\":null,\\\"occurs_on_weekly\\\":[],\\\"end_date\\\":null,\\\"address\\\":null,\\\"unit_apartment_number\\\":null,\\\"drop_off_address\\\":false,\\\"drop_address\\\":null,\\\"drop_unit_apartment_number\\\":null}\"', '\"{\\\"user_id\\\":[\\\"27\\\"],\\\"notify\\\":false,\\\"user_details\\\":[{\\\"user_id\\\":27,\\\"user_start_time\\\":\\\"01:00\\\",\\\"user_end_time\\\":\\\"05:00\\\",\\\"pay_group_id\\\":\\\"3\\\"}]}\"', NULL, '\"{\\\"description\\\":null}\"', '2026-01-19 10:12:08', '2026-01-19 10:13:37', 0, 5, '\"[{\\\"task_description\\\":null,\\\"mandatory\\\":false}]\"', 1, 0, 0, 0, 'Pending'),
+(194, '262aeaf2-bf95-4b24-984c-fe8b532f356f', NULL, '{\"client_id\":\"3\",\"price_book_id\":\"9\",\"funds\":null}', '{\"shift_type_id\":\"2\",\"additional_shift_types\":[\"2\"],\"allowance_id\":null}', '{\"start_date\":\"2026-01-22\",\"shift_finishes_next_day\":null,\"start_time\":\"14:00\",\"end_time\":\"16:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"22\",\"pay_group_id\":null,\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-02 05:16:34', '2026-02-02 05:16:34', NULL, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(195, '8615d194-9fa0-490a-ba79-446028cc2aaf', NULL, '{\"client_id\":\"1\",\"price_book_id\":\"11\"}', '{\"shift_type_id\":\"3\",\"additional_shift_types\":[\"2\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-01-22\",\"shift_finishes_next_day\":false,\"start_time\":\"17:00\",\"end_time\":\"18:00\",\"repeat\":false,\"occurs_on_weekly\":[],\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":null,\"user_details\":[],\"notify\":false}', NULL, '{\"description\":null}', '2026-02-02 05:17:22', '2026-02-02 05:31:07', 0, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(196, '92a1061e-e3c3-441e-a601-41f21c6dd6f4', NULL, '{\"client_id\":\"1\",\"price_book_id\":\"9\",\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-02-03\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":null,\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-03 03:58:57', '2026-02-03 04:13:49', NULL, 5, NULL, 0, 0, 1, 0, 'Invoiced'),
+(197, '074bb1a4-952e-44e2-b79a-8a810e562f4f', NULL, '{\"client_id\":\"1\",\"price_book_id\":null,\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-02-04\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-03 04:00:10', '2026-02-03 04:13:49', NULL, 5, NULL, 0, 0, 1, 0, 'Invoiced'),
+(198, '074bb1a4-952e-44e2-b79a-8a810e562f4f', NULL, '{\"client_id\":\"1\",\"price_book_id\":null,\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-02-05\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-03 04:00:12', '2026-02-04 03:53:19', NULL, 5, NULL, 0, 0, 1, 0, 'Invoiced'),
+(199, '074bb1a4-952e-44e2-b79a-8a810e562f4f', NULL, '{\"client_id\":\"1\",\"price_book_id\":null,\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-02-06\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-03 04:00:13', '2026-02-04 03:53:19', NULL, 5, NULL, 0, 0, 1, 0, 'Invoiced'),
+(200, '074bb1a4-952e-44e2-b79a-8a810e562f4f', NULL, '{\"client_id\":\"1\",\"price_book_id\":null,\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-02-07\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-03 04:00:15', '2026-02-03 04:00:15', NULL, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(201, '074bb1a4-952e-44e2-b79a-8a810e562f4f', NULL, '{\"client_id\":\"1\",\"price_book_id\":null,\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"2\"]}', '{\"start_date\":\"2026-02-08\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"04:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"27\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-03 04:00:16', '2026-02-03 04:00:16', NULL, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(202, '56dca007-816d-4369-b23c-46e6eb5f17da', NULL, '{\"client_id\":\"1\",\"price_book_id\":\"12\",\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"3\"],\"allowance_id\":[\"4\"]}', '{\"start_date\":\"2026-02-06\",\"shift_finishes_next_day\":null,\"start_time\":\"02:00\",\"end_time\":\"05:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"71\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-05 03:48:50', '2026-02-05 03:48:50', NULL, 5, NULL, 0, 0, 0, 0, 'Pending'),
+(203, '9ea6d887-6fb3-4d06-8af6-33ebb9baf744', NULL, '{\"client_id\":\"2\",\"price_book_id\":\"12\",\"funds\":null}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"9\"],\"allowance_id\":[\"4\"]}', '{\"start_date\":\"2026-02-05\",\"shift_finishes_next_day\":null,\"start_time\":\"07:00\",\"end_time\":\"10:00\",\"repeat\":false,\"recurrance\":null,\"repeat_every_daily\":null,\"repeat_every_weekly\":null,\"repeat_every_monthly\":null,\"occurs_on_monthly\":null,\"occurs_on_weekly\":null,\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"64\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":null}', NULL, '{\"description\":null}', '2026-02-05 05:29:21', '2026-02-05 06:24:11', NULL, 5, NULL, 0, 0, 1, 0, 'Booked'),
+(205, '987a829d-15d1-4666-ba1d-d5d5e67e38f5', NULL, '{\"client_id\":\"2\",\"price_book_id\":\"9\"}', '{\"shift_type_id\":\"1\",\"additional_shift_types\":[\"1\"],\"allowance_id\":[\"4\"]}', '{\"start_date\":\"2026-02-05\",\"shift_finishes_next_day\":false,\"start_time\":\"20:00\",\"end_time\":\"22:00\",\"repeat\":false,\"occurs_on_weekly\":[],\"end_date\":null,\"address\":null,\"unit_apartment_number\":null}', '{\"user_id\":\"64\",\"pay_group_id\":\"1\",\"user_details\":[],\"notify\":false}', NULL, '{\"description\":null}', '2026-02-05 05:38:06', '2026-02-05 06:26:09', 0, 5, NULL, 0, 0, 1, 0, 'Booked'),
+(206, '0077f6fb-e1cb-49e8-ac97-e15849a83bd3', NULL, '\"{\\\"client_id\\\":[\\\"2\\\",\\\"1\\\"],\\\"client_details\\\":[{\\\"client_id\\\":1,\\\"client_start_time\\\":\\\"02:00\\\",\\\"client_end_time\\\":\\\"05:00\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"hours\\\":\\\"1:1\\\"},{\\\"client_id\\\":2,\\\"client_start_time\\\":\\\"02:00\\\",\\\"client_end_time\\\":\\\"05:00\\\",\\\"price_book_id\\\":\\\"12\\\",\\\"hours\\\":\\\"1:2\\\"}]}\"', '\"{\\\"shift_type_id\\\":\\\"1\\\",\\\"additional_shift_types\\\":[\\\"1\\\"],\\\"allowance_id\\\":[\\\"4\\\"],\\\"invoice_mileage\\\":[\\\"2\\\",\\\"1\\\"],\\\"mileage\\\":null,\\\"additional_cost\\\":null,\\\"ignore_staff_count\\\":false,\\\"confirmation_required\\\":false}\"', '\"{\\\"start_date\\\":\\\"2026-02-05\\\",\\\"shift_finishes_next_day\\\":false,\\\"start_time\\\":\\\"02:00\\\",\\\"end_time\\\":\\\"05:00\\\",\\\"break_time\\\":null,\\\"repeat\\\":false,\\\"recurrance\\\":null,\\\"repeat_every_daily\\\":null,\\\"repeat_every_weekly\\\":null,\\\"repeat_every_monthly\\\":null,\\\"occurs_on_monthly\\\":null,\\\"occurs_on_weekly\\\":[],\\\"end_date\\\":null,\\\"address\\\":null,\\\"unit_apartment_number\\\":null,\\\"drop_off_address\\\":false,\\\"drop_address\\\":null,\\\"drop_unit_apartment_number\\\":null}\"', '\"{\\\"user_id\\\":[\\\"65\\\"],\\\"notify\\\":false,\\\"user_details\\\":[{\\\"user_id\\\":65,\\\"user_start_time\\\":\\\"02:00\\\",\\\"user_end_time\\\":\\\"05:00\\\",\\\"pay_group_id\\\":\\\"1\\\"}]}\"', NULL, '\"{\\\"description\\\":null}\"', '2026-02-05 06:21:23', '2026-02-05 07:11:58', 0, 5, '\"[{\\\"task_description\\\":null,\\\"mandatory\\\":false}]\"', 1, 0, 0, 0, 'Pending');
 
 -- --------------------------------------------------------
 
@@ -4512,7 +4661,10 @@ INSERT INTO `staff_profiles` (`id`, `salutation`, `first_name`, `middle_name`, `
 (29, 'Mrs', 'Indigo', 'Sims', 'Torres', '629', '+1 (865) 663-8611', 'Office User', 8, 'Male', '1969-12-06', 'Ohters', 'Et natus ratione ips', 65, '01KBFK9BKAVEK7H632W4F4GJVJ.jpg', '2025-12-02 08:16:03', '2025-12-02 08:16:03', 5, 'Unarchive', NULL),
 (30, 'Mrs', 'Justine', 'Duncan', 'Camacho', '266', '+1 (201) 826-4681', 'Office User', 8, 'Male', '2025-12-09', 'Contractor', 'Sint ipsum omnis au', 66, '01KBFKXGPKCVRXESYVV9T36SAV.jpg', '2025-12-02 08:27:03', '2025-12-02 08:27:03', 5, 'Unarchive', NULL),
 (31, 'Mr', 'Kevin', 'Nicholson', 'Short', '+1 (234) 423-2343', '+1 (176) 351-3708', 'Office User', 8, 'Male', '1981-12-02', 'Contractor', 'Delectus rem elit ', 67, '01KBZA6DSQ2A2AEFJK0VGW8DV1.jpg', '2025-12-08 10:45:00', '2025-12-08 10:45:00', 5, 'Unarchive', NULL),
-(32, NULL, 'James ', 'H', 'William', '+1 (234) 423-2343', '+1 (504) 744-5249', 'Office User', 8, 'Male', '1981-12-01', 'Full-Time', NULL, 68, '01KECDNNB1NWXMT7F9C4E8DT02.jpg', '2026-01-07 09:27:17', '2026-01-07 09:27:17', 5, 'Unarchive', NULL);
+(32, NULL, 'James ', 'H', 'William', '+1 (234) 423-2343', '+1 (504) 744-5249', 'Office User', 8, 'Male', '1981-12-01', 'Full-Time', NULL, 68, '01KECDNNB1NWXMT7F9C4E8DT02.jpg', '2026-01-07 09:27:17', '2026-01-07 09:27:17', 5, 'Unarchive', NULL),
+(33, NULL, 'Roha', 'Vision', 'Tech', '0234892375', '2342387235', 'Office User', 8, 'Male', '1991-02-15', 'Part-Time', NULL, 69, '01KGH67P7JRBSXXAYR392BD418.webp', '2026-02-03 02:24:55', '2026-02-03 02:24:55', 5, 'Unarchive', NULL),
+(34, 'They', 'Vielka', 'Dennis', 'Mcfadden', '32523523623', '+1 (365) 798-6854', 'Carer', NULL, 'Male', '1997-02-05', 'Part-Time', 'Saepe dolor neque ut', 70, NULL, '2026-02-04 03:57:09', '2026-02-04 03:57:09', 5, 'Unarchive', NULL),
+(35, 'Doctor', 'Elvis', 'Anthony', 'Shepard', '23423934234', '+1 (822) 484-7449', 'Carer', 8, 'Female', '1993-02-10', 'Part-Time', 'Odio pariatur Delen', 71, NULL, '2026-02-04 04:04:15', '2026-02-04 04:04:15', 5, 'Unarchive', NULL);
 
 -- --------------------------------------------------------
 
@@ -4720,6 +4872,34 @@ CREATE TABLE `timesheets` (
   `timesheet_report_id` bigint(20) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `timesheets`
+--
+
+INSERT INTO `timesheets` (`id`, `user_id`, `company_id`, `approved_status`, `weekday_12a_6a`, `weekday_6a_8p`, `weekday_8p_10p`, `weekday_10p_12a`, `saturday`, `sunday`, `standard_hours`, `break_time`, `public_holidays`, `total`, `mileage`, `expense`, `sleepover`, `created_at`, `updated_at`, `shift_id`, `timesheet_report_id`) VALUES
+(89, 27, 5, 1, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-01-19 02:27:30', '2026-01-19 02:27:30', 181, 92),
+(90, 27, 5, 1, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-01-19 02:28:20', '2026-01-19 02:28:20', 182, 93),
+(91, 27, 5, 1, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-01-19 02:28:20', '2026-01-19 02:28:20', 183, 94),
+(92, 27, 5, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, '2026-01-19 02:29:00', '2026-01-19 02:29:00', 184, 95),
+(93, 65, 5, 1, 4, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, '2026-01-19 02:31:48', '2026-01-19 02:31:48', 185, 96),
+(94, 28, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-01-19 04:24:30', '2026-01-19 04:24:30', 186, 97),
+(95, 28, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-01-19 04:26:41', '2026-01-19 04:26:41', 187, 98),
+(96, 66, 5, 1, 4, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, '2026-01-19 04:40:28', '2026-01-19 04:40:28', 188, 99),
+(97, 1, 5, 1, 4, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, '2026-01-19 09:19:01', '2026-01-19 09:19:01', 189, 100),
+(98, 27, 5, 1, 0, 0, 0, 0, 4, 0, 4, 0, 0, 4, 0, 0, 0, '2026-01-19 10:12:09', '2026-01-19 10:12:09', 193, 101),
+(99, 22, 5, 1, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-02 05:16:35', '2026-02-02 05:16:35', 194, 102),
+(100, 27, 5, 1, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-02 05:17:22', '2026-02-02 05:17:22', 195, 103),
+(101, 27, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-03 03:58:58', '2026-02-03 03:58:58', 196, 104),
+(102, 27, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-03 04:00:12', '2026-02-03 04:00:12', 197, 105),
+(103, 27, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-03 04:00:13', '2026-02-03 04:00:13', 198, 106),
+(104, 27, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-03 04:00:14', '2026-02-03 04:00:14', 199, 107),
+(105, 27, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-03 04:00:16', '2026-02-03 04:00:16', 200, 108),
+(106, 27, 5, 1, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-03 04:00:17', '2026-02-03 04:00:17', 201, 109),
+(107, 71, 5, 1, 3, 0, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, '2026-02-05 03:48:51', '2026-02-05 03:48:51', 202, 110),
+(108, 64, 5, 1, 0, 3, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, '2026-02-05 05:29:21', '2026-02-05 05:29:21', 203, 111),
+(110, 64, 5, 1, 0, 0, 2, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, '2026-02-05 05:38:06', '2026-02-05 05:38:06', 205, 113),
+(111, 65, 5, 1, 3, 0, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, '2026-02-05 06:21:23', '2026-02-05 06:21:23', 206, 114);
+
 -- --------------------------------------------------------
 
 --
@@ -4746,6 +4926,34 @@ CREATE TABLE `timesheet_reports` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `timesheet_reports`
+--
+
+INSERT INTO `timesheet_reports` (`id`, `user_id`, `shift_id`, `date`, `clients`, `start_time`, `end_time`, `break_time`, `hours`, `distance`, `expense`, `allowances`, `clockin`, `clockout`, `status`, `created_at`, `updated_at`) VALUES
+(92, 27, 181, '2026-01-21', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '14:00:00', '16:00:00', '0', 2.00, NULL, NULL, '\"null\"', NULL, NULL, 'Pending', '2026-01-19 02:27:30', '2026-01-19 02:27:30'),
+(93, 27, 182, '2026-01-22', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '14:00:00', '16:00:00', '0', 2.00, NULL, NULL, '\"null\"', NULL, NULL, 'Pending', '2026-01-19 02:28:20', '2026-01-19 02:28:20'),
+(94, 27, 183, '2026-01-23', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '14:00:00', '16:00:00', '0', 2.00, NULL, NULL, '\"null\"', NULL, NULL, 'Pending', '2026-01-19 02:28:20', '2026-01-19 02:28:20'),
+(95, 27, 184, '2026-01-21', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '03:00:00', '04:00:00', '0', 1.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-01-19 02:29:00', '2026-01-19 02:29:00'),
+(96, 65, 185, '2026-01-22', '[{\"client_id\":1,\"client_name\":\"Maile Koch\",\"hours\":\"1:1\",\"client_start_time\":\"02:00\",\"client_end_time\":\"04:00\",\"price_book_id\":\"9\"},{\"client_id\":8,\"client_name\":\"Julie  Bridge\",\"hours\":\"1:2\",\"client_start_time\":\"04:09\",\"client_end_time\":\"06:09\",\"price_book_id\":\"9\"}]', '02:00:00', '06:00:00', '0', 4.00, 0.00, 0.00, '[\"2\"]', NULL, NULL, 'Pending', '2026-01-19 02:31:48', '2026-01-19 02:31:48'),
+(97, 28, 186, '2026-02-19', '\"{\\\"client_id\\\":\\\"2\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '02:00:00', '04:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-01-19 04:24:29', '2026-01-19 04:24:29'),
+(98, 28, 187, '2026-02-02', '[{\"client_id\":1,\"client_name\":\"Maile Koch\",\"hours\":\"1:1\",\"client_start_time\":\"02:00\",\"client_end_time\":\"04:00\",\"price_book_id\":\"9\"}]', '02:00:00', '04:00:00', '0', 2.00, 0.00, 0.00, '[]', NULL, NULL, 'Pending', '2026-01-19 04:26:41', '2026-01-19 04:26:41'),
+(99, 66, 188, '2026-01-20', '[{\"client_id\":3,\"client_name\":\"Kai Foster\",\"client_start_time\":\"01:00\",\"client_end_time\":\"03:00\",\"price_book_id\":9,\"hours\":\"1:1\"},{\"client_id\":3,\"client_name\":\"Kai Foster\",\"client_start_time\":\"03:00\",\"client_end_time\":\"05:00\",\"price_book_id\":9,\"hours\":\"1:1\"}]', '01:00:00', '05:00:00', '0', 4.00, 0.00, 0.00, '[]', NULL, NULL, 'Pending', '2026-01-19 04:40:28', '2026-01-19 04:40:28'),
+(100, 1, 189, '2026-01-19', '[{\"client_id\":1,\"client_name\":\"Maile Koch\",\"client_start_time\":\"02:00\",\"client_end_time\":\"03:00\",\"price_book_id\":null,\"hours\":\"1:1\"},{\"client_id\":1,\"client_name\":\"Maile Koch\",\"client_start_time\":\"03:00\",\"client_end_time\":\"04:00\",\"price_book_id\":null,\"hours\":\"1:1\"},{\"client_id\":3,\"client_name\":\"Kai Foster\",\"client_start_time\":\"01:00\",\"client_end_time\":\"03:00\",\"price_book_id\":null,\"hours\":\"1:2\"},{\"client_id\":3,\"client_name\":\"Kai Foster\",\"client_start_time\":\"03:00\",\"client_end_time\":\"05:00\",\"price_book_id\":null,\"hours\":\"1:2\"}]', '01:00:00', '05:00:00', '0', 4.00, 0.00, 0.00, '[]', NULL, NULL, 'Pending', '2026-01-19 09:19:01', '2026-01-19 09:19:01'),
+(101, 27, 193, '2026-01-31', '[{\"client_id\":4,\"client_name\":\"Michael Cairo Gordon\",\"client_start_time\":\"02:00\",\"client_end_time\":\"03:30\",\"price_book_id\":9,\"hours\":\"1:1\"},{\"client_id\":4,\"client_name\":\"Michael Cairo Gordon\",\"client_start_time\":\"03:30\",\"client_end_time\":\"05:00\",\"price_book_id\":9,\"hours\":\"1:1\"}]', '01:00:00', '05:00:00', '0', 4.00, 0.00, 0.00, '[]', NULL, NULL, 'Pending', '2026-01-19 10:12:09', '2026-01-19 10:12:09'),
+(102, 22, 194, '2026-01-22', '\"{\\\"client_id\\\":\\\"3\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '14:00:00', '16:00:00', '0', 2.00, NULL, NULL, '\"null\"', NULL, NULL, 'Pending', '2026-02-02 05:16:35', '2026-02-02 05:16:35'),
+(103, 27, 195, '2026-01-22', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":\\\"11\\\",\\\"funds\\\":null}\"', '16:00:00', '18:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-02-02 05:17:22', '2026-02-02 05:17:22'),
+(104, 27, 196, '2026-02-03', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '02:00:00', '04:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-02-03 03:58:58', '2026-02-03 03:58:58'),
+(105, 27, 197, '2026-02-04', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":null,\\\"funds\\\":null}\"', '02:00:00', '04:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-02-03 04:00:11', '2026-02-03 04:00:11'),
+(106, 27, 198, '2026-02-05', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":null,\\\"funds\\\":null}\"', '02:00:00', '04:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-02-03 04:00:13', '2026-02-03 04:00:13'),
+(107, 27, 199, '2026-02-06', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":null,\\\"funds\\\":null}\"', '02:00:00', '04:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-02-03 04:00:14', '2026-02-03 04:00:14'),
+(108, 27, 200, '2026-02-07', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":null,\\\"funds\\\":null}\"', '02:00:00', '04:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-02-03 04:00:16', '2026-02-03 04:00:16'),
+(109, 27, 201, '2026-02-08', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":null,\\\"funds\\\":null}\"', '02:00:00', '04:00:00', '0', 2.00, NULL, NULL, '\"[\\\"2\\\"]\"', NULL, NULL, 'Pending', '2026-02-03 04:00:16', '2026-02-03 04:00:16'),
+(110, 71, 202, '2026-02-06', '\"{\\\"client_id\\\":\\\"1\\\",\\\"price_book_id\\\":\\\"12\\\",\\\"funds\\\":null}\"', '02:00:00', '05:00:00', '0', 3.00, NULL, NULL, '\"[\\\"4\\\"]\"', NULL, NULL, 'Pending', '2026-02-05 03:48:51', '2026-02-05 03:48:51'),
+(111, 64, 203, '2026-02-05', '\"{\\\"client_id\\\":\\\"2\\\",\\\"price_book_id\\\":\\\"12\\\",\\\"funds\\\":null}\"', '07:00:00', '10:00:00', '0', 3.00, NULL, NULL, '\"[\\\"4\\\"]\"', NULL, NULL, 'Pending', '2026-02-05 05:29:21', '2026-02-05 05:29:21'),
+(113, 64, 205, '2026-02-05', '\"{\\\"client_id\\\":\\\"2\\\",\\\"price_book_id\\\":\\\"9\\\",\\\"funds\\\":null}\"', '20:00:00', '22:00:00', '0', 2.00, NULL, NULL, '\"[\\\"4\\\"]\"', NULL, NULL, 'Pending', '2026-02-05 05:38:06', '2026-02-05 05:38:06'),
+(114, 65, 206, '2026-02-05', '[{\"client_id\":1,\"client_name\":\"Maile Koch\",\"hours\":\"1:1\",\"client_start_time\":\"02:00\",\"client_end_time\":\"05:00\",\"price_book_id\":\"9\"},{\"client_id\":2,\"client_name\":\"Lev Woodard\",\"hours\":\"1:2\",\"client_start_time\":\"02:00\",\"client_end_time\":\"05:00\",\"price_book_id\":\"12\"}]', '02:00:00', '05:00:00', '0', 3.00, 0.00, 0.00, '[\"4\"]', NULL, NULL, 'Pending', '2026-02-05 06:21:23', '2026-02-05 06:21:23');
+
 -- --------------------------------------------------------
 
 --
@@ -4758,6 +4966,8 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
+  `set_password_token` varchar(255) DEFAULT NULL,
+  `set_password_sent_at` timestamp NULL DEFAULT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -4780,44 +4990,47 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `contact_number`, `image`, `country`, `last_login_at`, `status`, `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at`, `private_note`, `job_title_id`, `languages`, `no_access`) VALUES
-(1, 'Mr Admin', 'admin@gmail.com', '2025-07-26 15:14:29', '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, '2025-07-26 15:14:29', '2026-01-07 09:24:46', '03483532564', 'profile-images/1-trading-what-is-it.png', 'Pakistann', '2026-01-07 09:21:28', 'Active', 'cus_TD3p8sDv3AQI5b', NULL, NULL, NULL, NULL, 1, '[\"English\",\"French\"]', 0),
-(2, 'Super Admin', 'superadmin@gmail.com', '2025-10-07 11:43:02', '$2y$12$iD33CBzYArxxG5aQ/44eae7jmMkStmdDCr5VGu/oBh5jRr1/qj5nu', NULL, '2025-10-07 11:43:02', '2025-11-01 20:48:00', '03859723795', '01K71QXC5WPHPH8ZTRGZ9BWWB4.jpg', 'Pakistan', '2025-11-01 20:48:00', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(8, 'Damon Foreman', 'canyhuvodu@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', 'atOP6WMyJFRc7Han1SNmH1F038dyOH7EWcHYOv19KwkTByWNGbXdEnFJ8Msa', '2025-07-29 05:49:13', '2025-11-12 03:57:58', '0398546455', NULL, 'Pakistann', '2025-11-12 03:57:58', 'Active', 'cus_TD46oi3agOs1Gb', NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(10, 'Mannix Palmer', 'jitican@mailinator.com', NULL, '$2y$12$3labHLQoAuB5NYlokawkfunHzfj6BXSrSIE/gJawT8yaIoJUzZfw2', 'IHtBl2hUyoryQvAE2yBknYvO6UGjgoN0vkYzgPpCOeNLGwzujex7nRGp2cHg', '2025-07-29 06:36:41', '2025-07-29 06:36:41', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(19, 'Aiko Ayers', 'zowapuwe@mailinator.com', NULL, '$2y$12$Ongx5A1xgmV6w/2mkuCaA.PZvABfCrwR9SEza8qz/AmH65Yp.Biiy', NULL, '2025-07-30 05:42:43', '2025-07-30 05:42:43', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(20, 'Wade Coleman', 'tage@mailinator.com', NULL, '$2y$12$iLFkiNLCyukpA4/cGIL/BOd72ZkAzcE3kUTUMOhkGvXoRvXvoCuLO', NULL, '2025-07-30 05:44:21', '2025-07-30 05:44:21', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(21, 'Breanna Cruz Phillips', 'tehyn@mailinator.com', NULL, '$2y$12$KKaYFuUCsiGeqnDirADBHueqJZtdaP19HNpOVav0wYM4Hw2wVyLbq', NULL, '2025-07-30 07:22:39', '2025-08-05 16:04:45', NULL, NULL, NULL, '2025-08-05 16:04:45', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(22, 'Xaviera Shelton', 'weweno@mailinator.com', NULL, '$2y$12$o0069VPTfoFdvi84541NV.nDJEkgr83gAHY.TYwbogI1U1tRpwCU2', NULL, '2025-08-01 06:27:15', '2025-08-01 06:27:15', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(24, 'Yolanda Byrd', 'cegulebene@mailinator.com', NULL, '$2y$12$eeqRMqFRgZ9f5zvqo1nY4OlhrgwVO/C1STbygE/p5E2E/0i4N99JW', NULL, '2025-08-26 18:12:22', '2025-08-26 18:12:22', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(25, 'Tashya Townsend', 'fyzeludu@mailinator.com', NULL, '$2y$12$0DHwom4uGXN50tS8FfL9TOe7tfHJuMExewQ0sodPDXL.24NMDAqDq', NULL, '2025-08-26 18:14:39', '2025-08-26 18:14:39', NULL, NULL, NULL, '2025-11-12 07:38:31', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(26, 'Victoria Clements', 'pohiwo@mailinator.com', NULL, '$2y$12$ndIH3mnEt.WYhX/dLbtjWuKh/Kw0ShdvR2ymlCLO5dIydXIo5o4ea', NULL, '2025-08-26 18:16:30', '2025-08-26 18:16:30', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(27, 'Junaid Afzal', 'junaid@gmail.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, '2025-08-26 18:18:56', '2025-11-18 04:05:47', NULL, NULL, NULL, '2025-11-17 09:25:40', 'Active', NULL, NULL, NULL, NULL, 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum', NULL, '[\"English\",\"Arabic\"]', 0),
-(28, 'Jawaid Afzal', 'risoh@mailinator.com', NULL, '$2y$12$xgDFdsC28Jq3wBCGJi6o6uPya3jRy.tvYNFBSyxUsvquDYq0BLG1u', NULL, '2025-08-26 18:21:24', '2025-08-26 18:21:24', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(31, 'Zohaib Afzal', 'falu@mailinator.com', NULL, '$2y$12$ebGaGJ1Fc7PGB5qVFjnR1eMjhBP2H4Fae1xMgEdlIEfP7cqM2W3M.', NULL, '2025-08-26 18:24:16', '2025-08-26 18:24:16', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(38, 'Jordan Mercer', 'jodip@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, '2025-10-07 22:22:56', '2025-11-05 06:00:56', '039287592', '01K71H2YARZ51G2E3H7WN1PPC0.jpg', 'England', '2025-11-05 06:00:56', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(39, 'Matthew Nielsen', 'gykuru@mailinator.com', NULL, '$2y$12$3zVwfCndHOoIlQJfm46mI.QC7bbyyzHxhGmQvQ7dZTIJSkFgIuLSS', NULL, '2025-10-07 22:43:02', '2025-10-08 16:04:45', '8353423423', '01K6ZNE7QTCQ8VS2TQ6W9K3D3Z.jpg', 'Australia', NULL, 'Awaiting Response', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(41, 'Thor Whitaker', 'vawuwy@mailinator.com', NULL, '$2y$12$dVTb8hAr.YS799ViYO6A/.lMVjNz/z2AIYx3BBnuKSctp.NBv5Hxy', 'UIDuNDAkGHDJdCrbahYP7cykSbu9fLmU1xFDZlw5KddiaoqgmQZNCf5D9Nl2', '2025-10-08 16:12:36', '2025-10-10 16:48:21', '0307250923', '01K71HG2BES382D7D3T80H2RQ4.jpg', 'Spain', '2025-10-10 16:42:19', 'No access', 'cus_TD31QqiJ83QwV1', NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(42, 'Amena Howe', 'zapefufe@mailinator.com', NULL, '$2y$12$roPS6o6O11K6lTl.3fsn8.q5hKElalMHgSboFlvMzWM4PKOMxkrwa', NULL, '2025-10-10 19:53:01', '2025-10-10 19:53:03', NULL, NULL, NULL, NULL, 'Active', 'cus_TD60wDD0RNACOY', NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(46, 'August Graham', 'zanubaf@mailinator.com', NULL, '$2y$12$nxDBvNjmvy6zphBXR/NF3.DO29z8xIeyOXn9rj3Gk48CJq0Rehl1S', NULL, '2025-10-10 20:08:09', '2025-11-01 17:41:45', NULL, NULL, NULL, '2025-11-01 17:41:45', 'Active', 'cus_TD6FrmsPs1Gspc', NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(51, 'Ira Lara', 'xebumy@mailinator.com', NULL, '$2y$12$uCkS0rjKAdiwzC021PGw6uNAWFvmHF5IHEb3Hw2rc0CUC7fCbSIge', NULL, '2025-10-10 20:55:53', '2025-10-10 20:55:53', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(52, 'Upton Ewing', 'xununiryqa@mailinator.com', NULL, '$2y$12$MZwqvDOquvqqgF.uxoDSEu5RyBSdEkG3mfDZ/P4hpkmnKPMFX9pcW', NULL, '2025-10-10 20:57:58', '2025-10-10 21:06:40', '03483532564', 'profile-images/1520100147725.jpg', 'Pakistann', '2025-10-10 20:58:22', 'Active', 'cus_TD73tRC6H5uuKU', NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(53, 'Driscoll Soto', 'kofini@mailinator.com', NULL, '$2y$12$7SHwYY4p.LOs76s7Vv6dVuECS1RY94lcaGRaJDHRc4ztSw4o9ZPvK', NULL, '2025-10-10 21:10:10', '2025-10-10 21:10:31', NULL, NULL, NULL, '2025-10-10 21:10:31', 'Active', 'cus_TD7Fzzp0Le6EaP', NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(54, 'Chase Roberts', 'tunagad@mailinator.com', NULL, '$2y$12$cSqb7HoUzz4mbZjacYwqVOHSzKjvM76SLh9DhJaF0Ft1aaBEE6/iC', 'QfyhW0QPqvFdhPfPNtSGPwJ8yfWaeCA8BYjbfzsp58f6RSyxXBPDTpHEki96', '2025-10-21 15:49:18', '2025-10-21 16:42:33', NULL, NULL, NULL, '2025-10-21 16:42:33', 'Active', 'cus_TH9ZIYL409FEyG', NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(55, 'Orson Bean Hudson', 'latujep@mailinator.com', NULL, '$2y$12$BmZz2jEdZHVkb4se3WNp7Oji1oL5YhQbbm9hn4tNzT4tZzHCU8Fq.', NULL, '2025-11-11 08:33:24', '2025-11-11 09:01:53', NULL, NULL, NULL, '2025-11-11 09:01:53', 'Active', NULL, NULL, NULL, NULL, NULL, 4, NULL, 0),
-(56, 'Micah Brittany Wise', 'gaveqapij@mailinator.com', NULL, '$2y$12$5GAv9sbKkstgFGqCJRfZaejJfZzFWSHLAfxUnar5WdhWVMgRR/yqm', NULL, '2025-11-11 09:04:53', '2025-11-12 03:48:14', NULL, NULL, NULL, '2025-11-12 03:48:14', 'Active', NULL, NULL, NULL, NULL, NULL, 6, NULL, 0),
-(57, 'Joelle Lance Talley', 'nizu@mailinator.com', NULL, '$2y$12$.mxShzUqvMA6EH/UusSw7OHY.1hJ1Eam6M4mwOUPUgthPHll0pZM.', NULL, '2025-11-11 09:27:47', '2025-11-11 09:29:56', NULL, NULL, NULL, '2025-11-11 09:28:56', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
-(58, 'Velma Aladdin Curry', 'lefisoneko@mailinator.com', NULL, NULL, NULL, '2025-11-12 03:52:48', '2025-11-17 08:27:39', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[]', 0),
-(59, 'Erich Rollins Grimes', 'lobo@mailinator.com', NULL, NULL, NULL, '2025-11-12 03:54:26', '2025-11-12 03:54:26', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 1, NULL, 0),
-(60, 'Dillon Jason Reyes', 'zoqimut@mailinator.com', NULL, NULL, NULL, '2025-11-12 09:08:10', '2025-11-12 09:08:10', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\",\"Arabic\"]', 0),
-(61, 'Jonah Bailey Head', 'cyfiwaqina@mailinator.com', NULL, NULL, NULL, '2025-11-12 09:10:25', '2025-11-12 09:10:25', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 1, '[\"English\"]', 0),
-(62, 'Hector Logan Holloway', 'wiramaw@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, '2025-11-15 07:47:27', '2025-11-15 07:47:27', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\"]', 1),
-(63, 'Xandra Angela Potts', 'gukomad@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, '2025-11-17 09:04:05', '2025-12-02 11:57:29', NULL, NULL, NULL, '2025-11-17 09:15:34', 'Active', NULL, NULL, NULL, NULL, NULL, 1, '[\"English\"]', 0),
-(64, 'Harry Warren Hayden', 'wawyjyb@mailinator.com', NULL, NULL, NULL, '2025-11-18 06:19:47', '2025-11-18 06:20:18', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\"]', 1),
-(65, 'Indigo Sims Torres', 'admin@gmail.com', NULL, NULL, NULL, '2025-12-02 08:16:03', '2025-12-02 08:16:03', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\",\"French\"]', 0),
-(66, 'Justine Duncan Camacho', 'dukawol@mailinator.com', NULL, NULL, NULL, '2025-12-02 08:27:03', '2025-12-02 08:27:03', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, '[\"Dutch\",\"Spanish\",\"English\"]', 0),
-(67, 'Kevin Nicholson Short', 'fefys@mailinator.com', NULL, NULL, NULL, '2025-12-08 10:45:00', '2025-12-08 10:45:00', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"Hindi\",\"Arabic\",\"Bengali\"]', 0),
-(68, 'James  H William', 'Ahmed.mustajabshah92@gmail.com', NULL, NULL, NULL, '2026-01-07 09:27:17', '2026-01-07 09:27:17', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, '[\"English\"]', 0);
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `set_password_token`, `set_password_sent_at`, `remember_token`, `created_at`, `updated_at`, `contact_number`, `image`, `country`, `last_login_at`, `status`, `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at`, `private_note`, `job_title_id`, `languages`, `no_access`) VALUES
+(1, 'Mr Admin', 'admin@gmail.com', '2025-07-26 15:14:29', '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, NULL, NULL, '2025-07-26 15:14:29', '2026-02-05 02:22:29', '03483532564', 'profile-images/1-trading-what-is-it.png', 'Pakistann', '2026-02-05 02:22:29', 'Active', 'cus_TD3p8sDv3AQI5b', NULL, NULL, NULL, NULL, 1, '[\"English\",\"French\"]', 0),
+(2, 'Super Admin', 'superadmin@gmail.com', '2025-10-07 11:43:02', '$2y$12$iD33CBzYArxxG5aQ/44eae7jmMkStmdDCr5VGu/oBh5jRr1/qj5nu', NULL, NULL, NULL, '2025-10-07 11:43:02', '2025-11-01 20:48:00', '03859723795', '01K71QXC5WPHPH8ZTRGZ9BWWB4.jpg', 'Pakistan', '2025-11-01 20:48:00', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(8, 'Damon Foreman', 'canyhuvodu@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, NULL, 'atOP6WMyJFRc7Han1SNmH1F038dyOH7EWcHYOv19KwkTByWNGbXdEnFJ8Msa', '2025-07-29 05:49:13', '2025-11-12 03:57:58', '0398546455', NULL, 'Pakistann', '2025-11-12 03:57:58', 'Active', 'cus_TD46oi3agOs1Gb', NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(10, 'Mannix Palmer', 'jitican@mailinator.com', NULL, '$2y$12$3labHLQoAuB5NYlokawkfunHzfj6BXSrSIE/gJawT8yaIoJUzZfw2', NULL, NULL, 'IHtBl2hUyoryQvAE2yBknYvO6UGjgoN0vkYzgPpCOeNLGwzujex7nRGp2cHg', '2025-07-29 06:36:41', '2025-07-29 06:36:41', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(19, 'Aiko Ayers', 'zowapuwe@mailinator.com', NULL, '$2y$12$Ongx5A1xgmV6w/2mkuCaA.PZvABfCrwR9SEza8qz/AmH65Yp.Biiy', NULL, NULL, NULL, '2025-07-30 05:42:43', '2025-07-30 05:42:43', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(20, 'Wade Coleman', 'tage@mailinator.com', NULL, '$2y$12$iLFkiNLCyukpA4/cGIL/BOd72ZkAzcE3kUTUMOhkGvXoRvXvoCuLO', NULL, NULL, NULL, '2025-07-30 05:44:21', '2025-07-30 05:44:21', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(21, 'Breanna Cruz Phillips', 'tehyn@mailinator.com', NULL, '$2y$12$KKaYFuUCsiGeqnDirADBHueqJZtdaP19HNpOVav0wYM4Hw2wVyLbq', NULL, NULL, NULL, '2025-07-30 07:22:39', '2025-08-05 16:04:45', NULL, NULL, NULL, '2025-08-05 16:04:45', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(22, 'Xaviera Shelton', 'weweno@mailinator.com', NULL, '$2y$12$o0069VPTfoFdvi84541NV.nDJEkgr83gAHY.TYwbogI1U1tRpwCU2', NULL, NULL, NULL, '2025-08-01 06:27:15', '2025-08-01 06:27:15', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(24, 'Yolanda Byrd', 'cegulebene@mailinator.com', NULL, '$2y$12$eeqRMqFRgZ9f5zvqo1nY4OlhrgwVO/C1STbygE/p5E2E/0i4N99JW', NULL, NULL, NULL, '2025-08-26 18:12:22', '2025-08-26 18:12:22', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(25, 'Tashya Townsend', 'fyzeludu@mailinator.com', NULL, '$2y$12$0DHwom4uGXN50tS8FfL9TOe7tfHJuMExewQ0sodPDXL.24NMDAqDq', NULL, NULL, NULL, '2025-08-26 18:14:39', '2025-08-26 18:14:39', NULL, NULL, NULL, '2025-11-12 07:38:31', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(26, 'Victoria Clements', 'pohiwo@mailinator.com', NULL, '$2y$12$ndIH3mnEt.WYhX/dLbtjWuKh/Kw0ShdvR2ymlCLO5dIydXIo5o4ea', NULL, NULL, NULL, '2025-08-26 18:16:30', '2025-08-26 18:16:30', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(27, 'Junaid Afzal', 'junaid@gmail.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, NULL, NULL, '2025-08-26 18:18:56', '2025-11-18 04:05:47', NULL, NULL, NULL, '2025-11-17 09:25:40', 'Active', NULL, NULL, NULL, NULL, 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum', NULL, '[\"English\",\"Arabic\"]', 0),
+(28, 'Jawaid Afzal', 'risoh@mailinator.com', NULL, '$2y$12$xgDFdsC28Jq3wBCGJi6o6uPya3jRy.tvYNFBSyxUsvquDYq0BLG1u', NULL, NULL, NULL, '2025-08-26 18:21:24', '2025-08-26 18:21:24', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(31, 'Zohaib Afzal', 'falu@mailinator.com', NULL, '$2y$12$ebGaGJ1Fc7PGB5qVFjnR1eMjhBP2H4Fae1xMgEdlIEfP7cqM2W3M.', NULL, NULL, NULL, '2025-08-26 18:24:16', '2025-08-26 18:24:16', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(38, 'Jordan Mercer', 'jodip@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, NULL, NULL, '2025-10-07 22:22:56', '2025-11-05 06:00:56', '039287592', '01K71H2YARZ51G2E3H7WN1PPC0.jpg', 'England', '2025-11-05 06:00:56', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(39, 'Matthew Nielsen', 'gykuru@mailinator.com', NULL, '$2y$12$3zVwfCndHOoIlQJfm46mI.QC7bbyyzHxhGmQvQ7dZTIJSkFgIuLSS', NULL, NULL, NULL, '2025-10-07 22:43:02', '2025-10-08 16:04:45', '8353423423', '01K6ZNE7QTCQ8VS2TQ6W9K3D3Z.jpg', 'Australia', NULL, 'Awaiting Response', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(41, 'Thor Whitaker', 'vawuwy@mailinator.com', NULL, '$2y$12$dVTb8hAr.YS799ViYO6A/.lMVjNz/z2AIYx3BBnuKSctp.NBv5Hxy', NULL, NULL, 'UIDuNDAkGHDJdCrbahYP7cykSbu9fLmU1xFDZlw5KddiaoqgmQZNCf5D9Nl2', '2025-10-08 16:12:36', '2025-10-10 16:48:21', '0307250923', '01K71HG2BES382D7D3T80H2RQ4.jpg', 'Spain', '2025-10-10 16:42:19', 'No access', 'cus_TD31QqiJ83QwV1', NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(42, 'Amena Howe', 'zapefufe@mailinator.com', NULL, '$2y$12$roPS6o6O11K6lTl.3fsn8.q5hKElalMHgSboFlvMzWM4PKOMxkrwa', NULL, NULL, NULL, '2025-10-10 19:53:01', '2025-10-10 19:53:03', NULL, NULL, NULL, NULL, 'Active', 'cus_TD60wDD0RNACOY', NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(46, 'August Graham', 'zanubaf@mailinator.com', NULL, '$2y$12$nxDBvNjmvy6zphBXR/NF3.DO29z8xIeyOXn9rj3Gk48CJq0Rehl1S', NULL, NULL, NULL, '2025-10-10 20:08:09', '2025-11-01 17:41:45', NULL, NULL, NULL, '2025-11-01 17:41:45', 'Active', 'cus_TD6FrmsPs1Gspc', NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(51, 'Ira Lara', 'xebumy@mailinator.com', NULL, '$2y$12$uCkS0rjKAdiwzC021PGw6uNAWFvmHF5IHEb3Hw2rc0CUC7fCbSIge', NULL, NULL, NULL, '2025-10-10 20:55:53', '2025-10-10 20:55:53', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(52, 'Upton Ewing', 'xununiryqa@mailinator.com', NULL, '$2y$12$MZwqvDOquvqqgF.uxoDSEu5RyBSdEkG3mfDZ/P4hpkmnKPMFX9pcW', NULL, NULL, NULL, '2025-10-10 20:57:58', '2025-10-10 21:06:40', '03483532564', 'profile-images/1520100147725.jpg', 'Pakistann', '2025-10-10 20:58:22', 'Active', 'cus_TD73tRC6H5uuKU', NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(53, 'Driscoll Soto', 'kofini@mailinator.com', NULL, '$2y$12$7SHwYY4p.LOs76s7Vv6dVuECS1RY94lcaGRaJDHRc4ztSw4o9ZPvK', NULL, NULL, NULL, '2025-10-10 21:10:10', '2025-10-10 21:10:31', NULL, NULL, NULL, '2025-10-10 21:10:31', 'Active', 'cus_TD7Fzzp0Le6EaP', NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(54, 'Chase Roberts', 'tunagad@mailinator.com', NULL, '$2y$12$cSqb7HoUzz4mbZjacYwqVOHSzKjvM76SLh9DhJaF0Ft1aaBEE6/iC', NULL, NULL, 'QfyhW0QPqvFdhPfPNtSGPwJ8yfWaeCA8BYjbfzsp58f6RSyxXBPDTpHEki96', '2025-10-21 15:49:18', '2025-10-21 16:42:33', NULL, NULL, NULL, '2025-10-21 16:42:33', 'Active', 'cus_TH9ZIYL409FEyG', NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(55, 'Orson Bean Hudson', 'latujep@mailinator.com', NULL, '$2y$12$BmZz2jEdZHVkb4se3WNp7Oji1oL5YhQbbm9hn4tNzT4tZzHCU8Fq.', NULL, NULL, NULL, '2025-11-11 08:33:24', '2025-11-11 09:01:53', NULL, NULL, NULL, '2025-11-11 09:01:53', 'Active', NULL, NULL, NULL, NULL, NULL, 4, NULL, 0),
+(56, 'Micah Brittany Wise', 'gaveqapij@mailinator.com', NULL, '$2y$12$5GAv9sbKkstgFGqCJRfZaejJfZzFWSHLAfxUnar5WdhWVMgRR/yqm', NULL, NULL, NULL, '2025-11-11 09:04:53', '2025-11-12 03:48:14', NULL, NULL, NULL, '2025-11-12 03:48:14', 'Active', NULL, NULL, NULL, NULL, NULL, 6, NULL, 0),
+(57, 'Joelle Lance Talley', 'nizu@mailinator.com', NULL, '$2y$12$.mxShzUqvMA6EH/UusSw7OHY.1hJ1Eam6M4mwOUPUgthPHll0pZM.', NULL, NULL, NULL, '2025-11-11 09:27:47', '2025-11-11 09:29:56', NULL, NULL, NULL, '2025-11-11 09:28:56', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0),
+(58, 'Velma Aladdin Curry', 'lefisoneko@mailinator.com', NULL, NULL, NULL, NULL, NULL, '2025-11-12 03:52:48', '2025-11-17 08:27:39', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[]', 0),
+(59, 'Erich Rollins Grimes', 'lobo@mailinator.com', NULL, NULL, NULL, NULL, NULL, '2025-11-12 03:54:26', '2025-11-12 03:54:26', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 1, NULL, 0),
+(60, 'Dillon Jason Reyes', 'zoqimut@mailinator.com', NULL, NULL, NULL, NULL, NULL, '2025-11-12 09:08:10', '2025-11-12 09:08:10', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\",\"Arabic\"]', 0),
+(61, 'Jonah Bailey Head', 'cyfiwaqina@mailinator.com', NULL, NULL, NULL, NULL, NULL, '2025-11-12 09:10:25', '2025-11-12 09:10:25', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 1, '[\"English\"]', 0),
+(62, 'Hector Logan Holloway', 'wiramaw@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, NULL, NULL, '2025-11-15 07:47:27', '2025-11-15 07:47:27', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\"]', 1),
+(63, 'Xandra Angela Potts', 'gukomad@mailinator.com', NULL, '$2y$12$dcFpRlHL8kz8TukSzyb.TuKPx3zYFlSor5avRui3AM2xT8UbJ5JAi', NULL, NULL, NULL, '2025-11-17 09:04:05', '2025-12-02 11:57:29', NULL, NULL, NULL, '2025-11-17 09:15:34', 'Active', NULL, NULL, NULL, NULL, NULL, 1, '[\"English\"]', 0),
+(64, 'Harry Warren Hayden', 'wawyjyb@mailinator.com', NULL, NULL, NULL, NULL, NULL, '2025-11-18 06:19:47', '2025-11-18 06:20:18', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\"]', 1),
+(65, 'Indigo Sims Torres', 'admin@gmail.com', NULL, NULL, NULL, NULL, NULL, '2025-12-02 08:16:03', '2025-12-02 08:16:03', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"English\",\"French\"]', 0),
+(66, 'Justine Duncan Camacho', 'dukawol@mailinator.com', NULL, NULL, NULL, NULL, NULL, '2025-12-02 08:27:03', '2025-12-02 08:27:03', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, '[\"Dutch\",\"Spanish\",\"English\"]', 0),
+(67, 'Kevin Nicholson Short', 'fefys@mailinator.com', NULL, NULL, NULL, NULL, NULL, '2025-12-08 10:45:00', '2025-12-08 10:45:00', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, 2, '[\"Hindi\",\"Arabic\",\"Bengali\"]', 0),
+(68, 'James  H William', 'Ahmed.mustajabshah92@gmail.com', NULL, NULL, NULL, NULL, NULL, '2026-01-07 09:27:17', '2026-01-07 09:27:17', NULL, NULL, NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, '[\"English\"]', 0),
+(69, 'Roha Vision Tech', 'rohavisiontech@gmail.com', NULL, '$2y$12$E/hLLSBM8pGMV1MYngu4y.YHEdVMoAuCWWQcf9Sw2qStDzV8FteMm', NULL, NULL, NULL, '2026-02-03 02:24:54', '2026-02-03 02:49:47', NULL, NULL, NULL, '2026-02-03 02:49:47', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, '[\"English\",\"Spanish\",\"Hindi\"]', 0),
+(70, 'Vielka Dennis Mcfadden', 'mohis@mailinator.com', NULL, '$2y$12$3.vmkSl0vgrcaYpsvStxD.XKheFgoUp5vDRauyk/HfT2wBE3xKPW6', NULL, NULL, NULL, '2026-02-04 03:57:09', '2026-02-04 03:58:47', NULL, NULL, NULL, '2026-02-04 03:58:47', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, '[\"English\",\"Spanish\",\"Arabic\"]', 0),
+(71, 'Elvis Anthony Shepard', 'qicajewel@mailinator.com', NULL, '$2y$12$Mgxrw88JvztjbPyRCPlUL.psL86HBjag.BmgzNCeq2IX5ZFmHr/Sm', NULL, NULL, NULL, '2026-02-04 04:04:15', '2026-02-04 04:05:43', NULL, NULL, NULL, '2026-02-04 04:05:43', 'Active', NULL, NULL, NULL, NULL, NULL, NULL, '[\"Spanish\",\"English\",\"Hindi\"]', 0);
 
 --
 -- Indexes for dumped tables
@@ -5271,13 +5484,13 @@ ALTER TABLE `allowances`
 -- AUTO_INCREMENT for table `approved_shifts`
 --
 ALTER TABLE `approved_shifts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `billing_reports`
 --
 ALTER TABLE `billing_reports`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=164;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
 
 --
 -- AUTO_INCREMENT for table `clients`
@@ -5319,7 +5532,7 @@ ALTER TABLE `document_categories`
 -- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=286;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=344;
 
 --
 -- AUTO_INCREMENT for table `exports`
@@ -5349,7 +5562,7 @@ ALTER TABLE `imports`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
 
 --
 -- AUTO_INCREMENT for table `invoice_categories`
@@ -5391,7 +5604,7 @@ ALTER TABLE `languages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
 
 --
 -- AUTO_INCREMENT for table `notes`
@@ -5427,13 +5640,13 @@ ALTER TABLE `prices`
 -- AUTO_INCREMENT for table `price_books`
 --
 ALTER TABLE `price_books`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `price_book_details`
 --
 ALTER TABLE `price_book_details`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `public_holidays`
@@ -5451,7 +5664,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `shifts`
 --
 ALTER TABLE `shifts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=207;
 
 --
 -- AUTO_INCREMENT for table `shift_cancels`
@@ -5487,7 +5700,7 @@ ALTER TABLE `staff_payroll_settings`
 -- AUTO_INCREMENT for table `staff_profiles`
 --
 ALTER TABLE `staff_profiles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `subscriptions`
@@ -5529,19 +5742,19 @@ ALTER TABLE `team_has_staffs`
 -- AUTO_INCREMENT for table `timesheets`
 --
 ALTER TABLE `timesheets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=89;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
 
 --
 -- AUTO_INCREMENT for table `timesheet_reports`
 --
 ALTER TABLE `timesheet_reports`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=115;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
 
 --
 -- Constraints for dumped tables

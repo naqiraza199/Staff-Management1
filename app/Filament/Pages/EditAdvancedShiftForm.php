@@ -872,6 +872,7 @@ foreach ($clientDetails as $detail) {
 
         $hours = $shiftStart->floatDiffInHours($shiftEnd);
 
+        $fetchPriceBook = PriceBook::where('id', $priceBookId)->first();
 
         $priceDetail = \App\Models\PriceBookDetail::where('price_book_id', $priceBookId)
             ->where('day_of_week', $dayType)
@@ -890,17 +891,25 @@ foreach ($clientDetails as $detail) {
             })
             ->first();
 
-
-    $rate         = $priceDetail?->per_hour ?? 0;
+    // ────────────────────────────────────────────────
+    //          FIXED PRICE vs HOURLY LOGIC
+    // ────────────────────────────────────────────────
+    $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
     $per_km_price = $priceDetail?->per_km ?? 0;
-
-    // ❗ If you track actual distance, replace this 0.0 with the real km
     $distance     = $data['mileage'] ?? 0.0;
     $additionalCostPrice = $data['additional_cost'] ?? 0.0;
-
-    $hoursXRate    = number_format($hours, 1) . ' x $' . number_format($rate, 2);
     $distanceXRate = $distance . ' x $' . number_format($per_km_price, 2);
-    $totalCost     = ($hours * $rate) + ($distance * $per_km_price) + $additionalCostPrice;
+
+    if ($isFixedPrice) {
+        $baseCost   = $priceDetail->per_hour ?? 0;   // here per_hour actually stores the fixed amount
+        $hoursXRate = 'Fixed: $' . number_format($baseCost, 2);
+        $totalCost  = $baseCost + ($distance * $per_km_price) + $additionalCostPrice;
+    } else {
+        $rate       = $priceDetail?->per_hour ?? 0;
+        $baseCost   = $hours * $rate;
+        $hoursXRate = number_format($hours, 1) . ' x $' . number_format($rate, 2);
+        $totalCost  = $baseCost + ($distance * $per_km_price) + $additionalCostPrice;
+    }
 
     // ✅ Add start_time and end_time to uniqueness check so multiple records per client can exist
     $billing = \App\Models\BillingReport::updateOrCreate(
