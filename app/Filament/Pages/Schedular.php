@@ -227,6 +227,7 @@ public function mount()
                 'status' => $shift->status ?? 'Unknown',
                 'is_split' => $is_split,
                 'series_uuid' => $shift->series_uuid ?? null,
+                'repeat_tooltip' => $shift->repeat_tooltip ?? '',
             ];
 
             // Handle shifts based on is_advanced_shift
@@ -1136,8 +1137,74 @@ public function createShift()
     $authUser = Auth::user();
     $companyId = Company::where('user_id', $authUser->id)->value('id');
 
+    /**
+     * Generate repeat tooltip string based on recurrence settings
+     */
+    function generateRepeatTooltip($data, $startDate, $endDate)
+    {
+        $recurrence = data_get($data, 'time_and_location.recurrance');
+        $endDateFormatted = $endDate->format('d M Y');
+        
+        if ($recurrence === 'None' || $recurrence === null) {
+            return null;
+        }
+        
+        if ($recurrence === 'Daily') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_daily', 1);
+            $dayWord = $every === 1 ? 'day' : 'days';
+            return "Repeats every {$every} {$dayWord} until {$endDateFormatted}";
+        }
+        
+        if ($recurrence === 'Weekly') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_weekly', 1);
+            $weekWord = $every === 1 ? 'week' : 'weeks';
+            
+            $occursOn = data_get($data, 'time_and_location.occurs_on_weekly', []);
+            $dayAbbrev = [
+                'monday' => 'Mon',
+                'tuesday' => 'Tue',
+                'wednesday' => 'Wed',
+                'thursday' => 'Thu',
+                'friday' => 'Fri',
+                'saturday' => 'Sat',
+                'sunday' => 'Sun',
+            ];
+            
+            $selectedDays = [];
+            foreach ($dayAbbrev as $full => $abbr) {
+                if (!empty($occursOn[$full])) {
+                    $selectedDays[] = $abbr;
+                }
+            }
+            
+            if (empty($selectedDays)) {
+                return "Repeats every {$every} {$weekWord} until {$endDateFormatted}";
+            }
+            
+            $daysString = implode(',', $selectedDays);
+            return "Repeats every {$every} {$weekWord} ({$daysString}) until {$endDateFormatted}";
+        }
+        
+        if ($recurrence === 'Monthly') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_monthly', 1);
+            $monthWord = $every === 1 ? 'month' : 'months';
+            $occursOn = (int) data_get($data, 'time_and_location.occurs_on_monthly');
+            return "Repeats every {$every} {$monthWord} on day {$occursOn} until {$endDateFormatted}";
+        }
+        
+        return null;
+    }
+
     // 🔑 One UUID for whole recurring series
     $seriesUuid = (string) \Illuminate\Support\Str::uuid();
+
+    $startDate = Carbon::parse(data_get($data, 'time_and_location.start_date'));
+    $endDate = data_get($data, 'time_and_location.end_date')
+        ? Carbon::parse(data_get($data, 'time_and_location.end_date'))
+        : $startDate->copy();
+
+    // Generate repeat tooltip based on recurrence
+    $repeatTooltip = generateRepeatTooltip($data, $startDate, $endDate);
 
     // --------------------------------------------------
     // 🧑‍⚕️ Carer / Vacant Logic (UNCHANGED)
@@ -1162,10 +1229,7 @@ public function createShift()
     // --------------------------------------------------
     // 🔁 BUILD REPEAT DATES (JS LOGIC MIRROR)
     // --------------------------------------------------
-    $startDate = Carbon::parse(data_get($data, 'time_and_location.start_date'));
-    $endDate = data_get($data, 'time_and_location.end_date')
-        ? Carbon::parse(data_get($data, 'time_and_location.end_date'))
-        : $startDate->copy();
+
 
     $recurrence = data_get($data, 'time_and_location.recurrance');
     $repeatDates = [];
@@ -1285,6 +1349,7 @@ public function createShift()
             ],
 
             'is_vacant' => $isVacant,
+            'repeat_tooltip' => $repeatTooltip,
         ]);
 
         // --------------------------------------------------

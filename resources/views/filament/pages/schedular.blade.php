@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     <!-- Ensure CSRF token is available for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
@@ -924,14 +925,22 @@ body.sidebar-collapsed .main-content-sidebar {
     font-size: 10px;
     margin-left: 4px;
     vertical-align: middle;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 14px;
 }
 .status-icon-booked {
-    background-color: #10b981;
-    color: white;
+    color: #10b981;
 }
 .status-icon-invoiced {
-    background-color: #a855f7;
-    color: white;
+    color: #a855f7;
+}
+.status-icon-pending {
+    color: #0ea5e9;
+}
+.status-icon-cancelled {
+    color: #ef4444;
 }
 
 /* Series/Repeat Icon */
@@ -1110,23 +1119,35 @@ body.sidebar-collapsed .main-content-sidebar {
 
             function getStatusIcon(status) {
                 if (status === 'Booked') {
-                    return '<span class="status-icon status-icon-booked" title="Booked">&#128077;</span>';
+                    return '<span class="status-icon status-icon-booked" title="Shift Approved"><i class="fa-solid fa-thumbs-up"></i></span>';
                 } else if (status === 'Invoiced') {
-                    return '<span class="status-icon status-icon-invoiced" title="Invoiced">&#128274;</span>';
+                    return '<span class="status-icon status-icon-invoiced" title="Shift Invoiced"><i class="fa-solid fa-lock"></i></span>';
+                }
+                 else if (status === 'Pending') {
+                    return '<span class="status-icon status-icon-pending" title="Shift Pending"><i class="fa-solid fa-clock"></i></span>';
+                }
+                 else if (status === 'Cancelled') {
+                    return '<span class="status-icon status-icon-cancelled" title="Shift Cancelled"><i class="fa-solid fa-times-circle"></i></span>';
                 }
                 return '';
             }
 
-            function getSeriesIcon(shiftId, seriesUuid) {
-                if (!seriesUuid) return '';
-                // Count how many shifts have this same series_uuid
-                const count = shifts.filter(s => s.series_uuid === seriesUuid).length;
-                // If there are more than 1 shift with the same series_uuid, show the repeat icon
-                if (count > 1) {
-                    return '<span class="series-icon" title="Part of a series">&#10227;</span>';
-                }
-                return '';
-            }
+            function getSeriesIcon(shift) {
+                                if (!shift.series_uuid) return '';
+
+                                const count = shifts.filter(s => s.series_uuid === shift.series_uuid).length;
+
+                                if (count > 1) {
+                                    return `<span style="position:absolute;bottom:8px;right:5px;"
+                                                class="series-icon"
+                                                title="${shift.repeat_tooltip}">
+                                                <i class="fa-solid fa-repeat"></i>
+                                            </span>`;
+                                }
+
+                                return '';
+                            }
+
 
             function getInitials(name) {
                 if (!name) return '';
@@ -1300,7 +1321,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                 const clientName = clientNames[String(shift.client_id)] || '';
 
                 taskDiv.innerHTML = `
-                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong>
+                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
                     <div>${shiftType}</div>
                     <div class="small-text">${clientName}</div>
                 `;
@@ -1369,7 +1390,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                 const clientName = clientNames[String(shift.client_id)] || '';
 
                 taskDiv.innerHTML = `
-                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong>
+                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
                     <div>${shiftType}</div>
                     <div class="small-text">${clientName}</div>
                 `;
@@ -1480,7 +1501,7 @@ relevant.forEach(shift => {
         }
 
         div.innerHTML = `
-            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
             ${shiftType}<br>
             ${clientHtml}
         `;
@@ -1517,7 +1538,7 @@ relevant.forEach(shift => {
 
     part1.innerHTML = `
         <strong>NEXT DAY</strong><br>
-        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
         ${shiftType}<br>
         ${clientHtml}
     `;
@@ -1607,7 +1628,7 @@ calendar.appendChild(dayCell);
                         }
 
                         div.innerHTML = `
-                            <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+                            <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                             ${shiftType}<br>
                             ${clientHtml}
                             ${shift.is_split ? '<span style="float:right; color: #13b982; font-size: 14px;">&#9986;</span>' : ''}
@@ -1644,7 +1665,7 @@ calendar.appendChild(dayCell);
 
                     part1.innerHTML = `
                         <strong>NEXT DAY</strong><br>
-                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                         ${shiftType}<br>
                         ${clientHtml}
                         ${shift.is_split ? '<span style="float:right; color: #666; font-size: 14px;">&#9986;</span>' : ''}
@@ -1758,7 +1779,7 @@ function renderClientCalendar(filteredShifts = shifts) {
             }
 
             div.innerHTML = `
-                <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong>
+                <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
                 <div>${shiftType}</div>
                 <div style="display: flex; align-items: center; margin-top: 4px;">${staffHtml}</div>
             `;
@@ -1819,7 +1840,7 @@ function renderClientCalendar(filteredShifts = shifts) {
                 const staffName = users[String(shift.user_id)] || '';
 
                 div.innerHTML = `
-                    <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong>
+                    <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
                     <div>${shiftType}</div>
                     <div class="small-text">${staffName}</div>
                 `;
@@ -1891,7 +1912,7 @@ function renderClientCalendar(filteredShifts = shifts) {
                     }
 
                     div.innerHTML = `
-                        <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+                        <strong>${timeRange}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                         ${shiftType}<br>
                         <div style="display: flex; align-items: center; margin-top: 4px;">${staffHtml}</div>
                     `;
@@ -1912,7 +1933,7 @@ function renderClientCalendar(filteredShifts = shifts) {
 
                     part1.innerHTML = `
                         <strong>NEXT DAY</strong><br>
-                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_approved ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_approved ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                         ${shiftType}<br>
                         <div style="display: flex; align-items: center; margin-top: 4px;">${staffHtml}</div>
                     `;
@@ -1980,7 +2001,7 @@ function renderClientCalendar(filteredShifts = shifts) {
                             : 'No Time';
 
                         div.innerHTML = `
-                            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+                            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                             ${shiftType}<br>
                             <small>${staffName}</small>
                         `;
@@ -2000,7 +2021,7 @@ function renderClientCalendar(filteredShifts = shifts) {
 
                         part1.innerHTML = `
                             <strong>NEXT DAY</strong><br>
-                            <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''} ${shift.is_approved ? '<span style="color: #10b981;" title="Approved">&#10004;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift.id, shift.series_uuid)}</strong><br>
+                            <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''} ${shift.is_approved ? '<span style="color: #10b981;" title="Approved">&#10004;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                             ${shiftType}<br>
                             <small>${staffName}</small>
                         `;

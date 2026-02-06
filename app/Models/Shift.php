@@ -23,6 +23,7 @@ class Shift extends Model
         'status',
         'series_uuid',
         'parent_shift_id',
+        'repeat_tooltip',
     ];
 
     protected $casts = [

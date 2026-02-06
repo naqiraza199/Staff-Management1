@@ -1249,6 +1249,70 @@ public function createShift()
     $authUser = Auth::user();
     $shiftCompanyID = Company::where('user_id', $authUser->id)->value('id');
 
+    /**
+     * Generate repeat tooltip string based on recurrence settings
+     */
+    function generateRepeatTooltip($data, $startDate, $endDate)
+    {
+        $recurrence = data_get($data, 'time_and_location.recurrance');
+        $endDateFormatted = $endDate->format('d M Y');
+        
+        if ($recurrence === 'None' || $recurrence === null) {
+            return null;
+        }
+        
+        if ($recurrence === 'Daily') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_daily', 1);
+            $dayWord = $every === 1 ? 'day' : 'days';
+            return "Repeats every {$every} {$dayWord} until {$endDateFormatted}";
+        }
+        
+        if ($recurrence === 'Weekly') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_weekly', 1);
+            $weekWord = $every === 1 ? 'week' : 'weeks';
+            
+            $occursOn = data_get($data, 'time_and_location.occurs_on_weekly', []);
+            $dayAbbrev = [
+                'monday' => 'Mon',
+                'tuesday' => 'Tue',
+                'wednesday' => 'Wed',
+                'thursday' => 'Thu',
+                'friday' => 'Fri',
+                'saturday' => 'Sat',
+                'sunday' => 'Sun',
+            ];
+            
+            $selectedDays = [];
+            foreach ($dayAbbrev as $full => $abbr) {
+                if (!empty($occursOn[$full])) {
+                    $selectedDays[] = $abbr;
+                }
+            }
+            
+            if (empty($selectedDays)) {
+                return "Repeats every {$every} {$weekWord} until {$endDateFormatted}";
+            }
+            
+            $daysString = implode(',', $selectedDays);
+            return "Repeats every {$every} {$weekWord} ({$daysString}) until {$endDateFormatted}";
+        }
+        
+        if ($recurrence === 'Monthly') {
+            $every = (int) data_get($data, 'time_and_location.repeat_every_monthly', 1);
+            $monthWord = $every === 1 ? 'month' : 'months';
+            $occursOn = (int) data_get($data, 'time_and_location.occurs_on_monthly');
+            return "Repeats every {$every} {$monthWord} on day {$occursOn} until {$endDateFormatted}";
+        }
+        
+        return null;
+    }
+    $startDate = Carbon::parse(data_get($data, 'time_and_location.start_date'));
+    $endDate   = data_get($data, 'time_and_location.end_date')
+        ? Carbon::parse(data_get($data, 'time_and_location.end_date'))
+        : $startDate->copy();
+    // Generate repeat tooltip
+    $repeatTooltip = generateRepeatTooltip($data, $startDate, $endDate);
+
     $carerSection = empty($data['add_to_job_board']) ? [
         'user_id'      => data_get($data, 'carer_section.user_id'),
         'pay_group_id' => data_get($data, 'carer_section.pay_group_id'),
@@ -1438,6 +1502,7 @@ public function createShift()
             'company_id' => $shiftCompanyID,
             'is_advanced_shift' => true,
             'is_vacant' => $isVacant,
+            'repeat_tooltip' => $repeatTooltip,
         ]);
 
         /*
