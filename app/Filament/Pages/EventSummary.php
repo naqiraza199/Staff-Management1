@@ -16,7 +16,6 @@ use Filament\Facades\Filament;
 class EventSummary extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-s-document-text';
-    protected static ?string $title = 'Reports';
     protected static string $view = 'filament.pages.event-summary';
     protected static ?string $navigationLabel = 'Event Summary';
     protected static ?string $navigationGroup = 'Reports';
@@ -31,9 +30,14 @@ class EventSummary extends Page
 
     public $clients = [];
     public $staff = [];
+    public $start_date = '';
+    public $end_date = '';
 
     public function mount(): void
     {
+        // Get date filters from request
+        $this->start_date = request('start_date', '');
+        $this->end_date = request('end_date', '');
 
             $this->clients = $this->getClients();
             $this->staff = $this->getStaff();
@@ -141,48 +145,62 @@ class EventSummary extends Page
     /**
      * 🧮 Count notes for a client
      */
-protected function getNoteCountsForClient($clientId): array
-{
-    $shiftIds = $this->getShiftIdsForClient($clientId);
+ protected function getNoteCountsForClient($clientId): array
+ {
+     $shiftIds = $this->getShiftIdsForClient($clientId);
 
-    // Fetch notes that belong either to related shifts OR directly to this client
-    $counts = ShiftNote::query()
-        ->where(function ($q) use ($shiftIds, $clientId) {
-            if (!empty($shiftIds)) {
-                $q->whereIn('shift_id', $shiftIds);
-            }
-            $q->orWhere('client_id', $clientId);
-        })
-        ->selectRaw('note_type, COUNT(*) as total')
-        ->groupBy('note_type')
-        ->pluck('total', 'note_type')
-        ->toArray();
+     $query = ShiftNote::query()
+         ->where(function ($q) use ($shiftIds, $clientId) {
+             if (!empty($shiftIds)) {
+                 $q->whereIn('shift_id', $shiftIds);
+             }
+             $q->orWhere('client_id', $clientId);
+         });
 
-    // If no notes found, return zeros for all types
-    return $this->buildCountsArray($counts ?: []);
-}
+     // Apply date range filter
+     if (!empty($this->start_date)) {
+         $query->whereDate('created_at', '>=', $this->start_date);
+     }
+     if (!empty($this->end_date)) {
+         $query->whereDate('created_at', '<=', $this->end_date);
+     }
+
+     $counts = $query
+         ->selectRaw('note_type, COUNT(*) as total')
+         ->groupBy('note_type')
+         ->pluck('total', 'note_type')
+         ->toArray();
+
+     return $this->buildCountsArray($counts ?: []);
+ }
 
 
     /**
      * 🧮 Count notes for a staff user
      */
-protected function getNoteCountsForStaff($userId): array
-{
-    // $shiftIds = $this->getShiftIdsForStaff($userId);
+ protected function getNoteCountsForStaff($userId): array
+ {
+     $query = ShiftNote::query()
+         ->whereNull('client_id')
+         ->where('user_id', $userId)
+         ->where('staff_note', true);
 
-    // Fetch notes that belong either to related shifts OR directly to this staff
-$counts = ShiftNote::query()
-    ->whereNull('client_id')
-    ->where('user_id', $userId)
-    ->where('staff_note', true)
-    ->selectRaw('note_type, COUNT(*) as total')
-    ->groupBy('note_type')
-    ->pluck('total', 'note_type')
-    ->toArray();
+     // Apply date range filter
+     if (!empty($this->start_date)) {
+         $query->whereDate('created_at', '>=', $this->start_date);
+     }
+     if (!empty($this->end_date)) {
+         $query->whereDate('created_at', '<=', $this->end_date);
+     }
 
+     $counts = $query
+         ->selectRaw('note_type, COUNT(*) as total')
+         ->groupBy('note_type')
+         ->pluck('total', 'note_type')
+         ->toArray();
 
-    return $this->buildCountsArray($counts ?: []);
-}
+     return $this->buildCountsArray($counts ?: []);
+ }
 
 
     /**
@@ -214,54 +232,54 @@ $counts = ShiftNote::query()
     }
 
     protected function getClients()
-{
-    $authUser = auth()->user();
+ {
+     $authUser = auth()->user();
 
-    $companyId = \App\Models\Company::where('user_id', $authUser->id)->value('id');
+     $companyId = \App\Models\Company::where('user_id', $authUser->id)->value('id');
 
-    $clients = \App\Models\Client::where('user_id', $authUser->id)
-        ->get();
+     $clients = \App\Models\Client::where('user_id', $authUser->id)
+         ->get();
 
-    foreach ($clients as $client) {
-        $noteCounts = \App\Models\ShiftNote::whereHas('shift', function ($q) use ($client) {
-            $q->whereJsonContains('client_section->client_id', (string) $client->id)
-              ->orWhereJsonContains('client_section->client_id', $client->id);
-        })
-        ->select('note_type', \DB::raw('count(*) as total'))
-        ->groupBy('note_type')
-        ->pluck('total', 'note_type');
+     foreach ($clients as $client) {
+         $noteCounts = \App\Models\ShiftNote::whereHas('shift', function ($q) use ($client) {
+             $q->whereJsonContains('client_section->client_id', (string) $client->id)
+               ->orWhereJsonContains('client_section->client_id', $client->id);
+         })
+         ->select('note_type', \DB::raw('count(*) as total'))
+         ->groupBy('note_type')
+         ->pluck('total', 'note_type');
 
-        $client->note_counts = $noteCounts->toArray();
-    }
+         $client->note_counts = $noteCounts->toArray();
+     }
 
-    return $clients;
-}
+     return $clients;
+ }
 
-protected function getStaff()
-{
-    $authUser = auth()->user();
+ protected function getStaff()
+ {
+     $authUser = auth()->user();
 
-    $companyId = \App\Models\Company::where('user_id', $authUser->id)->value('id');
+     $companyId = \App\Models\Company::where('user_id', $authUser->id)->value('id');
 
-    $staffIds = \App\Models\StaffProfile::where('company_id', $companyId)
-        ->where('is_archive', 'Unarchive')
-        ->pluck('user_id')
-        ->toArray();
+     $staffIds = \App\Models\StaffProfile::where('company_id', $companyId)
+         ->where('is_archive', 'Unarchive')
+         ->pluck('user_id')
+         ->toArray();
 
-    $staff = \App\Models\User::whereIn('id', $staffIds)->get();
+     $staff = \App\Models\User::whereIn('id', $staffIds)->get();
 
-    foreach ($staff as $user) {
-        $noteCounts = \App\Models\ShiftNote::whereHas('shift', function ($q) use ($user) {
-            $q->whereJsonContains('carer_section->user_id', (string) $user->id)
-              ->orWhereJsonContains('carer_section->user_id', $user->id);
-        })
-        ->select('note_type', \DB::raw('count(*) as total'))
-        ->groupBy('note_type')
-        ->pluck('total', 'note_type');
+     foreach ($staff as $user) {
+         $noteCounts = \App\Models\ShiftNote::whereHas('shift', function ($q) use ($user) {
+             $q->whereJsonContains('carer_section->user_id', (string) $user->id)
+               ->orWhereJsonContains('carer_section->user_id', $user->id);
+         })
+         ->select('note_type', \DB::raw('count(*) as total'))
+         ->groupBy('note_type')
+         ->pluck('total', 'note_type');
 
-        $user->note_counts = $noteCounts->toArray();
-    }
+         $user->note_counts = $noteCounts->toArray();
+     }
 
-    return $staff;
-}
+     return $staff;
+ }
 }

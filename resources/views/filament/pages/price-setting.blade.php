@@ -1,11 +1,38 @@
 <x-filament-panels::page>
     <div class="space-y-6">
+        <style>
+            .badge {
+                margin-left: 0.5rem;
+                display: inline-flex;
+                align-items: center;
+                padding: 0.125rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 500;
+
+                /* Light mode colors */
+                background-color: #dbeafe; /* primary-100 */
+                color: #1e40af; /* primary-800 */
+            }
+
+            /* Dark mode support */
+            .dark .badge {
+                background-color: #1e3a8a; /* primary-900 */
+                color: #bfdbfe; /* primary-200 */
+            }
+
+        </style>
 
          @foreach ($this->priceBooks as $book)
             <div class="rounded-lg border bg-white dark:bg-gray-900">
                 <div class="flex items-center justify-between p-4 border-b">
                     <div class="font-semibold">
                         {{ $book->name }}
+                        @if($book->fixed_price)
+                            <span class="badge">
+                                FIXED PRICE
+                            </span>
+                        @endif
                     </div>
                     <div>
                     <x-filament::button
@@ -46,8 +73,10 @@
                         <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
                                 <th class="px-4 py-2 text-left">Day of Week</th>
+                                @if(!$book->fixed_price)
                                 <th class="px-4 py-2 text-left">Time</th>
-                                <th class="px-4 py-2 text-left">Per Hour</th>
+                                @endif
+                                <th class="px-4 py-2 text-left">{{ $book->fixed_price ? 'Price' : 'Per Hour' }}</th>
                                 <th class="px-4 py-2 text-left">Reference Number (Hour)</th>
                                 <th class="px-4 py-2 text-left">Per Km</th>
                                 <th class="px-4 py-2 text-left">Reference Number</th>
@@ -59,11 +88,17 @@
                             @forelse($book->priceBookDetails as $detail)
                                 <tr class="border-t">
                                     <td class="px-4 py-2">{{ $detail->day_of_week }}</td>
-                                        <td>
-                                            {{ \Carbon\Carbon::parse($detail->start_time)->format('h:i A') }}
-                                            -
-                                            {{ \Carbon\Carbon::parse($detail->end_time)->format('h:i A') }}
-                                        </td>
+                                    @if(!$book->fixed_price)
+                                    <td class="px-4 py-2">
+                                        @if($detail->start_time && $detail->end_time)
+                                            {{ \Carbon\Carbon::parse($detail->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($detail->end_time)->format('h:i A') }}
+                                        @elseif($detail->start_time)
+                                            {{ \Carbon\Carbon::parse($detail->start_time)->format('h:i A') }} - null
+                                        @elseif($detail->end_time)
+                                            null - {{ \Carbon\Carbon::parse($detail->end_time)->format('h:i A') }}
+                                        @endif
+                                    </td>
+                                    @endif
 
                                     <td class="px-4 py-2">${{ number_format($detail->per_hour, 2) }}</td>
                                     <td class="px-4 py-2">{{ $detail->ref_hour }}</td>

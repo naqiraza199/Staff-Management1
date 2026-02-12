@@ -146,8 +146,8 @@ class PriceSetting extends Page
         PriceBookDetail::create([
             'price_book_id'   => $this->selectedPriceBookId,
             'day_of_week'     => $this->priceData['day_of_week'] ?? '',
-            'start_time'      => $this->priceData['start_time'] ?? '',
-            'end_time'        => $this->priceData['end_time'] ?? '',
+            'start_time'      => $this->priceData['start_time'] ?? null,
+            'end_time'        => $this->priceData['end_time'] ?? null,
             'per_hour'        => $this->priceData['per_hour'] ?? 0,
             'ref_hour'        => $this->priceData['ref_hour'] ?? '',
             'per_km'          => $this->priceData['per_km'] ?? 0,

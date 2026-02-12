@@ -1490,35 +1490,69 @@ $userIds = $carerSection['user_id'] ?? [];
 $startDate = data_get($data, 'time_and_location.start_date');
 $newStartTime = data_get($data, 'time_and_location.start_time');
 $newEndTime = data_get($data, 'time_and_location.end_time');
+$newShiftFinishesNextDay = data_get($data, 'time_and_location.shift_finishes_next_day', false);
 $companyId = Company::where('user_id', Auth::id())->value('id');
 
+// Convert new shift times to minutes past midnight
+[$newStartHours, $newStartMinutes] = explode(':', $newStartTime);
+$newStartTotal = (int)$newStartHours * 60 + (int)$newStartMinutes;
+[$newEndHours, $newEndMinutes] = explode(':', $newEndTime);
+$newEndTotal = (int)$newEndHours * 60 + (int)$newEndMinutes;
+
+// Handle overnight for new shift
+if ($newEndTotal <= $newStartTotal || $newShiftFinishesNextDay) {
+    $newEndTotal += 24 * 60;
+}
+
 $conflict = false;
-if (is_array($userIds)) {
+
+// Normalize userIds to array
+if (!is_array($userIds) && $userIds) {
+    $userIds = [$userIds];
+}
+
+if (!empty($userIds)) {
     foreach ($userIds as $userId) {
-        $existing = Shift::where('company_id', $companyId)
+        // Get all existing shifts for this staff on this date (excluding current shift)
+        $existingShifts = Shift::where('company_id', $companyId)
             ->where('id', '!=', $this->shift->id)
-            ->whereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)])
+            ->where(function ($query) use ($userId) {
+                $query->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userId])
+                      ->orWhereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)]);
+            })
             ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
-            ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
-            ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
-            ->exists();
-
-        if ($existing) {
-            $conflict = true;
-            break;
+            ->get();
+        
+        foreach ($existingShifts as $existingShift) {
+            $existingTimeLocation = is_string($existingShift->time_and_location) 
+                ? json_decode($existingShift->time_and_location, true) 
+                : ($existingShift->time_and_location ?? []);
+            
+            $existingStartTime = $existingTimeLocation['start_time'] ?? '';
+            $existingEndTime = $existingTimeLocation['end_time'] ?? '';
+            $existingFinishesNextDay = $existingTimeLocation['shift_finishes_next_day'] ?? false;
+            
+            if (empty($existingStartTime) || empty($existingEndTime)) {
+                continue;
+            }
+            
+            // Convert existing shift times to minutes past midnight
+            [$existingStartHours, $existingStartMinutes] = explode(':', $existingStartTime);
+            $existingStartTotal = (int)$existingStartHours * 60 + (int)$existingStartMinutes;
+            [$existingEndHours, $existingEndMinutes] = explode(':', $existingEndTime);
+            $existingEndTotal = (int)$existingEndHours * 60 + (int)$existingEndMinutes;
+            
+            // Handle overnight for existing shift
+            if ($existingEndTotal <= $existingStartTotal || $existingFinishesNextDay) {
+                $existingEndTotal += 24 * 60;
+            }
+            
+            // Check for overlap: new shift overlaps if newStart < existingEnd AND newEnd > existingStart
+            if ($newStartTotal < $existingEndTotal && $newEndTotal > $existingStartTotal) {
+                $conflict = true;
+                break 2;
+            }
         }
-    }
-} elseif ($userIds) {
-    $existing = Shift::where('company_id', $companyId)
-        ->where('id', '!=', $this->shift->id)
-        ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userIds])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
-        ->exists();
-
-    if ($existing) {
-        $conflict = true;
     }
 }
 
@@ -1547,48 +1581,55 @@ if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
 
         $hours = $shiftStart->floatDiffInHours($shiftEnd);
 
-
-    $dayOfWeek = $shiftDate->format('l');
-    $dayType = match ($dayOfWeek) {
-        'Saturday' => 'Saturday',
-        'Sunday'   => 'Sunday',
-        default    => 'Weekdays - I',
-    };
-
     $fetchPriceBook = PriceBook::where('id', $priceBookId)->first();
 
-    // ✅ Price book logic — now supports fixed_price = 1
-    $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
-        ->where('day_of_week', $dayType)
-        ->where(function ($q) use ($shiftEnd) {
-            $endTime = $shiftEnd->format('H:i:s');
-
-            $q->where(function ($sub) use ($endTime) {
-                $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
-                    ->whereColumn('end_time', '>', 'start_time');
-            })
-            ->orWhere(function ($sub) use ($endTime) {
-                $sub->whereColumn('end_time', '<', 'start_time')
-                    ->where(function ($wrap) use ($endTime) {
-                        $wrap->where('start_time', '<=', $endTime)
-                             ->orWhere('end_time', '>=', $endTime); 
-                    });
-            })
-            ->orWhere(function ($sub) {
-                $sub->whereTime('start_time', '00:00:00')
-                    ->whereTime('end_time', '00:00:00');
-            });
-        })
-        ->orderBy('start_time')
-        ->first();
-
     $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
+
+    if ($isFixedPrice) {
+        // ─── CHANGED: No time logic — just take the FIRST price book detail record ───
+        $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+            ->orderBy('id')
+            ->first();
+    } else {
+        // ─── HOURLY LOGIC REMAINS 100% UNCHANGED ───
+        $dayOfWeek = $shiftDate->format('l');
+        $dayType = match ($dayOfWeek) {
+            'Saturday' => 'Saturday',
+            'Sunday'   => 'Sunday',
+            default    => 'Weekdays - I',
+        };
+
+        $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+            ->where('day_of_week', $dayType)
+            ->where(function ($q) use ($shiftEnd) {
+                $endTime = $shiftEnd->format('H:i:s');
+
+                $q->where(function ($sub) use ($endTime) {
+                    $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
+                        ->whereColumn('end_time', '>', 'start_time');
+                })
+                ->orWhere(function ($sub) use ($endTime) {
+                    $sub->whereColumn('end_time', '<', 'start_time')
+                        ->where(function ($wrap) use ($endTime) {
+                            $wrap->where('start_time', '<=', $endTime)
+                                 ->orWhere('end_time', '>=', $endTime); 
+                        });
+                })
+                ->orWhere(function ($sub) {
+                    $sub->whereTime('start_time', '00:00:00')
+                        ->whereTime('end_time', '00:00:00');
+                });
+            })
+            ->orderBy('start_time')
+            ->first();
+    }
+
     $per_km_price = $priceDetail?->per_km ?? 0;
     $distanceXRate = '0.0 x $' . number_format($per_km_price, 2);
 
     if ($isFixedPrice) {
         // Fixed price shift → use the value stored in per_hour column as the fixed amount
-        $baseCost   = $priceDetail->per_hour ?? 0;
+        $baseCost   = $priceDetail?->per_hour ?? 0;
         $hoursXRate = 'Fixed: $' . number_format($baseCost, 2);
         $totalCost  = $baseCost;                       // base cost only (mileage/expense added later on approve)
     } else {

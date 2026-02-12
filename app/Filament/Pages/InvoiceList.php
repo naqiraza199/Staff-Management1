@@ -55,7 +55,7 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
 
     return $table
          ->query(fn (): Builder =>
-                Invoice::query()->where('company_id', $companyId)->where('is_void',0)
+                Invoice::query()->where('company_id', $companyId)->where('is_void',0)->orderBy('invoice_no', 'desc')
             )
         ->columns([
             TextColumn::make('invoice_no')
@@ -93,12 +93,11 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
                 BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([
-                        'success' => 'Paid',
-                        'warning' => 'Unpaid/Overdue',
-                        'danger'  => 'Overdue',
+                        'success' => fn ($record) => $record->balance == 0,
+                        'warning' => fn ($record) => $record->balance > 0,
                     ])
-                    ->formatStateUsing(function ($state, $record) {
-                        if ($state === 'Paid') {
+                    ->formatStateUsing(function ($record) {
+                        if ($record->balance == 0) {
                             $lastPayment = InvoicePayment::where('invoice_id', $record->id)
                                 ->latest('payment_date')
                                 ->first();
@@ -107,30 +106,25 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
                                 return "Paid " . Carbon::parse($lastPayment->payment_date)->format('d M Y');
                             }
 
-                            return "Paid";
+                            return "PAID";
                         }
 
-                            if ($state === 'Unpaid/Overdue' && $record->payment_due) {
-                                $dueDate = Carbon::parse($record->payment_due)->startOfDay();
-                                $today   = Carbon::now()->startOfDay();
+                        if ($record->payment_due) {
+                            $dueDate = Carbon::parse($record->payment_due)->startOfDay();
+                            $today   = Carbon::now()->startOfDay();
 
-                                $daysRemaining = $today->diffInDays($dueDate, false); // signed integer only
+                            $daysRemaining = $today->diffInDays($dueDate, false);
 
-                                if ($daysRemaining > 0) {
-                                    return "Due in {$daysRemaining} " . Str::plural('day', $daysRemaining);
-                                } elseif ($daysRemaining === 0) {
-                                    return "Due Today";
-                                } else {
-                                    return "Overdue";
-                                }
+                            if ($daysRemaining > 0) {
+                                return "Due in {$daysRemaining} " . Str::plural('day', $daysRemaining);
+                            } elseif ($daysRemaining === 0) {
+                                return "Due Today";
+                            } else {
+                                return "Overdue";
                             }
-
-
-                        if ($state === 'Overdue') {
-                            return "Overdue";
                         }
 
-                        return $state;
+                        return "UNPAID";
                     })
                     ->sortable(),
 

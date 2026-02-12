@@ -83,7 +83,11 @@ class ExceptionReport extends Page
             ->toArray();
 
         foreach ($paidInvoices as $idsJson) {
-            $ids = json_decode($idsJson, true);
+            if (is_array($idsJson)) {
+                $ids = $idsJson;
+            } else {
+                $ids = json_decode($idsJson, true) ?? [];
+            }
             if (!is_array($ids)) continue;
 
             $reports = BillingReport::whereIn('id', $ids)->get();
@@ -101,6 +105,9 @@ class ExceptionReport extends Page
             ->where('status', 'Paid')
             ->pluck('billing_reports_ids')
             ->flatMap(function ($idsJson) {
+                if (is_array($idsJson)) {
+                    return $idsJson;
+                }
                 $ids = json_decode($idsJson, true);
                 return is_array($ids) ? $ids : [];
             })

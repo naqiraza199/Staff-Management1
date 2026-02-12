@@ -458,8 +458,19 @@
 
                     <div style="padding:30px">
                         <p><strong style="font-size:14px;">Tax Invoice:</strong> <span style="font-size:13px;">{{ $invoice->invoice_no }}</span> </p>
-                        <p><strong style="font-size:14px;">Issue Date:</strong> <span style="font-size:13px;">{{ $invoice->issue_date }}</span> </p>
-                        <p><strong style="font-size:14px;">Payment Due:</strong> <span style="font-size:13px;">{{ $invoice->payment_due }}</span> </p>
+                        <p>
+                            <strong style="font-size:14px;">Issue Date:</strong>
+                            <span style="font-size:13px;">
+                                {{ \Carbon\Carbon::parse($invoice->issue_date)->format('m/d/Y') }}
+                            </span>
+                        </p>
+
+                        <p>
+                            <strong style="font-size:14px;">Payment Due:</strong>
+                            <span style="font-size:13px;">
+                                {{ \Carbon\Carbon::parse($invoice->payment_due)->format('m/d/Y') }}
+                            </span>
+                        </p>
                         <p><strong style="font-size:14px;">NDIS:</strong> <span style="font-size:13px;">{{ $invoice->NDIS }}</span> </p>
                         <p><strong style="font-size:14px;">Ref No:</strong> <span style="font-size:13px;">{{ $invoice->ref_no }}</span> </p>
                     </div>
@@ -471,8 +482,6 @@
                             <!-- Alpine.js Scope Wrapper -->
                             <div x-data="{ editing: false }">
                                 <!-- Edit / Cancel Button -->
-                        @if($invoice->status !== 'Paid')
-
                                 <div class="mb-6">
                                     <button 
                                         type="button"
@@ -488,10 +497,6 @@
                                         <span x-text="editing ? 'Cancel' : 'Edit Invoice'"></span>
                                     </button>
                                 </div>
-                                @else
-                           
-                            <div class="text-gray-600" style="margin-bottom: 10px;">This invoice is marked as Paid and cannot be edited.</div>
-                        @endif
                                 <!-- EDIT MODE: Editable Form + Table -->
                                 <div x-show="editing" x-transition>
                                     <form method="POST" action="{{ route('invoices.update', $invoice->id) }}">

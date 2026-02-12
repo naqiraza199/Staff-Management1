@@ -545,7 +545,18 @@
                             grid: { color: 'rgba(200, 200, 200, 0.2)' },
                             ticks: { callback: value => '$' + value }
                         },
-                        x: { grid: { display: false } }
+                        x: { 
+                            grid: { display: false },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    const date = new Date(this.getLabelForValue(value));
+                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                    const dd = String(date.getDate()).padStart(2, '0');
+                                    const yy = date.getFullYear();
+                                    return mm + '/' + dd + '/' + yy;
+                                }
+                            }
+                        }
                     }
                 }
             });

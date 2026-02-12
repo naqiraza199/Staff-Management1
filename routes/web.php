@@ -39,8 +39,6 @@ Route::post('/set-selected-date', function (Request $request) {
 })->name('set-selected-date');
 
 
-
-
 Route::get('/billing-reports/{clientId}/print', [App\Http\Controllers\DataPrintController::class, 'printTimesheet'])
     ->name('billing-reports.print');
 
@@ -258,4 +256,111 @@ Route::get('/update-invoices', function () {
     }
 
     return "Invoices updated successfully!";
+});
+
+// AJAX routes for Staff/Client details in Schedular
+Route::middleware(['auth'])->group(function () {
+    Route::get('/get-staff-details', function (Request $request) {
+        $userId = $request->userId;
+        
+        try {
+            $user = User::with('staffProfile', 'company')->find($userId);
+            
+            if (!$user) {
+                return response()->json(['error' => 'Staff not found', 'userId' => $userId], 404);
+            }
+            
+            $staffProfile = $user->staffProfile;
+            
+            // Handle case where staffProfile is null
+            if (!$staffProfile) {
+                $staffProfile = new \stdClass();
+                $staffProfile->first_name = null;
+                $staffProfile->last_name = null;
+                $staffProfile->middle_name = null;
+                $staffProfile->mobile_number = null;
+                $staffProfile->phone_number = null;
+                $staffProfile->gender = null;
+                $staffProfile->dob = null;
+                $staffProfile->employment_type = null;
+                $staffProfile->address = null;
+                $staffProfile->role_type = null;
+                $staffProfile->about = null;
+            }
+            
+            $details = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'contact_number' => $user->contact_number,
+                'country' => $user->country,
+                'job_title' => $user->jobTitle ? $user->jobTitle->title : 'N/A',
+                'image' => $user->image,
+                'profile_pic' => $staffProfile->profile_pic ?? null,
+                'status' => $user->status,
+                'languages' => $user->languages ? implode(', ', $user->languages) : 'N/A',
+                'private_note' => $user->private_note,
+                // Staff profile fields
+                'first_name' => $staffProfile->first_name ?? 'N/A',
+                'last_name' => $staffProfile->last_name ?? 'N/A',
+                'middle_name' => $staffProfile->middle_name ?? 'N/A',
+                'mobile_number' => $staffProfile->mobile_number ?? 'N/A',
+                'phone_number' => $staffProfile->phone_number ?? 'N/A',
+                'gender' => $staffProfile->gender ?? 'N/A',
+                'dob' => $staffProfile->dob ? (is_string($staffProfile->dob) ? $staffProfile->dob : $staffProfile->dob->format('d/m/Y')) : 'N/A',
+                'employment_type' => $staffProfile->employment_type ?? 'N/A',
+                'address' => $staffProfile->address ?? 'N/A',
+                'role_type' => $staffProfile->role_type ?? 'N/A',
+                'about' => $staffProfile->about ?? 'N/A',
+            ];
+            
+            return response()->json($details);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+        }
+    })->name('get-staff-details');
+
+    Route::get('/get-client-details', function (Request $request) {
+        $clientId = $request->clientId;
+        
+        $client = Client::with('user', 'clientType', 'additionalContacts')->find($clientId);
+        
+        if (!$client) {
+            return response()->json(['error' => 'Client not found'], 404);
+        }
+        
+        $details = [
+            'id' => $client->id,
+            'client_no' => $client->client_no,
+            'salutation' => $client->salutation,
+            'first_name' => $client->first_name,
+            'middle_name' => $client->middle_name,
+            'last_name' => $client->last_name,
+            'full_name' => $client->full_name,
+            'display_name' => $client->display_name,
+            'gender' => $client->gender,
+            'dob' => $client->dob ? $client->dob->format('d/m/Y') : 'N/A',
+            'address' => $client->address,
+            'unit_no' => $client->unit_or_appartment_no,
+            'mobile_number' => $client->mobile_number,
+            'phone_number' => $client->phone_number,
+            'email' => $client->email,
+            'religion' => $client->religion,
+            'marital_status' => $client->marital_status,
+            'nationality' => $client->nationality,
+            'languages' => $client->languages ? implode(', ', $client->languages) : 'N/A',
+            'pic' => $client->pic,
+            'status' => $client->status,
+            'NDIS_number' => $client->NDIS_number ?? 'N/A',
+            'aged_care_recipient_ID' => $client->aged_care_recipient_ID ?? 'N/A',
+            'reference_number' => $client->reference_number ?? 'N/A',
+            'client_type' => $client->clientType ? $client->clientType->name : 'N/A',
+            'need_to_know_information' => $client->need_to_know_information ?? 'N/A',
+            'useful_information' => $client->useful_information ?? 'N/A',
+            'private_info' => $client->private_info ?? 'N/A',
+            'review_date' => $client->review_date ? $client->review_date->format('d/m/Y') : 'N/A',
+        ];
+        
+        return response()->json($details);
+    })->name('get-client-details');
 });

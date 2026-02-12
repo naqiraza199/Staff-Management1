@@ -627,30 +627,21 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                     ->label('Carer Name')
                                     ->disabled()
                                     ->default(fn ($get) => $get('user_name')),
-                                TimePicker::make('user_start_time')
-                                    ->label('Start Time')
-                                    ->seconds(false)
-                                    ->extraInputAttributes(['id' => 'edit-user-start-time-input'])
-                                    ->default($this->data['start_time'] ?? null),
-                                TimePicker::make('user_end_time')
-                                    ->label('End Time')
-                                    ->seconds(false)
-                                    ->extraInputAttributes(['id' => 'edit-user-end-time-input'])
-                                    ->default($this->data['end_time'] ?? null),
-                        Select::make('pay_group_id')
+                               
+                                Select::make('pay_group_id')
                                     ->label('Pay Group')
                                     ->options(PayGroup::where('user_id', auth()->id())->where('is_archive', 0)->pluck('name', 'id'))
                                     ->default(fn ($get) => $get('pay_group_id')),
-                                    View::make('edit-user-start-time-init')
-                                        ->view('filament.forms.components.time-js-initializer')
-                                        ->viewData(['fieldId' => 'edit-user-start-time-input']),
-
-                                    View::make('edit-user-start-time-init')
+                                View::make('edit-user-start-time-init')
                                     ->view('filament.forms.components.time-js-initializer')
-                                    ->viewData(['fieldId' => 'edit-user-end-time-input']),
+                                    ->viewData(fn ($get) => ['fieldId' => 'edit-user-start-time-input-' . $get('user_id') ?? 'default']),
+
+                                View::make('edit-user-end-time-init')
+                                    ->view('filament.forms.components.time-js-initializer')
+                                    ->viewData(fn ($get) => ['fieldId' => 'edit-user-end-time-input-' . $get('user_id') ?? 'default']),
                                
                             ])
-                            ->columns(4)
+                            ->columns(2)
                             ->addable(false)
                             ->visible(fn ($get) => !empty($get('user_id')) && !$get('add_to_job_board'))
                             ->default($this->data['user_details'] ?? []),
@@ -874,34 +865,43 @@ foreach ($clientDetails as $detail) {
 
         $fetchPriceBook = PriceBook::where('id', $priceBookId)->first();
 
-        $priceDetail = \App\Models\PriceBookDetail::where('price_book_id', $priceBookId)
-            ->where('day_of_week', $dayType)
-            ->where(function ($q) use ($shiftStart, $shiftEnd) {
-                $q->where(function ($sub) use ($shiftStart, $shiftEnd) {
-                    $sub->whereTime('start_time', '<=', $shiftStart->format('H:i'))
-                        ->where(function ($inner) use ($shiftEnd) {
-                            $inner->whereTime('end_time', '>=', $shiftEnd->format('H:i'))
-                                ->orWhere('end_time', '00:00:00'); // midnight means end of day
-                        });
+        $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
+
+        if ($isFixedPrice) {
+            // ─── CHANGED: No time logic — just take the FIRST price book detail record ───
+            $priceDetail = \App\Models\PriceBookDetail::where('price_book_id', $priceBookId)
+                ->orderBy('id')
+                ->first();
+        } else {
+            // ─── HOURLY LOGIC REMAINS 100% UNCHANGED ───
+            $priceDetail = \App\Models\PriceBookDetail::where('price_book_id', $priceBookId)
+                ->where('day_of_week', $dayType)
+                ->where(function ($q) use ($shiftStart, $shiftEnd) {
+                    $q->where(function ($sub) use ($shiftStart, $shiftEnd) {
+                        $sub->whereTime('start_time', '<=', $shiftStart->format('H:i'))
+                            ->where(function ($inner) use ($shiftEnd) {
+                                $inner->whereTime('end_time', '>=', $shiftEnd->format('H:i'))
+                                    ->orWhere('end_time', '00:00:00'); // midnight means end of day
+                            });
+                    })
+                    ->orWhere(function ($sub) {
+                        $sub->whereTime('start_time', '00:00:00')
+                            ->whereTime('end_time', '00:00:00');
+                    });
                 })
-                ->orWhere(function ($sub) {
-                    $sub->whereTime('start_time', '00:00:00')
-                        ->whereTime('end_time', '00:00:00');
-                });
-            })
-            ->first();
+                ->first();
+        }
 
     // ────────────────────────────────────────────────
     //          FIXED PRICE vs HOURLY LOGIC
     // ────────────────────────────────────────────────
-    $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
     $per_km_price = $priceDetail?->per_km ?? 0;
     $distance     = $data['mileage'] ?? 0.0;
     $additionalCostPrice = $data['additional_cost'] ?? 0.0;
     $distanceXRate = $distance . ' x $' . number_format($per_km_price, 2);
 
     if ($isFixedPrice) {
-        $baseCost   = $priceDetail->per_hour ?? 0;   // here per_hour actually stores the fixed amount
+        $baseCost   = $priceDetail?->per_hour ?? 0;   // here per_hour actually stores the fixed amount
         $hoursXRate = 'Fixed: $' . number_format($baseCost, 2);
         $totalCost  = $baseCost + ($distance * $per_km_price) + $additionalCostPrice;
     } else {
@@ -948,35 +948,69 @@ $userIds = $data['user_id'] ?? [];
 $startDate = $data['start_date'];
 $newStartTime = $data['start_time'];
 $newEndTime = $data['end_time'];
+$newShiftFinishesNextDay = $data['shift_finishes_next_day'] ?? false;
 $companyId = Company::where('user_id', Auth::id())->value('id');
 
+// Convert new shift times to minutes past midnight
+[$newStartHours, $newStartMinutes] = explode(':', $newStartTime);
+$newStartTotal = (int)$newStartHours * 60 + (int)$newStartMinutes;
+[$newEndHours, $newEndMinutes] = explode(':', $newEndTime);
+$newEndTotal = (int)$newEndHours * 60 + (int)$newEndMinutes;
+
+// Handle overnight for new shift
+if ($newEndTotal <= $newStartTotal || $newShiftFinishesNextDay) {
+    $newEndTotal += 24 * 60;
+}
+
 $conflict = false;
-if (is_array($userIds)) {
+
+// Normalize userIds to array
+if (!is_array($userIds) && $userIds) {
+    $userIds = [$userIds];
+}
+
+if (!empty($userIds)) {
     foreach ($userIds as $userId) {
-        $existing = Shift::where('company_id', $companyId)
+        // Get all existing shifts for this staff on this date (excluding current shift)
+        $existingShifts = Shift::where('company_id', $companyId)
             ->where('id', '!=', $this->shift->id)
-            ->whereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)])
+            ->where(function ($query) use ($userId) {
+                $query->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userId])
+                      ->orWhereRaw('JSON_CONTAINS(JSON_EXTRACT(carer_section, "$.user_id"), ?)', [json_encode($userId)]);
+            })
             ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
-            ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
-            ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
-            ->exists();
-
-        if ($existing) {
-            $conflict = true;
-            break;
+            ->get();
+        
+        foreach ($existingShifts as $existingShift) {
+            $existingTimeLocation = is_string($existingShift->time_and_location) 
+                ? json_decode($existingShift->time_and_location, true) 
+                : ($existingShift->time_and_location ?? []);
+            
+            $existingStartTime = $existingTimeLocation['start_time'] ?? '';
+            $existingEndTime = $existingTimeLocation['end_time'] ?? '';
+            $existingFinishesNextDay = $existingTimeLocation['shift_finishes_next_day'] ?? false;
+            
+            if (empty($existingStartTime) || empty($existingEndTime)) {
+                continue;
+            }
+            
+            // Convert existing shift times to minutes past midnight
+            [$existingStartHours, $existingStartMinutes] = explode(':', $existingStartTime);
+            $existingStartTotal = (int)$existingStartHours * 60 + (int)$existingStartMinutes;
+            [$existingEndHours, $existingEndMinutes] = explode(':', $existingEndTime);
+            $existingEndTotal = (int)$existingEndHours * 60 + (int)$existingEndMinutes;
+            
+            // Handle overnight for existing shift
+            if ($existingEndTotal <= $existingStartTotal || $existingFinishesNextDay) {
+                $existingEndTotal += 24 * 60;
+            }
+            
+            // Check for overlap: new shift overlaps if newStart < existingEnd AND newEnd > existingStart
+            if ($newStartTotal < $existingEndTotal && $newEndTotal > $existingStartTotal) {
+                $conflict = true;
+                break 2;
+            }
         }
-    }
-} elseif ($userIds) {
-    $existing = Shift::where('company_id', $companyId)
-        ->where('id', '!=', $this->shift->id)
-        ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userIds])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$startDate])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
-        ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
-        ->exists();
-
-    if ($existing) {
-        $conflict = true;
     }
 }
 

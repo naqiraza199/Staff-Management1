@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceMail;
 use Illuminate\Support\Facades\Auth;
 
-
 class InvoicePaymentController extends BaseController
 {
     public function store(Request $request, Invoice $invoice)
@@ -45,11 +44,7 @@ class InvoicePaymentController extends BaseController
             'invoice_payment_id' => $payment->id,
             'title'      => auth()->user()->name . ' Received Payment',
             'from'       => 'Invoice Payment'. $payment->paid_amount . ". ",
-            'body' => auth()->user()->name . " received payment of $" . $payment->paid_amount . ". " .
-                    "Reference: " . ($payment->reference ?? 'N/A') . ". " .
-                    "Payment Date: " . \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') . ". " .
-                    "Remaining Balance: $" . $invoice->balance . ".",
-
+            'body' => auth()->user()->name . " received payment of $" . $payment->paid_amount . ". ",
         ]);
     });
 
@@ -73,7 +68,7 @@ class InvoicePaymentController extends BaseController
         $amount = (float) $invoicePayment->paid_amount;
 
         // Delete the event linked to this payment
-        \App\Models\Event::where('invoice_payment_id', $invoicePayment->id)->delete();
+        // \App\Models\Event::where('invoice_payment_id', $invoicePayment->id)->delete();
 
         // Delete the payment
         $invoicePayment->delete();
@@ -84,6 +79,14 @@ class InvoicePaymentController extends BaseController
             $invoice->status = 'Paid';
         }
         $invoice->save();
+
+        Event::create([
+            'invoice_id' => $invoice->id, 
+            'invoice_payment_id' => $invoicePayment->id,
+            'title'      => auth()->user()->name . ' Deleted Payment',
+            'from'       => 'Invoice Payment'. $invoicePayment->paid_amount . ". ",
+            'body' => auth()->user()->name . " deleted payment of $" . $invoicePayment->paid_amount . ". ",
+        ]);
     });
 
     Notification::make()
@@ -133,13 +136,16 @@ public function update(Request $request, Invoice $invoice)
     $description['hour_shift'] = array_filter($description['hour_shift'] ?? [], fn($v) => trim($v) !== '');
     $description['km_shift']   = array_filter($description['km_shift'] ?? [], fn($v) => trim($v) !== '');
 
+
     $invoice->update([
         'additional_contact_id' => $request->additional_contact_id,
-        'payment_due'           => $request->payment_due,
-        'ref_no'                => $request->ref_no,
-        'purchase_order'        => $request->purchase_order,
-        'description'           => !empty($description) ? $description : null,
+        'payment_due' => Carbon::createFromFormat('d-m-Y', $request->payment_due)
+                                ->format('Y-m-d'),
+        'ref_no' => $request->ref_no,
+        'purchase_order' => $request->purchase_order,
+        'description' => !empty($description) ? $description : null,
     ]);
+
 
     \App\Models\Event::create([
         'invoice_id' => $invoice->id,

@@ -386,8 +386,8 @@
 </select>
 
 <!-- Date Range Picker: Separate Start and End -->
-<input type="date" id="start-date" class="filter-input" placeholder="Start Date" value="2025-10-13">
-<input type="date" id="end-date" class="filter-input" placeholder="End Date" value="2025-10-19">
+<input type="date" id="start-date" class="filter-input" placeholder="Start Date">
+<input type="date" id="end-date" class="filter-input" placeholder="End Date">
 
 
     <button id="apply-metric" class="filter-input action-buttons">Apply</button>

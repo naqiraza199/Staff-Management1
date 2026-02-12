@@ -40,6 +40,8 @@ use App\Models\Timesheet;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\View;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ShiftAssignment;
 
 use Carbon\CarbonInterval;
 
@@ -83,12 +85,12 @@ public bool $isTaskModalOpen = false;
 
 public bool $showTaskModal = false;
 public ?int $shiftId = null;
-    public ?string $selectedDate = null;
+public ?string $selectedDate = null;
 
-    protected $listeners = [
+protected $listeners = [
     'open-task-modal'   => 'openTaskModal',
     'close-task-modal'  => 'closeTaskModal',
-    ];
+];
 
     public function openTaskModal($params = [])
     {
@@ -118,7 +120,7 @@ public ?int $shiftId = null;
         ]);
     }
 
-    
+
 
 public function mount()
 {
@@ -1277,6 +1279,21 @@ public function createShift()
     // 🔂 CREATE SHIFTS + ALL RELATED RECORDS
     // --------------------------------------------------
     $skippedCount = 0;
+    
+    /**
+     * Helper function to convert time string to minutes past midnight
+     * Handles both same-day and overnight shifts
+     */
+    $timeToMinutes = function ($time, $startMinutes, $endMinutes) {
+        [$hours, $minutes] = explode(':', $time);
+        $totalMinutes = (int)$hours * 60 + (int)$minutes;
+        // If overnight shift (end time is earlier than start time), add 24 hours
+        if ($endMinutes <= $startMinutes) {
+            $totalMinutes += 24 * 60;
+        }
+        return $totalMinutes;
+    };
+    
     foreach ($repeatDates as $shiftDate) {
 
         // Check for overlapping shift for the same staff on same date
@@ -1284,15 +1301,58 @@ public function createShift()
         if ($userId && !is_array($userId)) {
             $newStartTime = data_get($data, 'time_and_location.start_time');
             $newEndTime = data_get($data, 'time_and_location.end_time');
-
-            $existingShift = Shift::where('company_id', $companyId)
+            $newShiftFinishesNextDay = data_get($data, 'time_and_location.shift_finishes_next_day', false);
+            
+            // Convert new shift times to minutes past midnight
+            [$newStartHours, $newStartMinutes] = explode(':', $newStartTime);
+            $newStartTotal = (int)$newStartHours * 60 + (int)$newStartMinutes;
+            [$newEndHours, $newEndMinutes] = explode(':', $newEndTime);
+            $newEndTotal = (int)$newEndHours * 60 + (int)$newEndMinutes;
+            
+            // Handle overnight for new shift
+            if ($newEndTotal <= $newStartTotal || $newShiftFinishesNextDay) {
+                $newEndTotal += 24 * 60;
+            }
+            
+            // Get all existing shifts for this staff on this date
+            $existingShifts = Shift::where('company_id', $companyId)
                 ->whereRaw('JSON_EXTRACT(carer_section, "$.user_id") = ?', [$userId])
                 ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_date") = ?', [$shiftDate->toDateString()])
-                ->whereRaw('JSON_EXTRACT(time_and_location, "$.start_time") < ?', [$newEndTime])
-                ->whereRaw('JSON_EXTRACT(time_and_location, "$.end_time") > ?', [$newStartTime])
-                ->exists();
+                ->get();
+            
+            $hasOverlap = false;
+            foreach ($existingShifts as $existingShift) {
+                $existingTimeLocation = is_string($existingShift->time_and_location) 
+                    ? json_decode($existingShift->time_and_location, true) 
+                    : ($existingShift->time_and_location ?? []);
+                
+                $existingStartTime = $existingTimeLocation['start_time'] ?? '';
+                $existingEndTime = $existingTimeLocation['end_time'] ?? '';
+                $existingFinishesNextDay = $existingTimeLocation['shift_finishes_next_day'] ?? false;
+                
+                if (empty($existingStartTime) || empty($existingEndTime)) {
+                    continue;
+                }
+                
+                // Convert existing shift times to minutes past midnight
+                [$existingStartHours, $existingStartMinutes] = explode(':', $existingStartTime);
+                $existingStartTotal = (int)$existingStartHours * 60 + (int)$existingStartMinutes;
+                [$existingEndHours, $existingEndMinutes] = explode(':', $existingEndTime);
+                $existingEndTotal = (int)$existingEndHours * 60 + (int)$existingEndMinutes;
+                
+                // Handle overnight for existing shift
+                if ($existingEndTotal <= $existingStartTotal || $existingFinishesNextDay) {
+                    $existingEndTotal += 24 * 60;
+                }
+                
+                // Check for overlap: new shift overlaps if newStart < existingEnd AND newEnd > existingStart
+                if ($newStartTotal < $existingEndTotal && $newEndTotal > $existingStartTotal) {
+                    $hasOverlap = true;
+                    break;
+                }
+            }
 
-            if ($existingShift) {
+            if ($hasOverlap) {
                 $skippedCount++;
                 continue;
             }
@@ -1353,12 +1413,39 @@ public function createShift()
         ]);
 
         // --------------------------------------------------
-        // 🧾 BILLING + TIMESHEET (OLD LOGIC 100%)
+        // 📧 SEND SHIFT ASSIGNMENT EMAIL TO STAFF
         // --------------------------------------------------
         if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
+            $userId = $carerSection['user_id'] ?? null;
+            
+            // Handle both single user_id and array of user_ids
+            if ($userId) {
+                $userIds = is_array($userId) ? $userId : [$userId];
+                
+                foreach ($userIds as $staffUserId) {
+                    $staffUser = User::find($staffUserId);
+                    
+                    if ($staffUser && $staffUser->email) {
+                        try {
+                            Mail::to($staffUser->email)->send(new ShiftAssignment($newShift, $staffUser, $authUser));
+                            // Add delay to avoid rate limiting
+                            usleep(500000); // 0.5 second delay between emails
+                        } catch (\Exception $e) {
+                            // Log error but don't break shift creation
+                            \Log::error('Failed to send shift assignment email: ' . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        }
 
-    // ✅ IMPORTANT: use loop date, NOT original start_date
-    $shiftDate = Carbon::parse($shiftDate); // already done earlier — kept for clarity
+        // --------------------------------------------------
+        // 🧾 BILLING + TIMESHEET (OLD LOGIC 100%)
+        // --------------------------------------------------
+       if (($data['add_to_job_board'] == 0) && ($isVacant == 0)) {
+
+    // Use the actual shift date from the loop
+    $shiftDate = Carbon::parse($shiftDate);
 
     $shiftStart  = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.start_time'));
     $shiftEnd    = Carbon::parse($shiftDate->toDateString() . ' ' . data_get($data, 'time_and_location.end_time'));
@@ -1366,49 +1453,12 @@ public function createShift()
 
     $fetchPriceBook = PriceBook::where('id', $priceBookId)->first();
 
-    // Overnight shift handling
+    // Handle overnight shifts for hour calculation (still needed for hourly & display)
     if ($shiftEnd->lessThanOrEqualTo($shiftStart)) {
         $shiftEnd = $shiftEnd->addDay();
     }
 
     $hours = $shiftStart->floatDiffInHours($shiftEnd);
-
-    // -------------------------------------------------
-    // 📅 Day type
-    // -------------------------------------------------
-    $dayOfWeek = $shiftDate->format('l');
-    $dayType = match ($dayOfWeek) {
-        'Saturday' => 'Saturday',
-        'Sunday'   => 'Sunday',
-        default    => 'Weekdays - I',
-    };
-
-    // -------------------------------------------------
-    // 💰 Price book logic — now supports fixed_price
-    // -------------------------------------------------
-    $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
-        ->where('day_of_week', $dayType)
-        ->where(function ($q) use ($shiftEnd) {
-            $endTime = $shiftEnd->format('H:i:s');
-
-            $q->where(function ($sub) use ($endTime) {
-                $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
-                    ->whereColumn('end_time', '>', 'start_time');
-            })
-            ->orWhere(function ($sub) use ($endTime) {
-                $sub->whereColumn('end_time', '<', 'start_time')
-                    ->where(function ($wrap) use ($endTime) {
-                        $wrap->where('start_time', '<=', $endTime)
-                             ->orWhere('end_time', '>=', $endTime);
-                    });
-            })
-            ->orWhere(function ($sub) {
-                $sub->whereTime('start_time', '00:00:00')
-                    ->whereTime('end_time', '00:00:00');
-            });
-        })
-        ->orderBy('start_time')
-        ->first();
 
     // ────────────────────────────────────────────────
     //          FIXED PRICE vs HOURLY LOGIC
@@ -1416,11 +1466,48 @@ public function createShift()
     $isFixedPrice = $fetchPriceBook && $fetchPriceBook->fixed_price == 1;
 
     if ($isFixedPrice) {
-        $rate          = 0;                     // not used
-        $totalCost     = $priceDetail->per_hour ?? 0;   // here per_hour actually stores the fixed amount
+        // ─── CHANGED: No time logic — just take the FIRST price book detail record ───
+        $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+            ->orderBy('id')           // or ->first() — simplest and most predictable
+            ->first();
+
+        $fixedAmount   = $priceDetail ? (float) $priceDetail->per_hour : 0.0;
+        $totalCost     = $fixedAmount;
         $hoursXRate    = 'Fixed: $' . number_format($totalCost, 2);
         $displayHours  = 'Fixed price';
     } else {
+        // ─── HOURLY LOGIC REMAINS 100% UNCHANGED ───
+        $dayOfWeek = $shiftDate->format('l');
+        $dayType = match ($dayOfWeek) {
+            'Saturday' => 'Saturday',
+            'Sunday'   => 'Sunday',
+            default    => 'Weekdays - I',
+        };
+
+        $priceDetail = PriceBookDetail::where('price_book_id', $priceBookId)
+            ->where('day_of_week', $dayType)
+            ->where(function ($q) use ($shiftEnd) {
+                $endTime = $shiftEnd->format('H:i:s');
+
+                $q->where(function ($sub) use ($endTime) {
+                    $sub->whereRaw('? BETWEEN start_time AND end_time', [$endTime])
+                        ->whereColumn('end_time', '>', 'start_time');
+                })
+                ->orWhere(function ($sub) use ($endTime) {
+                    $sub->whereColumn('end_time', '<', 'start_time')
+                        ->where(function ($wrap) use ($endTime) {
+                            $wrap->where('start_time', '<=', $endTime)
+                                 ->orWhere('end_time', '>=', $endTime);
+                        });
+                })
+                ->orWhere(function ($sub) {
+                    $sub->whereTime('start_time', '00:00:00')
+                        ->whereTime('end_time', '00:00:00');
+                });
+            })
+            ->orderBy('start_time')
+            ->first();
+
         $rate          = $priceDetail?->per_hour ?? 0;
         $totalCost     = $hours * $rate;
         $hoursXRate    = number_format($hours, 1) . ' x $' . number_format($rate, 2);
@@ -1430,16 +1517,16 @@ public function createShift()
     $per_km_price = $priceDetail?->per_km ?? 0;
     $distanceXRate = 0.0 . ' x $' . number_format($per_km_price, 2);
 
-    // -------------------------------------------------
-    // 🧾 Billing Report — now supports fixed price
-    // -------------------------------------------------
+    // ────────────────────────────────────────────────
+    //          BILLING REPORT — unchanged except values above
+    // ────────────────────────────────────────────────
     $billingRecordForClient = BillingReport::create([
         'date'            => $shiftDate->toDateString(),
         'shift_id'        => $newShift->id,
         'staff'           => data_get($data, 'carer_section.user_id'),
         'start_time'      => $shiftStart->format('H:i'),
         'end_time'        => $shiftEnd->format('H:i'),
-        'hours_x_rate'    => $hoursXRate,               // ← shows "Fixed: $xxx.xx" or "3.5 x $45.00"
+        'hours_x_rate'    => $hoursXRate,
         'additional_cost' => 0.0,
         'distance_x_rate' => $distanceXRate,
         'total_cost'      => $totalCost,

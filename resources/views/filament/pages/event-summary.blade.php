@@ -277,7 +277,16 @@ background-color: #e9f0f7;
         <header class="report-header">
             <h1> <span class="header-subtitle">Event</span></h1>
             <div class="header-controls">
-               <div class="toggle-group" id="entity-toggle">
+                <form method="GET" action="" class="date-filter-form" style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
+                    <input type="date" name="start_date" value="{{ $start_date }}" class="date-input" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.9rem;">
+                    <span style="color: #666;">to</span>
+                    <input type="date" name="end_date" value="{{ $end_date }}" class="date-input" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.9rem;">
+                    <button type="submit" style="padding: 6px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem;">Filter</button>
+                    @if($start_date || $end_date)
+                        <a href="" style="padding: 6px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Clear</a>
+                    @endif
+                </form>
+                <div class="toggle-group" id="entity-toggle">
                     <label class="toggle-button active" data-target="client">
                         <input type="radio" name="entity" value="client" checked>
                         <i class="fas fa-user-tie"></i> Client
@@ -409,6 +418,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search');
     const clientRows = document.querySelectorAll('#client-table tbody tr');
     const staffRows = document.querySelectorAll('#staff-table tbody tr');
+    const dateFilterForm = document.querySelector('.date-filter-form');
+
+    // Get current date filter values
+    function getDateFilters() {
+        const startDate = dateFilterForm.querySelector('[name="start_date"]').value;
+        const endDate = dateFilterForm.querySelector('[name="end_date"]').value;
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        return params.toString();
+    }
 
     searchInput.addEventListener('keyup', function () {
         const query = this.value.toLowerCase().trim();
@@ -531,6 +551,7 @@ document.querySelectorAll('.toggle-button').forEach(button => {
         if (targetDiv) targetDiv.style.display = 'flex';
     });
 });
+
 </script>
 
 </x-filament-panels::page>

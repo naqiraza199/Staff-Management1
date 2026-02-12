@@ -462,6 +462,8 @@
             float: right;
             cursor: pointer;
         }
+        
+        /* Details Modal Styles */
         .whiti {
             /* background-color: white; */
         }
@@ -957,6 +959,104 @@ body.sidebar-collapsed .main-content-sidebar {
     background-color: #514bff;
     color: white;
 }
+
+/* Details Modal Styles */
+.details-modal-content {
+    background: #ffffff;
+    width: 1000px;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+    margin: auto;
+}
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.details-modal-header {
+    background: linear-gradient(135deg, #151A2D 0%, #1e2a4a 100%);
+    color: white;
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.details-modal-header h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.details-modal-header h3 i { font-size: 1.5rem; color: #60a5fa; }
+.details-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 28px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.details-close-btn:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(90deg); }
+.details-modal-body { padding: 25px; }
+.details-loading { text-align: center; padding: 40px; font-size: 1.1rem; color: #6b7280; }
+.details-loading i { font-size: 2rem; margin-bottom: 15px; color: #60a5fa; }
+.details-section { margin-bottom: 25px; }
+.details-section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+}
+.details-row { display: flex; margin-bottom: 12px; align-items: flex-start; }
+.details-label { width: 140px; font-weight: 500; color: #4b5563; font-size: 0.9rem; flex-shrink: 0; }
+.details-value { flex: 1; color: #1f2937; font-size: 0.95rem; word-break: break-word; }
+.details-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0 auto 20px;
+}
+.details-name { text-align: center; font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 5px; }
+.details-email { text-align: center; color: #6b7280; margin-bottom: 20px; }
+.details-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+.status-active { background: #d1fae5; color: #059669; }
+.status-inactive { background: #fee2e2; color: #dc2626; }
+.details-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+.details-info-item { background: #f9fafb; padding: 12px 15px; border-radius: 10px; border-left: 3px solid #60a5fa; }
+.details-info-item .label { font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px; }
+.details-info-item .value { font-size: 0.95rem; font-weight: 500; color: #1f2937; }
+.details-textarea { background: #f9fafb; padding: 12px 15px; border-radius: 10px; border-left: 3px solid #60a5fa; font-size: 0.95rem; color: #1f2937; line-height: 1.5; }
+.details-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.details-tag { background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+.details-empty { color: #9ca3af; font-style: italic; }
+
+/* Clickable cells */
+.staff-cell.clickable, .client-staff-label.clickable { cursor: pointer; transition: all 0.2s ease; }
+.staff-cell.clickable:hover, .client-staff-label.clickable:hover { background: #151A2D !important; color: white !important; transform: translateX(3px); }
+.staff-cell.clickable:hover .label-badge, .client-staff-label.clickable:hover .label-badge { background: #60a5fa !important; }
+.staff-cell.clickable:hover .label-text, .client-staff-label.clickable:hover .label-text { color: white !important; }
+
     </style>
 
     <div wire:ignore.self x-data="{ calendarType: 'staff', viewType: 'Weekly' }">
@@ -1002,7 +1102,10 @@ body.sidebar-collapsed .main-content-sidebar {
 
             <button class="today" id="todayBtn">Today</button>
 
-            <button class="custom-calendar-btn" id="customCalendarToggle">📅</button>
+            <div style="position: relative; display: inline-block;">
+                <input type="date" id="customDatePicker" style="position: absolute; left: 0; top: 0; width: 40px; height: 40px; opacity: 0; cursor: pointer; z-index: 9999;">
+                <button class="custom-calendar-btn" id="customCalendarToggle">📅</button>
+            </div>
 
             <x-filament::button 
                 color="primary" 
@@ -1012,11 +1115,6 @@ body.sidebar-collapsed .main-content-sidebar {
             >
                 Shift
             </x-filament::button>
-
-            <!-- Calendar Popup -->
-            <div class="custom-calendar-popup" id="customCalendarPopup">
-                <input type="date" id="customDatePicker">
-            </div>
         </div>
             <div id="calendarWrapper" :class="viewType.toLowerCase()">
                     <!-- Staff Calendar -->
@@ -1091,6 +1189,36 @@ body.sidebar-collapsed .main-content-sidebar {
             </div>
         </div>
 
+        <!-- Staff Details Modal -->
+        <div class="modal" id="staffDetailsModal" style="display: none;" wire:ignore>
+            <div class="details-modal-content">
+                <div class="details-modal-header">
+                    <h3><i class="fa-solid fa-user-tie"></i> Staff Details</h3>
+                    <button class="details-close-btn" onclick="closeStaffDetailsModal()">&times;</button>
+                </div>
+                <div class="details-modal-body" id="staffDetailsContent">
+                    <!-- Staff details will be loaded here -->
+                   
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Details Modal -->
+        <div class="modal" id="clientDetailsModal" style="display: none;" wire:ignore>
+            <div class="details-modal-content">
+                <div class="details-modal-header">
+                    <h3><i class="fa-solid fa-user"></i> Client Details</h3>
+                    <button class="details-close-btn" onclick="closeClientDetailsModal()">&times;</button>
+                </div>
+                <div class="details-modal-body" id="clientDetailsContent">
+                    <!-- Client details will be loaded here -->
+                    <div class="details-loading">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
             const users = @json($users ?? []);
             const shifts = @json($shifts ?? []);
@@ -1138,7 +1266,7 @@ body.sidebar-collapsed .main-content-sidebar {
                                 const count = shifts.filter(s => s.series_uuid === shift.series_uuid).length;
 
                                 if (count > 1) {
-                                    return `<span style="position:absolute;bottom:8px;right:5px;"
+                                    return `<span style="position:absolute;top:30px;right:5px;"
                                                 class="series-icon"
                                                 title="${shift.repeat_tooltip}">
                                                 <i class="fa-solid fa-repeat"></i>
@@ -1248,7 +1376,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
 
     if (viewType === 'Daily') {
         // ----- DAILY VIEW -----
-        weekRange.textContent = startDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+        weekRange.textContent = formatDateRange(startDate, startDate);
         const timeSlots = getDailyTimeSlots();
         const dayCount = timeSlots.length;
         calendar.className = 'calendar-grid daily';
@@ -1321,7 +1449,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                 const clientName = clientNames[String(shift.client_id)] || '';
 
                 taskDiv.innerHTML = `
-                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
+                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
                     <div>${shiftType}</div>
                     <div class="small-text">${clientName}</div>
                 `;
@@ -1346,11 +1474,16 @@ function renderStaffCalendar(filteredShifts = shifts) {
 
             // 🟢 Create the label cell with badge + name
             const staffCell = document.createElement('div');
-            staffCell.className = 'staff-cell user-staff-label';
+            staffCell.className = 'staff-cell user-staff-label clickable';
             staffCell.innerHTML = `
                 <span class="label-badge user-staff-label-badge">${initials}</span>
                 <span class="label-text">${userName}</span>
             `;
+            staffCell.title = 'Click to view staff details';
+            staffCell.onclick = function(e) {
+                e.stopPropagation();
+                openStaffDetails(userId);
+            };
             calendar.appendChild(staffCell);
 
             // 🔹 Create the timeline cell for this staff row
@@ -1390,7 +1523,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
                 const clientName = clientNames[String(shift.client_id)] || '';
 
                 taskDiv.innerHTML = `
-                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
+                    <strong>${timeRange}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong>
                     <div>${shiftType}</div>
                     <div class="small-text">${clientName}</div>
                 `;
@@ -1419,7 +1552,7 @@ function renderStaffCalendar(filteredShifts = shifts) {
         const dayCount = viewType === 'Weekly' ? 7 : 14;
         let day = new Date(startDate);
         while (day <= endDate) { dates.push(new Date(day)); day.setDate(day.getDate() + 1); }
-        weekRange.textContent = `${formatDateShort(startDate)} - ${formatDateShort(endDate)}`;
+        weekRange.textContent = formatDateRange(startDate, endDate);
         calendar.innerHTML = '<div class="day-header-staff">Staff</div>';
 
         // pending map stores next-day DOM pieces keyed by row & date
@@ -1489,19 +1622,15 @@ relevant.forEach(shift => {
         let clientHtml = '';
         if (shift.is_advanced_shift) {
             let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
-            clientIds.forEach(id => {
-                const clientName = clientNames[String(id)] || 'Unknown Client';
-                const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
-                clientHtml += `<div class="client-avatar">${initials}</div>`;
-            });
-            clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+            const clientNamesList = clientIds.map(id => clientNames[String(id)] || 'Unknown Client');
+            clientHtml = `<small>${clientNamesList.join(', ')}</small>`;
         } else {
             const clientName = clientNames[String(shift.client_id)] || '';
             clientHtml = `<small>${clientName}</small>`;
         }
 
         div.innerHTML = `
-            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
             ${shiftType}<br>
             ${clientHtml}
         `;
@@ -1525,12 +1654,8 @@ relevant.forEach(shift => {
     let clientHtml = '';
     if (shift.is_advanced_shift) {
         let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
-        clientIds.forEach(id => {
-            const clientName = clientNames[String(id)] || 'Unknown Client';
-            const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
-            clientHtml += `<div class="client-avatar">${initials}</div>`;
-        });
-        clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+        const clientNamesList = clientIds.map(id => clientNames[String(id)] || 'Unknown Client');
+        clientHtml = `<small>${clientNamesList.join(', ')}</small>`;
     } else {
         const clientName = clientNames[String(shift.client_id)] || '';
         clientHtml = `<small>${clientName}</small>`;
@@ -1538,7 +1663,7 @@ relevant.forEach(shift => {
 
     part1.innerHTML = `
         <strong>NEXT DAY</strong><br>
-        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
         ${shiftType}<br>
         ${clientHtml}
     `;
@@ -1577,11 +1702,16 @@ calendar.appendChild(dayCell);
 
             // 🟩 Create the left label cell with badge + name
             const staffCell = document.createElement('div');
-            staffCell.className = 'staff-cell user-staff-label';
+            staffCell.className = 'staff-cell user-staff-label clickable';
             staffCell.innerHTML = `
                 <span class="label-badge user-staff-label-badge">${initials}</span></br>
                 <span class="label-text">${userName}</span>
             `;
+            staffCell.title = 'Click to view staff details';
+            staffCell.onclick = function(e) {
+                e.stopPropagation();
+                openStaffDetails(userId);
+            };
             calendar.appendChild(staffCell);
 
             // 🔹 Create day cells for this user row
@@ -1616,12 +1746,8 @@ calendar.appendChild(dayCell);
                         let clientHtml = '';
                         if (shift.is_advanced_shift) {
                             let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
-                            clientIds.forEach(id => {
-                                const clientName = clientNames[String(id)] || 'Unknown Client';
-                                const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
-                                clientHtml += `<div class="client-avatar">${initials}</div>`;
-                            });
-                            clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+                            const clientNamesList = clientIds.map(id => clientNames[String(id)] || 'Unknown Client');
+                            clientHtml = `<small>${clientNamesList.join(', ')}</small>`;
                         } else {
                             const clientName = clientNames[String(shift.client_id)] || '';
                             clientHtml = `<small>${clientName}</small>`;
@@ -1652,12 +1778,8 @@ calendar.appendChild(dayCell);
                     let clientHtml = '';
                     if (shift.is_advanced_shift) {
                         let clientIds = Array.isArray(shift.clientIds) ? shift.clientIds : [shift.clientIds];
-                        clientIds.forEach(id => {
-                            const clientName = clientNames[String(id)] || 'Unknown Client';
-                            const initials = clientName.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
-                            clientHtml += `<div class="client-avatar">${initials}</div>`;
-                        });
-                        clientHtml = `<div style="display: flex; align-items: center; margin-top: 4px;">${clientHtml}</div>`;
+                        const clientNamesList = clientIds.map(id => clientNames[String(id)] || 'Unknown Client');
+                        clientHtml = `<small>${clientNamesList.join(', ')}</small>`;
                     } else {
                         const clientName = clientNames[String(shift.client_id)] || '';
                         clientHtml = `<small>${clientName}</small>`;
@@ -1665,10 +1787,10 @@ calendar.appendChild(dayCell);
 
                     part1.innerHTML = `
                         <strong>NEXT DAY</strong><br>
-                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                         ${shiftType}<br>
                         ${clientHtml}
-                        ${shift.is_split ? '<span style="float:right; color: #666; font-size: 14px;">&#9986;</span>' : ''}
+                        ${shift.is_split ? '<span style="float:right; color: #666; font-size: 1px;">&#9986;</span>' : ''}
                     `;
                     part1.onclick = e => { e.stopPropagation(); openShiftSlider(shift.id, dateKey); };
                     dayCell.appendChild(part1);
@@ -1720,9 +1842,7 @@ function renderClientCalendar(filteredShifts = shifts) {
 
     if (viewType === 'Daily') {
         // ── DAILY VIEW ───────────────────────────────────────
-        weekRange.textContent = startDate.toLocaleDateString('en-US', {
-            weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
-        });
+        weekRange.textContent = formatDateRange(startDate, startDate);
 
         const timeSlots = getDailyTimeSlots();
         const dayCount = timeSlots.length;
@@ -1802,11 +1922,16 @@ function renderClientCalendar(filteredShifts = shifts) {
                 .toUpperCase();
 
             const clientCell = document.createElement('div');
-            clientCell.className = 'staff-cell client-staff-label';
+            clientCell.className = 'staff-cell client-staff-label clickable';
             clientCell.innerHTML = `
                 <span class="label-badge client-staff-label-badge">${initials}</span>
                 <span class="label-text">${clientName}</span>
             `;
+            clientCell.title = 'Click to view client details';
+            clientCell.onclick = function(e) {
+                e.stopPropagation();
+                openClientDetails(clientId);
+            };
             calendar.appendChild(clientCell);
 
             const timelineCell = document.createElement('div');
@@ -1862,7 +1987,7 @@ function renderClientCalendar(filteredShifts = shifts) {
             day.setDate(day.getDate() + 1);
         }
 
-        weekRange.textContent = `${formatDateShort(startDate)} - ${formatDateShort(endDate)}`;
+        weekRange.textContent = formatDateRange(startDate, endDate);
         calendar.className = `calendar-grid ${viewType.toLowerCase()}`;
 
         dates.forEach(d => {
@@ -1933,7 +2058,7 @@ function renderClientCalendar(filteredShifts = shifts) {
 
                     part1.innerHTML = `
                         <strong>NEXT DAY</strong><br>
-                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_approved ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">&#128402;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_approved ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                         ${shiftType}<br>
                         <div style="display: flex; align-items: center; margin-top: 4px;">${staffHtml}</div>
                     `;
@@ -1967,11 +2092,16 @@ function renderClientCalendar(filteredShifts = shifts) {
                 .toUpperCase();
 
             const clientCell = document.createElement('div');
-            clientCell.className = 'staff-cell client-staff-label';
+            clientCell.className = 'staff-cell client-staff-label clickable';
             clientCell.innerHTML = `
                 <span class="label-badge client-staff-label-badge">${initials}</span>
                 <span class="label-text">${clientName}</span>
             `;
+            clientCell.title = 'Click to view client details';
+            clientCell.onclick = function(e) {
+                e.stopPropagation();
+                openClientDetails(clientId);
+            };
             calendar.appendChild(clientCell);
 
             dates.forEach(d => {
@@ -2053,6 +2183,28 @@ function formatDateKey(date) {
 }
 function formatDateShort(date) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatDateRange(startDate, endDate) {
+    const startMonth = startDate.toLocaleDateString('en-US', { month: 'long' });
+    const endMonth = endDate.toLocaleDateString('en-US', { month: 'long' });
+    const startYear = startDate.getFullYear();
+    const endYear = endDate.getFullYear();
+    const startMonthShort = startDate.toLocaleDateString('en-US', { month: 'short' });
+    const endMonthShort = endDate.toLocaleDateString('en-US', { month: 'short' });
+    
+    // If same month and same year - show single month with year
+    if (startMonth === endMonth && startYear === endYear) {
+        return `${startMonth} ${startYear}`;
+    }
+    
+    // If different months but same year - show "Jan - Feb 2026"
+    if (startYear === endYear) {
+        return `${startMonthShort} - ${endMonth} ${startYear}`;
+    }
+    
+    // If different years - show "Dec 2025 - Jan 2026"
+    return `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
 }
 function calculateShiftPosition(shift, refDate) {
     const shiftStart = new Date(`${shift.start_date}T${shift.start_time || '00:00'}`);
@@ -2273,37 +2425,6 @@ function sortClientsBy(viewType, filteredShifts) {
                 highlightToday();
             }
 
-            document.getElementById('customCalendarToggle').addEventListener('click', (e) => {
-                e.stopPropagation();
-                const customPopup = document.getElementById('customCalendarPopup');
-                customPopup.style.display = customPopup.style.display === 'block' ? 'none' : 'block';
-                const rect = document.getElementById('customCalendarToggle').getBoundingClientRect();
-                customPopup.style.left = '581.35px';
-                customPopup.style.top = '135px';
-            });
-
-            document.addEventListener('click', (e) => {
-                const customPopup = document.getElementById('customCalendarPopup');
-                const customBtn = document.getElementById('customCalendarToggle');
-                if (!customPopup.contains(e.target) && e.target !== customBtn) {
-                    customPopup.style.display = 'none';
-                }
-            });
-
-            document.getElementById('customDatePicker').addEventListener('change', function(e) {
-                const selectedDate = new Date(e.target.value);
-                if (selectedDate) {
-                    currentDate = selectedDate;
-                    if (document.getElementById('viewType').value !== 'Daily') {
-                        currentDate.setDate(currentDate.getDate() - currentDate.getDay());
-                    }
-                    renderStaffCalendar(filteredShifts);
-                    renderClientCalendar(filteredShifts);
-                    highlightToday();
-                    document.getElementById('customCalendarPopup').style.display = 'none';
-                }
-            });
-
             const dropdown = document.getElementById('dropdown');
             const button = dropdown.querySelector('.dropdown-btn');
             button.addEventListener('click', (e) => {
@@ -2382,6 +2503,24 @@ function sortClientsBy(viewType, filteredShifts) {
                 renderStaffCalendar();
                 renderClientCalendar();
                 highlightToday();
+
+                document.getElementById('customCalendarToggle').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('customDatePicker').click();
+                });
+
+                document.getElementById('customDatePicker').addEventListener('change', function(e) {
+                    const selectedDate = new Date(e.target.value);
+                    if (selectedDate && !isNaN(selectedDate)) {
+                        currentDate = new Date(selectedDate);
+                        if (document.getElementById('viewType').value !== 'Daily') {
+                            currentDate.setDate(currentDate.getDate() - currentDate.getDay());
+                        }
+                        renderStaffCalendar(filteredShifts);
+                        renderClientCalendar(filteredShifts);
+                        highlightToday();
+                    }
+                });
             });
             // 🔹 Handles clicking empty blocks across all calendar views
 function handleEmptyCalendarClick(dateKey) {
@@ -2389,14 +2528,530 @@ function handleEmptyCalendarClick(dateKey) {
     openModal('shift-modal', dateKey);
 }
 
-        </script>
-        <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (!window.initCustomDatePicker) return;
-
-        ['customDatePicker'].forEach(function (id) {
-            window.initCustomDatePicker(id);
-        });
+// 🔹 Staff Details Modal Functions
+function openStaffDetails(userId) {
+    const modal = document.getElementById('staffDetailsModal');
+    const content = document.getElementById('staffDetailsContent');
+    if (content) {
+        content.innerHTML = '<div class="details-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+    }
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+    
+    // Fetch staff details via AJAX
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch('/get-staff-details?userId=' + userId, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Staff details response:', data);
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        showStaffDetails(data);
+    })
+    .catch(error => {
+        console.error('Error fetching staff details:', error);
+        const content = document.getElementById('staffDetailsContent');
+        if (content) {
+            content.innerHTML = '<div class="details-loading">Error: ' + error.message + '</div>';
+        }
     });
-</script>
+}
+
+function showStaffDetails(details) {
+    const content = document.getElementById('staffDetailsContent');
+    if (!content) return;
+    
+    const initials = details.name ? details.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const statusClass = details.status === 'Active' ? 'status-active' : 'status-inactive';
+    
+    let html = `
+        <div class="details-avatar">${initials}</div>
+        <div class="details-name">${details.name || 'N/A'}</div>
+        <div class="details-email">${details.email || 'N/A'}</div>
+        <div class="details-status ${statusClass}">${details.status || 'Unknown'}</div>
+
+              <div class="details-section" style="margin-top: 20px;">
+            <div class="details-section-title">Personal Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">First Name</div>
+                    <div class="value">${details.first_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Last Name</div>
+                    <div class="value">${details.last_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Gender</div>
+                    <div class="value">${details.gender || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Date of Birth</div>
+                    <div class="value">${details.dob || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Employment Type</div>
+                    <div class="value">${details.employment_type || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Role Type</div>
+                    <div class="value">${details.role_type || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section" >
+            <div class="details-section-title">Contact Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">Phone</div>
+                    <div class="value">${details.phone_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Mobile</div>
+                    <div class="value">${details.mobile_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Email</div>
+                    <div class="value">${details.email || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+  
+        
+        <div class="details-section">
+            <div class="details-section-title">Address</div>
+            <div class="details-textarea">${details.address || '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">Languages</div>
+            <div class="details-tags">${details.languages && details.languages !== 'N/A' ? details.languages.split(', ').map(l => `<span class="details-tag">${l}</span>`).join('') : '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+        
+        ${details.about ? `
+        <div class="details-section">
+            <div class="details-section-title">About</div>
+            <div class="details-textarea">${details.about}</div>
+        </div>
+        ` : ''}
+    `;
+    
+    content.innerHTML = html;
+}
+
+function closeStaffDetailsModal() {
+    const modal = document.getElementById('staffDetailsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 🔹 Client Details Modal Functions
+function openClientDetails(clientId) {
+    const modal = document.getElementById('clientDetailsModal');
+    const content = document.getElementById('clientDetailsContent');
+    if (content) {
+        content.innerHTML = '<div class="details-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+    }
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+    
+    // Fetch client details via AJAX
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch('/get-client-details?clientId=' + clientId, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        showClientDetails(data);
+    })
+    .catch(error => {
+        console.error('Error fetching client details:', error);
+        if (content) {
+            content.innerHTML = '<div class="details-loading">Error loading details</div>';
+        }
+    });
+}
+
+function showClientDetails(details) {
+    const content = document.getElementById('clientDetailsContent');
+    if (!content) return;
+    
+    const initials = details.full_name ? details.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const statusClass = details.status === 'Active' ? 'status-active' : 'status-inactive';
+    
+    // Determine profile picture HTML
+    let avatarHtml = '';
+    if (details.pic) {
+        const picUrl = '/storage/' + details.pic;
+        avatarHtml = `<img src="${picUrl}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 20px; border: 3px solid #10b981;">`;
+    } else {
+        avatarHtml = `<div class="details-avatar" style="background: linear-gradient(135deg, #10b981, #34d399);">${initials}</div>`;
+    }
+    
+    let html = `
+        ${avatarHtml}
+        <div class="details-name">${details.display_name || details.full_name || 'N/A'}</div>
+        <div class="details-email">${details.email || 'N/A'}</div>
+        <div class="details-status ${statusClass}">${details.status || 'Unknown'}</div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="/admin/clients/${details.id}/view" target="_blank" style="display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #10b981 0%, #34d399 100%); color: white; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 500;">
+                <i class="fa-solid fa-eye"></i> View More
+            </a>
+        </div>
+
+        <div class="details-section" style="margin-top: 20px;">
+            <div class="details-section-title">Personal Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">Salutation</div>
+                    <div class="value">${details.salutation || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">First Name</div>
+                    <div class="value">${details.first_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Last Name</div>
+                    <div class="value">${details.last_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Gender</div>
+                    <div class="value">${details.gender || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Date of Birth</div>
+                    <div class="value">${details.dob || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Nationality</div>
+                    <div class="value">${details.nationality || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Marital Status</div>
+                    <div class="value">${details.marital_status || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Religion</div>
+                    <div class="value">${details.religion || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section" >
+            <div class="details-section-title">Contact Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">Phone</div>
+                    <div class="value">${details.phone_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Mobile</div>
+                    <div class="value">${details.mobile_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Client Type</div>
+                    <div class="value">${details.client_type || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+        <div class="details-section">
+            <div class="details-section-title">Address</div>
+            <div class="details-textarea">${details.unit_no ? details.unit_no + ', ' : ''}${details.address || '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">NDIS & ID Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">NDIS Number</div>
+                    <div class="value">${details.NDIS_number && details.NDIS_number !== 'N/A' ? details.NDIS_number : '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Aged Care ID</div>
+                    <div class="value">${details.aged_care_recipient_ID && details.aged_care_recipient_ID !== 'N/A' ? details.aged_care_recipient_ID : '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Reference Number</div>
+                    <div class="value">${details.reference_number && details.reference_number !== 'N/A' ? details.reference_number : '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Review Date</div>
+                    <div class="value">${details.review_date && details.review_date !== 'N/A' ? details.review_date : '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">Languages</div>
+            <div class="details-tags">${details.languages && details.languages !== 'N/A' ? details.languages.split(', ').map(l => `<span class="details-tag">${l}</span>`).join('') : '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+        
+        
+    `;
+    
+    content.innerHTML = html;
+}
+
+function closeClientDetailsModal() {
+    const modal = document.getElementById('clientDetailsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 🔹 Close modals when clicking outside
+document.addEventListener('click', function(event) {
+    const staffModal = document.getElementById('staffDetailsModal');
+    const clientModal = document.getElementById('clientDetailsModal');
+    
+    if (staffModal && event.target === staffModal) {
+        closeStaffDetailsModal();
+    }
+    if (clientModal && event.target === clientModal) {
+        closeClientDetailsModal();
+    }
+});
+
+// 🔹 Enhanced functions with profile picture and View More button
+function renderStaffDetailsWithPic(details) {
+    const content = document.getElementById('staffDetailsContent');
+    if (!content) return;
+    
+    const initials = details.name ? details.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const statusClass = details.status === 'Active' ? 'status-active' : 'status-inactive';
+    
+    // Determine profile picture HTML
+        avatarHtml = `<div class="details-avatar">${initials}</div>`;
+    
+    let html = `
+        ${avatarHtml}
+        <div class="details-name">${details.name || 'N/A'}</div>
+        <div class="details-email">${details.email || 'N/A'}</div>
+        <div class="details-status ${statusClass}">${details.status || 'Unknown'}</div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="/admin/users/${details.id}/view" target="_blank" style="display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #151A2D 0%, #1e2a4a 100%); color: white; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 500;">
+                <i class="fa-solid fa-eye"></i> View More
+            </a>
+        </div>
+
+        <div class="details-section" style="margin-top: 20px;">
+            <div class="details-section-title">Personal Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">First Name</div>
+                    <div class="value">${details.first_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Last Name</div>
+                    <div class="value">${details.last_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Gender</div>
+                    <div class="value">${details.gender || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Date of Birth</div>
+                    <div class="value">${details.dob || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Employment Type</div>
+                    <div class="value">${details.employment_type || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Role Type</div>
+                    <div class="value">${details.role_type || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+               <div class="details-section" >
+            <div class="details-section-title">Contact Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">Phone</div>
+                    <div class="value">${details.phone_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Mobile</div>
+                    <div class="value">${details.mobile_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Email</div>
+                    <div class="value">${details.email || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">Address</div>
+            <div class="details-textarea">${details.address || '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">Languages</div>
+            <div class="details-tags">${details.languages && details.languages !== 'N/A' ? details.languages.split(', ').map(l => `<span class="details-tag">${l}</span>`).join('') : '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+
+        
+        ${details.about ? `
+        <div class="details-section">
+            <div class="details-section-title">About</div>
+            <div class="details-textarea">${details.about}</div>
+        </div>
+        ` : ''}
+    `;
+    
+    content.innerHTML = html;
+}
+
+function renderClientDetailsWithPic(details) {
+    const content = document.getElementById('clientDetailsContent');
+    if (!content) return;
+    
+    const initials = details.full_name ? details.full_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const statusClass = details.status === 'Active' ? 'status-active' : 'status-inactive';
+    
+    // Determine profile picture HTML
+        avatarHtml = `<div class="details-avatar">${initials}</div>`;
+    
+    let html = `
+        ${avatarHtml}
+        <div class="details-name">${details.display_name || details.full_name || 'N/A'}</div>
+        <div class="details-email">${details.email || 'N/A'}</div>
+        <div class="details-status ${statusClass}">${details.status || 'Unknown'}</div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="/admin/clients/${details.id}/view" target="_blank" style="display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #151A2D 0%, #1e2a4a 100%); color: white; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 500;">
+                <i class="fa-solid fa-eye"></i> View More
+            </a>
+        </div>
+
+        <div class="details-section" style="margin-top: 20px;">
+            <div class="details-section-title">Personal Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">Salutation</div>
+                    <div class="value">${details.salutation || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">First Name</div>
+                    <div class="value">${details.first_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Last Name</div>
+                    <div class="value">${details.last_name || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Gender</div>
+                    <div class="value">${details.gender || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Date of Birth</div>
+                    <div class="value">${details.dob || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Nationality</div>
+                    <div class="value">${details.nationality || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Marital Status</div>
+                    <div class="value">${details.marital_status || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Religion</div>
+                    <div class="value">${details.religion || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">Contact Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">Phone</div>
+                    <div class="value">${details.phone_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Mobile</div>
+                    <div class="value">${details.mobile_number || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Client Type</div>
+                    <div class="value">${details.client_type || '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">Address</div>
+            <div class="details-textarea">${details.unit_no ? details.unit_no + ', ' : ''}${details.address || '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">NDIS & ID Information</div>
+            <div class="details-info-grid">
+                <div class="details-info-item">
+                    <div class="label">NDIS Number</div>
+                    <div class="value">${details.NDIS_number && details.NDIS_number !== 'N/A' ? details.NDIS_number : '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Aged Care ID</div>
+                    <div class="value">${details.aged_care_recipient_ID && details.aged_care_recipient_ID !== 'N/A' ? details.aged_care_recipient_ID : '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+                <div class="details-info-item">
+                    <div class="label">Reference Number</div>
+                    <div class="value">${details.reference_number && details.reference_number !== 'N/A' ? details.reference_number : '<span class="details-empty">Not provided</span>'}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section">
+            <div class="details-section-title">Languages</div>
+            <div class="details-tags">${details.languages && details.languages !== 'N/A' ? details.languages.split(', ').map(l => `<span class="details-tag">${l}</span>`).join('') : '<span class="details-empty">Not provided</span>'}</div>
+        </div>
+        
+
+    `;
+    
+    content.innerHTML = html;
+}
+
+// Update the showStaffDetails and showClientDetails to use the new functions
+function showStaffDetails(details) {
+    renderStaffDetailsWithPic(details);
+}
+
+function showClientDetails(details) {
+    renderClientDetailsWithPic(details);
+}
+
+        </script>
     </x-filament-panels::page> 
