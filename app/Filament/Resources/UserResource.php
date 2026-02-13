@@ -37,6 +37,9 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\View;
 use Spatie\Permission\Models\Role;
+
+use App\Models\Document;
+
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -539,34 +542,11 @@ public static function getEloquentQuery(): Builder
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
-                    ->label('Display Name')
+                    ->label('Name')
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('email')
+                Tables\Columns\TextColumn::make('staffProfile.gender')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('staffProfile.salutation')
-                    ->label('Salutation')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('staffProfile.first_name')
-                    ->label('First Name')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('staffProfile.middle_name')
-                    ->label('Middle Name')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('staffProfile.last_name')
-                    ->label('Last Name')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('staffProfile.mobile_number')
-                    ->label('Mobile Number')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('staffProfile.phone_number')
-                    ->label('Phone Number')
-                    ->searchable()
+                    ->label('Gender')
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('role')
                     ->label('Role')
@@ -576,38 +556,129 @@ public static function getEloquentQuery(): Builder
                     ->badge()
                     ->color('stripe') 
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('staffProfile.role_type')
-                    ->label('Role Type')
-                    ->badge()
-                    ->color('info')
+                Tables\Columns\TextColumn::make('teams.name')
+                    ->label('Team')
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->teams->pluck('name')->implode(', ');
+                    })
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('staffProfile.gender')
-                    ->label('Gender')
-                    ->badge()
-                    ->color('warning')
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('staffProfile.dob')
-                    ->label('Date of Birth')
-                    ->date()
-                    ->sortable()
+                Tables\Columns\TextColumn::make('staffProfile.mobile_number')
+                    ->label('Mobile Number')
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('staffProfile.employment_type')
                     ->label('Employment Type')
                     ->badge()
                     ->color('success')
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('staffProfile.address')
-                    ->label('Address')
+                Tables\Columns\TextColumn::make('jobTitle.name')
+                    ->label('Job Title')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Joined At')
+                    ->formatStateUsing(function ($state) {
+                        return Carbon::parse($state)->format('d M Y');
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('last_login_at')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Last Login')
+                    ->formatStateUsing(function ($state) {
+                        return $state ? Carbon::parse($state)->diffForHumans() : '-';
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                     Tables\Columns\IconColumn::make('password_status')
+                            ->label('')
+                            ->getStateUsing(fn ($record) =>
+                                !is_null($record->last_login_at) || !is_null($record->password)
+                            )
+                            ->icon(fn ($state) =>
+                                $state
+                                    ? 'heroicon-s-user'
+                                    : 'heroicon-s-clock'
+                            )
+                            ->tooltip(fn ($state) =>
+                                $state
+                                    ? 'Active'
+                                    : 'Awaiting Response'
+                            )
+                            ->color(fn ($state) =>
+                                $state ? 'rado' : 'warning'
+                ),
+
+                 Tables\Columns\IconColumn::make('documents')
+                    ->label('')
+                    ->getStateUsing(fn ($record) =>
+                        Document::where('user_id', $record->id)->exists()
+                    )
+                    ->icon(fn ($state) =>
+                        $state
+                            ? 'heroicon-s-document-check'
+                            : 'heroicon-s-question-mark-circle'
+                    )
+                    ->tooltip(fn ($state) =>
+                        $state
+                            ? 'Documents Attached'
+                            : 'No documents'
+                    )
+                    ->color(fn ($state) =>
+                        $state ? 'rado' : 'lightgrr'
+            ),
+                    
+                    Tables\Columns\IconColumn::make('status')
+                        ->label('')
+                        ->icon(fn ($state) =>
+                            $state === 'Active'
+                                ? 'heroicon-s-check-circle'
+                                : 'heroicon-s-x-circle'
+                        )
+                        ->tooltip(fn ($state) =>
+                            $state === 'Active'
+                                ? 'Available for roastering'
+                                : 'User not Active'
+                        )
+                        ->color(fn ($state) =>
+                            $state === 'Active' ? 'rado' : 'danger'
+                ),
+
+
+            //    Tables\Columns\TextColumn::make('max_hours_cap')
+            //         ->label('Max Hours Cap')
+            //         ->searchable()
+            //         ->toggleable(isToggledHiddenByDefault: false)
+            //         ->formatStateUsing(function ($record) {
+            //             $payrollSetting = $record->staffPayrollSetting;
+            //             if ($payrollSetting) {
+            //                 $dailyHours = $payrollSetting->daily_hours;
+            //                 $weeklyHours = $payrollSetting->weekly_hours;
+                            
+            //                 $parts = [];
+            //                 if ($dailyHours) {
+            //                     $parts[] = $dailyHours . 'hrs/day';
+            //                 }
+            //                 if ($weeklyHours) {
+            //                     $parts[] = $weeklyHours . 'hrs/week';
+            //                 }
+                            
+            //                 return implode(', ', $parts);
+            //             }
+            //             return '-';
+            //         }),
+
+                   
+
+
+
+
             ])
             ->filters([
                 //

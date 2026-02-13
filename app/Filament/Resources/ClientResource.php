@@ -448,25 +448,86 @@ class ClientResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('display_name')
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('first_name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('last_name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('mobile_number')
-                    ->searchable(),
+                    ->label('Name')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
                 Tables\Columns\TextColumn::make('gender')
                     ->badge()
-                    ->color('info'),
+                    ->color('info')
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('dob')
+                    ->label('Age')
+                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->age : '0')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('NDIS_number')
+                    ->label('Ndis')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('aged_care_recipient_ID')
+                    ->label('Recipient id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('mobile_number')
+                    ->label('Mobile')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('phone_number')
+                    ->label('Phone')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('address')
+                    ->label('Address')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('clientType.name')
+                    ->label('Type')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('priceBooks.name')
+                    ->label('Pricebook')
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->priceBooks->pluck('name')->implode(', ');
+                    })
+                    ->sortable()
+                    ->limit(30)
+                    ->tooltip(fn ($state, $record) => $record->priceBooks->pluck('name')->implode(', '))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Active' => 'success',
                         'Inactive' => 'danger',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('review_date')
+                    ->badge()
+                    ->label('Review')
+                    ->color('warning')
+                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->format('d M Y') : 'N/A')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

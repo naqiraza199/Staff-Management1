@@ -98,14 +98,12 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                 Tables\Columns\TextColumn::make('name')->label('Document')->searchable(),
                 Tables\Columns\TextColumn::make('documentCategory.name')->label('Category')->searchable(),
                 Tables\Columns\TextColumn::make('expired_at')->label('Expired At')->date('d/m/Y')->searchable(),
-                Tables\Columns\IconColumn::make('no_expiration')->boolean()->label('No Expiration')->searchable(),
+                Tables\Columns\TextColumn::make('no_expiration')
+                ->label('No Expiration')
+                ->searchable()
+                ->formatStateUsing(fn ($state) => $state ? '✔' : '-'),
                 Tables\Columns\TextColumn::make('created_at')->label('Last Update')->since()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('is_verified')
-                        ->label('Signature')
-                        ->boolean() 
-                        ->trueIcon('heroicon-s-document-check') 
-                        ->falseIcon(null), 
             ])
             ->headerActions([ // ✅ use this instead of ->actions()
             Tables\Actions\Action::make('Upload Document')
@@ -121,10 +119,10 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                                             ->reactive() // 👈 important so Filament listens for changes
                                             ->columnSpan(6),
 
-                                    Forms\Components\Checkbox::make('send_email')
-                                        ->label('Send email for signature?')
-                                        ->default(true)
-                                        ->columnSpan(6),
+                                    // Forms\Components\Checkbox::make('send_email')
+                                    //     ->label('Send email for signature?')
+                                    //     ->default(true)
+                                    //     ->columnSpan(6),
 
 
                             Forms\Components\Select::make('document_category_id')
@@ -186,10 +184,10 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                         ->disk('public')
                         ->maxSize(2048),
 
-                        Textarea::make('details')
-                                ->label('Content')
-                                ->rows(5)
-                                ->placeholder('Enter Content Here'),
+                        // Textarea::make('details')
+                        //         ->label('Content')
+                        //         ->rows(5)
+                        //         ->placeholder('Enter Content Here'),
                 ])
 
                 ->action(function (array $data): void {
@@ -227,12 +225,12 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                         'no_expiration'        => $data['no_expiration'] ?? 0,
                         'expired_at'           => $expires,
                         'signature_token'      => Str::uuid(),
-                        'details'              => $data['details'],
+                        // 'details'              => $data['details'],
                     ]);
 
-                    if (!empty($data['send_email'])) {
-                        Mail::to($clientDoc->client->email)->send(new DocumentSignatureRequest($clientDoc));
-                    }
+                    // if (!empty($data['send_email'])) {
+                    //     Mail::to($clientDoc->client->email)->send(new DocumentSignatureRequest($clientDoc));
+                    // }
 
                     \Filament\Notifications\Notification::make()
                         ->title('Document uploaded successfully')
@@ -248,63 +246,62 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
 
                  ActionGroup::make([
 
-                     Action::make('viewSignature')
-                 ->label('Verfied')
-                 ->color('lightgreen')
-                ->tooltip('View Signature')
-                ->icon('heroicon-s-check-badge')
-                ->modalHeading('Client Signature')
-                ->modalContent(fn ($record) => view('documents.signature-modal', [
-                    'record' => $record,
-                ]))
-                ->modalSubmitAction(false) 
-                ->visible(fn ($record) => $record->is_verified),
-  Action::make('View')
-                ->icon('heroicon-s-eye')
-                ->label('View')
-                ->color('warning')
-                ->modalHeading('Document Preview')
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Close')
-                ->modalContent(function ($record) {
-                    $filePath = $record->name;
-                    $fileName = basename($filePath);
-                    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                    $fileUrl = asset('storage/' . $filePath);
+//                      Action::make('viewSignature')
+//                  ->label('Verfied')
+//                  ->color('lightgreen')
+//                 ->tooltip('View Signature')
+//                 ->icon('heroicon-s-check-badge')
+//                 ->modalHeading('Client Signature')
+//                 ->modalContent(fn ($record) => view('documents.signature-modal', [
+//                     'record' => $record,
+//                 ]))
+//                 ->modalSubmitAction(false) 
+//                 ->visible(fn ($record) => $record->is_verified),
+//   Action::make('View')
+//                 ->icon('heroicon-s-eye')
+//                 ->label('View')
+//                 ->color('warning')
+//                 ->modalHeading('Document Preview')
+//                 ->modalSubmitAction(false)
+//                 ->modalCancelActionLabel('Close')
+//                 ->modalContent(function ($record) {
+//                     $filePath = $record->name;
+//                     $fileName = basename($filePath);
+//                     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+//                     $fileUrl = asset('storage/' . $filePath);
 
-                    if (!Storage::disk('public')->exists($filePath)) {
-                        return view('filament.components.document-preview', [
-                            'error' => 'File not found',
-                            'fileName' => $fileName
-                        ]);
-                    }
+//                     if (!Storage::disk('public')->exists($filePath)) {
+//                         return view('filament.components.document-preview', [
+//                             'error' => 'File not found',
+//                             'fileName' => $fileName
+//                         ]);
+//                     }
 
-                    // Convert Office file to PDF if needed
-                    if (in_array($fileExtension, ['doc', 'docx', 'xls', 'xlsx'])) {
-                        $convertedPath = convertOfficeToPdf($filePath);
+//                     // Convert Office file to PDF if needed
+//                     if (in_array($fileExtension, ['doc', 'docx', 'xls', 'xlsx'])) {
+//                         $convertedPath = convertOfficeToPdf($filePath);
 
-                        if ($convertedPath) {
-                            $fileUrl = asset('storage/' . $convertedPath);
-                            $fileExtension = 'pdf';
-                        } else {
-                            return view('filament.components.document-preview', [
-                                'error' => 'File conversion failed',
-                                'fileName' => $fileName,
-                            ]);
-                        }
-                    }
+//                         if ($convertedPath) {
+//                             $fileUrl = asset('storage/' . $convertedPath);
+//                             $fileExtension = 'pdf';
+//                         } else {
+//                             return view('filament.components.document-preview', [
+//                                 'error' => 'File conversion failed',
+//                                 'fileName' => $fileName,
+//                             ]);
+//                         }
+//                     }
 
-                    return view('filament.components.document-preview', [
-                        'fileUrl' => $fileUrl,
-                        'fileName' => $fileName,
-                        'fileExtension' => $fileExtension,
-                        'filePath' => $filePath
-                    ]);
-                }),
+//                     return view('filament.components.document-preview', [
+//                         'fileUrl' => $fileUrl,
+//                         'fileName' => $fileName,
+//                         'fileExtension' => $fileExtension,
+//                         'filePath' => $filePath
+//                     ]);
+//                 }),
 
                 
               Tables\Actions\Action::make('edit')
-                ->hidden(fn ($record) => $record->is_verified)
                 ->icon('heroicon-s-pencil-square')
                 ->label('Edit')
                 ->modalHeading('Edit Document')
@@ -325,10 +322,10 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->default(fn ($record) => $record?->no_expiration ?? false)
                             ->columnSpan(6),
 
-                            Forms\Components\Checkbox::make('send_email')
-                                        ->label('Send email for signature?')
-                                        ->default(true)
-                                        ->columnSpan(6),
+                            // Forms\Components\Checkbox::make('send_email')
+                            //             ->label('Send email for signature?')
+                            //             ->default(true)
+                            //             ->columnSpan(6),
 
                         Select::make('document_category_id')
                                         ->label('Document Category')
@@ -375,11 +372,11 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                             ->default($record->name)
                             ->required(),
 
-                            Textarea::make('details')
-                                ->label('Content')
-                                ->rows(5)
-                                ->default($record->details)
-                                ->placeholder('Enter Content Here'),
+                            // Textarea::make('details')
+                            //     ->label('Content')
+                            //     ->rows(5)
+                            //     ->default($record->details)
+                            //     ->placeholder('Enter Content Here'),
                     ];
                 })
                 ->action(function (array $data, $record): void {
@@ -391,13 +388,13 @@ class ClientOwnDocs extends Page implements Tables\Contracts\HasTable
                         'no_expiration' => $data['no_expiration'],
                         'expired_at'           => $data['expired_at'] ?? null,
                         'type' => $extension,
-                        'details' => $data['details'],
+                        // 'details' => $data['details'],
                         'signature_token'      => Str::uuid(),
                     ]);
 
-                      if (!empty($data['send_email'])) {
-                       Mail::to($record->client->email)->send(new DocumentSignatureRequest($record));
-                    }
+                    //   if (!empty($data['send_email'])) {
+                    //    Mail::to($record->client->email)->send(new DocumentSignatureRequest($record));
+                    // }
 
 
                     \Filament\Notifications\Notification::make()

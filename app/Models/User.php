@@ -74,6 +74,11 @@ class User extends Authenticatable
         return $this->hasOne(StaffProfile::class);
     }
 
+    public function staffPayrollSetting()
+    {
+        return $this->hasOne(StaffPayrollSetting::class);
+    }
+
     public function jobTitle()
     {
         return $this->belongsTo(JobTitle::class);

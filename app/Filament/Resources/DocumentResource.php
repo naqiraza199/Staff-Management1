@@ -143,16 +143,16 @@ class DocumentResource extends Resource
                     ->date('d/m/Y')
                     ->searchable(),
 
-                Tables\Columns\IconColumn::make('no_expiration')
-                    ->boolean()
-                    ->label('No Expiration')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('no_expiration')
+                ->label('No Expiration')
+                ->searchable()
+                ->formatStateUsing(fn ($state) => $state ? '✔' : '-'),
 
-                    Tables\Columns\IconColumn::make('is_verified')
-                        ->label('Signature')
-                        ->boolean() 
-                        ->trueIcon('heroicon-s-document-check') 
-                        ->falseIcon(null), 
+                    // Tables\Columns\IconColumn::make('is_verified')
+                    //     ->label('Signature')
+                    //     ->boolean() 
+                    //     ->trueIcon('heroicon-s-document-check') 
+                    //     ->falseIcon(null), 
 
             Tables\Columns\TextColumn::make('created_at')
                             ->label('Last Update')
@@ -294,14 +294,14 @@ class DocumentResource extends Resource
                         ->disk('public')
                         ->maxSize(2048),
 
-                        Textarea::make('details')
-                                ->label('Content')
-                                ->rows(5)
-                                ->placeholder('Enter Content Here'),
+                        // Textarea::make('details')
+                        //         ->label('Content')
+                        //         ->rows(5)
+                        //         ->placeholder('Enter Content Here'),
 
-                                     Forms\Components\Checkbox::make('send_email')
-                        ->label('Send email for signature?')
-                        ->default(true),
+                        //              Forms\Components\Checkbox::make('send_email')
+                        // ->label('Send email for signature?')
+                        // ->default(true),
                 ])
 
 
@@ -340,13 +340,13 @@ class DocumentResource extends Resource
                                         'no_expiration'        => $data['no_expiration'] ?? 0,
                                         'expired_at'           => $expires,
                                         'signature_token'      => Str::uuid(),
-                                        'details'              => $data['details'],
+                                        // 'details'              => $data['details'],
                                     ]);
 
                                     // 🔹 Send email only if send_email is checked (if you added checkbox)
-                                    if (!empty($data['send_email'])) {
-                                        Mail::to($staffDoc->user->email)->send(new DocumentSignatureRequest($staffDoc));
-                                    }
+                                    // if (!empty($data['send_email'])) {
+                                    //     Mail::to($staffDoc->user->email)->send(new DocumentSignatureRequest($staffDoc));
+                                    // }
 
                                     \Filament\Notifications\Notification::make()
                                         ->title('Document uploaded successfully')
@@ -362,66 +362,66 @@ class DocumentResource extends Resource
 
                  ActionGroup::make([
 
-                     Action::make('viewSignature')
-                 ->label('Verfied')
-                 ->color('lightgreen')
-                ->tooltip('View Signature')
-                ->icon('heroicon-s-check-badge')
-                ->modalHeading('Staff Signature')
-                ->modalContent(fn ($record) => view('documents.signature-modal', [
-                    'record' => $record,
-                ]))
-                ->modalSubmitAction(false)
-                ->visible(fn ($record) => $record->is_verified),
+//                      Action::make('viewSignature')
+//                  ->label('Verfied')
+//                  ->color('lightgreen')
+//                 ->tooltip('View Signature')
+//                 ->icon('heroicon-s-check-badge')
+//                 ->modalHeading('Staff Signature')
+//                 ->modalContent(fn ($record) => view('documents.signature-modal', [
+//                     'record' => $record,
+//                 ]))
+//                 ->modalSubmitAction(false)
+//                 ->visible(fn ($record) => $record->is_verified),
 
-   Action::make('View')
-                ->icon('heroicon-s-eye')
-                ->label('View')
-                ->color('warning')
-                ->modalHeading('Document Preview')
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Close')
-                ->modalContent(function ($record) {
-                    $filePath = $record->name;
-                    $fileName = basename($filePath);
-                    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                    $fileUrl = asset('storage/' . $filePath);
+//    Action::make('View')
+//                 ->icon('heroicon-s-eye')
+//                 ->label('View')
+//                 ->color('warning')
+//                 ->modalHeading('Document Preview')
+//                 ->modalSubmitAction(false)
+//                 ->modalCancelActionLabel('Close')
+//                 ->modalContent(function ($record) {
+//                     $filePath = $record->name;
+//                     $fileName = basename($filePath);
+//                     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+//                     $fileUrl = asset('storage/' . $filePath);
 
-                    if (!Storage::disk('public')->exists($filePath)) {
-                        return view('filament.components.document-preview', [
-                            'error' => 'File not found',
-                            'fileName' => $fileName
-                        ]);
-                    }
+//                     if (!Storage::disk('public')->exists($filePath)) {
+//                         return view('filament.components.document-preview', [
+//                             'error' => 'File not found',
+//                             'fileName' => $fileName
+//                         ]);
+//                     }
 
-                    // Convert Office file to PDF if needed
-                    if (in_array($fileExtension, ['doc', 'docx', 'xls', 'xlsx'])) {
-                        $convertedPath = convertOfficeToPdf($filePath);
+//                     // Convert Office file to PDF if needed
+//                     if (in_array($fileExtension, ['doc', 'docx', 'xls', 'xlsx'])) {
+//                         $convertedPath = convertOfficeToPdf($filePath);
 
-                        if ($convertedPath) {
-                            $fileUrl = asset('storage/' . $convertedPath);
-                            $fileExtension = 'pdf';
-                        } else {
-                            return view('filament.components.document-preview', [
-                                'error' => 'File conversion failed',
-                                'fileName' => $fileName,
-                            ]);
-                        }
-                    }
+//                         if ($convertedPath) {
+//                             $fileUrl = asset('storage/' . $convertedPath);
+//                             $fileExtension = 'pdf';
+//                         } else {
+//                             return view('filament.components.document-preview', [
+//                                 'error' => 'File conversion failed',
+//                                 'fileName' => $fileName,
+//                             ]);
+//                         }
+//                     }
 
-                    return view('filament.components.document-preview', [
-                        'fileUrl' => $fileUrl,
-                        'fileName' => $fileName,
-                        'fileExtension' => $fileExtension,
-                        'filePath' => $filePath
-                    ]);
-                }),
+//                     return view('filament.components.document-preview', [
+//                         'fileUrl' => $fileUrl,
+//                         'fileName' => $fileName,
+//                         'fileExtension' => $fileExtension,
+//                         'filePath' => $filePath
+//                     ]);
+//                 }),
 
                 
               Tables\Actions\Action::make('edit')
                 ->icon('heroicon-s-pencil-square')
                 ->label('Edit')
-                ->hidden(fn ($record) => $record->is_verified)
+                // ->hidden(fn ($record) => $record->is_verified)
                 ->modalHeading('Edit Document')
                 ->color('stripe')
                 ->form(function (\Filament\Tables\Actions\Action $action): array {
@@ -544,15 +544,15 @@ class DocumentResource extends Resource
                             ->required(),
 
                             
-                             Textarea::make('details')
-                                ->label('Content')
-                                ->rows(5)
-                                ->default($record->details)
-                                ->placeholder('Enter Content Here'),
+                            //  Textarea::make('details')
+                            //     ->label('Content')
+                            //     ->rows(5)
+                            //     ->default($record->details)
+                            //     ->placeholder('Enter Content Here'),
 
-                                 Forms\Components\Checkbox::make('send_email')
-                                ->label('Send email for signature?')
-                                ->default(true),
+                                //  Forms\Components\Checkbox::make('send_email')
+                                // ->label('Send email for signature?')
+                                // ->default(true),
                     ];
                 })
                                         ->action(function (array $data, $record): void {
@@ -566,7 +566,7 @@ class DocumentResource extends Resource
                                             'expired_at'           => $data['expired_at'] ?? null,
                                             'no_expiration'        => $data['no_expiration'],
                                             'type'                 => $extension,
-                                            'details'              => $data['details'],
+                                            // 'details'              => $data['details'],
                                             'signature_token'      => Str::uuid(),
                                         ]);
 
@@ -574,14 +574,14 @@ class DocumentResource extends Resource
                                         $record->refresh();
 
                                         // 🔹 Send email only if checkbox checked AND user email exists
-                                        if (!empty($data['send_email'])) {
-                                            $user = $record->user ?? null;   // relationship: Document belongsTo User
+                                        // if (!empty($data['send_email'])) {
+                                        //     $user = $record->user ?? null;   // relationship: Document belongsTo User
 
-                                            if ($user && !empty($user->email)) {
-                                                Mail::to($user->email)->send(new DocumentSignatureRequest($record));
-                                            }
-                                            // else: silently skip sending to avoid "To" header error
-                                        }
+                                        //     if ($user && !empty($user->email)) {
+                                        //         Mail::to($user->email)->send(new DocumentSignatureRequest($record));
+                                        //     }
+                                        //     // else: silently skip sending to avoid "To" header error
+                                        // }
 
                                         \Filament\Notifications\Notification::make()
                                             ->title('Document updated successfully')
