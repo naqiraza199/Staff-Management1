@@ -541,14 +541,14 @@
                   </a>
                </li>
                @endif
-               @if ($user && $user->hasPermissionTo('manage-void-invoices'))
+               {{-- @if ($user && $user->hasPermissionTo('manage-void-invoices'))
                <li class="nav-item">
                   <a href="{{ url('/admin/invoice-void') }}" class="nav-link dropdown-toggle">
                   <span class="material-symbols-rounded">keyboard_arrow_right</span>
                   <span class="nav-label">List Void</span>
                   </a>
                </li>
-               @endif
+               @endif --}}
                @if ($user && $user->hasPermissionTo('generate-invoices'))
                <li class="nav-item">
                   <a href="{{ url('/admin/invoice-generate') }}" class="nav-link dropdown-toggle">

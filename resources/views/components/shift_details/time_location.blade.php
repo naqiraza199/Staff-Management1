@@ -15,9 +15,9 @@
                             <div class="value">
                                 {{ $startDateFormatted }}
                                 <br>
-                               @if($timeAndLocation['repeat'] ?? false)
+                               @if($shift->series_uuid && \App\Models\Shift::where('series_uuid', $shift->series_uuid)->count() > 1)
                                     @switch($timeAndLocation['recurrance'])
-                                        @case('Daily')
+                                        @case('daily')
                                             Daily - Every {{ $timeAndLocation['repeat_every_daily'] ?? 1 }} day(s) until {{ $endDateFormatted }}
                                             @break
 
@@ -41,7 +41,7 @@
                                             @break
 
                                         @default
-                                            Repeats until {{ $endDateFormatted }}
+                                            Repeated Shift
                                     @endswitch
                                 @else
                                     One-off - No repeat

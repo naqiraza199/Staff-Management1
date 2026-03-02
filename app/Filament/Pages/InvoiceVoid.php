@@ -44,11 +44,16 @@ class InvoiceVoid extends Page implements Tables\Contracts\HasTable
 
     protected static ?int $navigationSort = 2;
 
-                       public static function canAccess(): bool
-        {
-            $user = Filament::auth()->user();
+        //                public static function canAccess(): bool
+        // {
+        //     $user = Filament::auth()->user();
 
-            return $user && $user->hasPermissionTo('manage-void-invoices');
+        //     return $user && $user->hasPermissionTo('manage-void-invoices');
+        // }
+
+          public static function canAccess(): bool
+        {
+            return false; // Disable access to this page for all users
         }
 
 

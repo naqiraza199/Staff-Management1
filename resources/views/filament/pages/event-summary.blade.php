@@ -278,9 +278,9 @@ background-color: #e9f0f7;
             <h1> <span class="header-subtitle">Event</span></h1>
             <div class="header-controls">
                 <form method="GET" action="" class="date-filter-form" style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
-                    <input type="date" name="start_date" value="{{ $start_date }}" class="date-input" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.9rem;">
+                    <input type="date" name="start_date" value="{{ $start_date }}" class="date-input" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.9rem; cursor: pointer;">
                     <span style="color: #666;">to</span>
-                    <input type="date" name="end_date" value="{{ $end_date }}" class="date-input" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.9rem;">
+                    <input type="date" name="end_date" value="{{ $end_date }}" class="date-input" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.9rem; cursor: pointer;">
                     <button type="submit" style="padding: 6px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem;">Filter</button>
                     @if($start_date || $end_date)
                         <a href="" style="padding: 6px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Clear</a>
@@ -452,6 +452,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Add click handlers to date inputs to ensure calendar opens
+    document.querySelectorAll('.date-input').forEach(function(input) {
+        // Force showPicker on click to ensure calendar opens
+        input.addEventListener('click', function(e) {
+            if (this.showPicker) {
+                this.showPicker();
+            }
+        });
+    });
+    
     const noteTypes = ['Injury', 'Feedback', 'Enquiry', 'Incident', 'Progress Notes'];
     const colors = ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'];
 

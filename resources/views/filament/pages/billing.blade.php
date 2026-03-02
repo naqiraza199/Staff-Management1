@@ -1,4 +1,4 @@
-<!-- NOTE: Tailwind CDN and configuration have been removed -->
+<!-- NOTE: Tailwind CDN and configuration have been removed billing -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
 <style>
@@ -352,13 +352,13 @@
             <span class="toggle-label-view">View:</span>
             <div class="toggle-container">
                 <!-- Staff Radio Button -->
-                <input type="radio" id="toggle-staff" name="data-view" class="toggle-radio" value="staff" checked  onclick="updateView('staff')">
+                <input type="radio" id="toggle-staff" name="data-view" class="toggle-radio" value="staff" checked onclick="updateView('staff')">
                 <label for="toggle-staff" class="toggle-button">
                     Staff
                 </label>
                 
                 <!-- Client Radio Button -->
-                <input type="radio" id="toggle-client" name="data-view" class="toggle-radio" value="client"  onclick="updateView('client')">
+                <input type="radio" id="toggle-client" name="data-view" class="toggle-radio" value="client" onclick="updateView('client')">
                 <label for="toggle-client" class="toggle-button">
                     Client
                 </label>
@@ -370,25 +370,25 @@
 
         <!-- Dropdowns and Date Picker -->
        <!-- Time Range Dropdown + Apply Button -->
-<div class="filter-inputs">
+<form method="GET" action="" id="filter-form" class="filter-inputs">
 
 
 <!-- Status Filter Dropdown -->
-<select class="filter-input" id="status-filter">
-    <option value="all">All Statuses</option>
-    <option value="Booked">Booked</option>
-    <option value="Pending">Pending</option>
-    <option value="Cancelled">Cancelled</option>
+<select name="status" class="filter-input" id="status-filter">
+    <option value="all" {{ $filterStatus == 'all' ? 'selected' : '' }}>All Statuses</option>
+    <option value="Booked" {{ $filterStatus == 'Booked' ? 'selected' : '' }}>Booked</option>
+    <option value="Pending" {{ $filterStatus == 'Pending' ? 'selected' : '' }}>Pending</option>
+    <option value="Cancelled" {{ $filterStatus == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
 </select>
 
 <!-- Date Range Picker: Separate Start and End -->
-<input type="date" id="start-date" class="filter-input" placeholder="Start Date">
-<input type="date" id="end-date" class="filter-input" placeholder="End Date">
+<input type="date" name="start_date" id="start-date" class="filter-input" value="{{ $filterStartDate }}" placeholder="Start Date">
+<input type="date" name="end_date" id="end-date" class="filter-input" value="{{ $filterEndDate }}" placeholder="End Date">
 
 
-    <button id="apply-metric" class="filter-input action-buttons">Apply</button>
+    <button type="submit" id="apply-metric" class="filter-input action-buttons">Apply</button>
 
-</div>
+</form>
 
     </div>
     
@@ -535,6 +535,30 @@
 let activityChartInstance;
 let donutChartInstance;
 
+// Get chart labels from PHP (passed from controller)
+let chartLabels = @json($chartLabels);
+
+// If no labels from PHP (fallback), generate current week labels
+if (!chartLabels || chartLabels.length === 0) {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    chartLabels = [];
+    const current = new Date(monday);
+    while (current <= sunday) {
+        const dayName = current.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNum = current.getDate();
+        const monthName = current.toLocaleDateString('en-US', { month: 'short' });
+        chartLabels.push(`${dayName}, ${dayNum} ${monthName}`);
+        current.setDate(current.getDate() + 1);
+    }
+}
+
 function generateChartLabelsFromRange(startDate, endDate) {
     const labels = [];
     const current = new Date(startDate);
@@ -551,26 +575,15 @@ function generateChartLabelsFromRange(startDate, endDate) {
     return labels;
 }
 
-// Example usage:
-const chartLabels = generateChartLabelsFromRange('2025-10-13', '2025-10-19')
-
 // 🔹 Parse data from HTML table
 let selectedMetric = 'hours'; // default metric
 
-// 🔹 Apply Metric Button
-document.getElementById('apply-metric').addEventListener('click', () => {
-    selectedMetric = document.getElementById('metric-select').value;
-
-    const activeTableId = document.getElementById('staff-table').classList.contains('hidden') ? 'client-table' : 'staff-table';
-
-    // 1️⃣ Update table values
-    updateTableValues(activeTableId);
-
-    // 2️⃣ Apply status + date filters (hide rows)
-    filterTableRows(activeTableId);
-
-    // 3️⃣ Update charts based on visible rows
-    updateChartsFromTable(activeTableId);
+// 🔹 Apply Metric Button - now handles form submission for filters
+document.getElementById('apply-metric').addEventListener('click', (e) => {
+    // Form will submit naturally, but we can add client-side validation here if needed
+    // The form action is empty, so it submits to the current page with query params
+    const form = document.getElementById('filter-form');
+    form.submit();
 });
 
 
@@ -891,12 +904,33 @@ function updateView(type) {
     updateDonutSummary(totals);
 }
 
-window.onload = () => initializeCharts('staff');
-    document.addEventListener('DOMContentLoaded', function () {
-        if (!window.initCustomDatePicker) return;
+// Set default dates on page load if not set
+window.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+    
+    // If dates are empty, set them to current week
+    if (!startDateInput.value || !endDateInput.value) {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+        
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        
+        // Format as YYYY-MM-DD
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        startDateInput.value = formatDate(monday);
+        endDateInput.value = formatDate(sunday);
+    }
+});
 
-        ['start-date','end-date'].forEach(function (id) {
-            window.initCustomDatePicker(id);
-        });
-    });
+window.onload = () => initializeCharts('staff');
 </script>

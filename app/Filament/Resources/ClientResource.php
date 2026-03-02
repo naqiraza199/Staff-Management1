@@ -199,8 +199,13 @@ class ClientResource extends Resource
                                         Forms\Components\TextInput::make('nationality')->placeholder('Enter Nationality')->columnSpan(1),
                                         Forms\Components\TextInput::make('unit_or_appartment_no')->placeholder('Enter Unit/Appartment Number')->columnSpan(1),
                                     ]),
-                                Forms\Components\Select::make('languages')
-                                    ->label('Languages')
+                               
+                                Textarea::make('address')->label('Address')->placeholder('Enter Address')->columnSpanFull(),
+                            ]),
+                        Forms\Components\Fieldset::make('Languages')
+                            ->schema([
+                                 Forms\Components\Select::make('languages')
+                                    ->label('')
                                     ->multiple()
                                     ->searchable()
                                     ->options([
@@ -398,10 +403,6 @@ class ClientResource extends Resource
                                         'Ainu (Japan)' => 'Ainu (Japan)',
                                     ])
                                     ->columnSpanFull(),
-                            ]),
-                        Forms\Components\Fieldset::make('Address')
-                            ->schema([
-                                Textarea::make('address')->label('')->placeholder('Enter Address')->columnSpanFull(),
                             ]),
                         Forms\Components\Fieldset::make('Profile Picture')
                             ->schema([
@@ -886,7 +887,7 @@ Section::make('Additional Information')
                     $headingPrefix = 'Billing Contact';
                 }
 
-                return Section::make("{$headingPrefix} #" . ($index + 1))
+                return Section::make("{$headingPrefix} " . ($index + 1))
                             ->extraAttributes(['style' => 'border-radius: 0px;font-size:12px'])
                     ->schema([
                         

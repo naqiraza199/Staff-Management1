@@ -137,10 +137,23 @@ public function update(Request $request, Invoice $invoice)
     $description['km_shift']   = array_filter($description['km_shift'] ?? [], fn($v) => trim($v) !== '');
 
 
+    $paymentDue = null;
+    if ($request->payment_due) {
+        try {
+            // Try different date formats
+            $paymentDue = Carbon::createFromFormat('d-m-Y', $request->payment_due)->format('Y-m-d');
+        } catch (\Exception $e) {
+            try {
+                $paymentDue = Carbon::parse($request->payment_due)->format('Y-m-d');
+            } catch (\Exception $e2) {
+                // Keep as null if parsing fails
+            }
+        }
+    }
+
     $invoice->update([
         'additional_contact_id' => $request->additional_contact_id,
-        'payment_due' => Carbon::createFromFormat('d-m-Y', $request->payment_due)
-                                ->format('Y-m-d'),
+        'payment_due' => $paymentDue,
         'ref_no' => $request->ref_no,
         'purchase_order' => $request->purchase_order,
         'description' => !empty($description) ? $description : null,

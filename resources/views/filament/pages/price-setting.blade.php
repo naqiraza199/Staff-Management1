@@ -170,6 +170,7 @@
                         <option value="Public Holidays">Public Holidays</option>
                     </select>
                 </div>
+                @if(!$this->isFixedPriceBook())
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
                     <input id="new-start-time" type="time" wire:model="priceData.start_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
@@ -178,6 +179,7 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
                     <input id="new-end-time" type="time" wire:model="priceData.end_time" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 </div>
+                @endif
                                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
                     <input id="create-input" wire:model="priceData.effective_date" class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
@@ -281,7 +283,7 @@
                     <option value="Public Holidays">Public Holidays</option>
                 </select>
             </div>
-
+                @if(!$this->isEditingFixedPriceBook())
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
                 <input id="edit-start-time" type="time" wire:model="editingPriceData.start_time"
@@ -293,7 +295,7 @@
                 <input id="edit-end-time" type="time" wire:model="editingPriceData.end_time"
                        class="w-full mt-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
-
+                @endif
                         <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Effective Date</label>
                 <input id="edit-input"  wire:model="editingPriceData.effective_date"

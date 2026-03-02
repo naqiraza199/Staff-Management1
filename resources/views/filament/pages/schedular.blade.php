@@ -1663,7 +1663,7 @@ relevant.forEach(shift => {
 
     part1.innerHTML = `
         <strong>NEXT DAY</strong><br>
-        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br><spam>${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}</spam>
         ${shiftType}<br>
         ${clientHtml}
     `;
@@ -1787,7 +1787,7 @@ calendar.appendChild(dayCell);
 
                     part1.innerHTML = `
                         <strong>NEXT DAY</strong><br>
-                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+                        <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_approved == 1 ? '<span class="approved-icon" style="color: #10b981; font-size: 16px; margin-left: 4px;" title="Approved">;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}<span style="margin-left:35px">${shift.is_split ? '&#9986' : ''}</span></strong><br>
                         ${shiftType}<br>
                         ${clientHtml}
                         ${shift.is_split ? '<span style="float:right; color: #666; font-size: 1px;">&#9986;</span>' : ''}
@@ -2131,7 +2131,7 @@ function renderClientCalendar(filteredShifts = shifts) {
                             : 'No Time';
 
                         div.innerHTML = `
-                            <strong>${timeRange} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+                            <strong>${timeRange} ${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                             ${shiftType}<br>
                             <small>${staffName}</small>
                         `;
@@ -2151,7 +2151,7 @@ function renderClientCalendar(filteredShifts = shifts) {
 
                         part1.innerHTML = `
                             <strong>NEXT DAY</strong><br>
-                            <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} ${shift.is_split ? '<span style="color: #13b982;">&#9986;</span>' : ''} ${shift.is_approved ? '<span style="color: #10b981;" title="Approved">&#10004;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
+                            <strong>${formatTime(shift.start_time)} - ${formatTime(shift.end_time)}  ${shift.is_approved ? '<span style="color: #10b981;" title="Approved">&#10004;</span>' : ''}${getStatusIcon(shift.status)}${getSeriesIcon(shift)}</strong><br>
                             ${shiftType}<br>
                             <small>${staffName}</small>
                         `;

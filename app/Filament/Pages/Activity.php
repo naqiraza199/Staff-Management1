@@ -18,55 +18,96 @@ class Activity extends Page
     protected static string $view = 'filament.pages.activity';
     protected static ?string $navigationGroup = 'Reports';
 
-    
-                       public static function canAccess(): bool
-        {
-            $user = Filament::auth()->user();
-
-            return $user && $user->hasPermissionTo('see-activities');
-        }
+    public static function canAccess(): bool
+    {
+        $user = Filament::auth()->user();
+        return $user && $user->hasPermissionTo('see-activities');
+    }
 
     public $clients = [];
     public $staff = [];
 
-   public function mount()
-{
-    $authUser = Auth::user();
-    if (!$authUser) return;
+    // Filter properties
+    public $statusFilter = 'all';
+    public $startDate = null;
+    public $endDate = null;
 
-    $companyId = Company::where('user_id', $authUser->id)->value('id');
+    public function mount()
+    {
+        // Get filter parameters from query string
+        $this->statusFilter = request()->query('status', 'all');
+        $startDateParam = request()->query('start_date', null);
+        $endDateParam = request()->query('end_date', null);
+        
+        // Set default to current week if no dates provided
+        if (!$startDateParam) {
+            $this->startDate = now()->startOfWeek()->format('Y-m-d');
+        } else {
+            $this->startDate = $startDateParam;
+        }
+        
+        if (!$endDateParam) {
+            $this->endDate = now()->endOfWeek()->format('Y-m-d');
+        } else {
+            $this->endDate = $endDateParam;
+        }
 
-    // ✅ Fetch Clients with Aggregates
-    $clients = Client::where('user_id', $authUser->id)
-        ->select('id', 'display_name as name')
-        ->get();
+        $authUser = Auth::user();
+        if (!$authUser) return;
 
-    $this->clients = $clients->map(function ($client) {
-        $reports = BillingReport::where('client_id', $client->id)->get();
-        return $this->calculateActivityStats($reports, $client->name);
-    });
+        $companyId = Company::where('user_id', $authUser->id)->value('id');
 
-    // ✅ Fetch Staff (including the logged-in user)
-    $staffIds = StaffProfile::where('company_id', $companyId)
-        ->where('is_archive', 'Unarchive')
-        ->pluck('user_id')
-        ->toArray();
+        // ✅ Fetch Clients with Aggregates
+        $clients = Client::where('user_id', $authUser->id)
+            ->select('id', 'display_name as name')
+            ->get();
 
-    // ➕ Add current user if missing
-    if (!in_array($authUser->id, $staffIds)) {
-        $staffIds[] = $authUser->id;
+        $this->clients = $clients->map(function ($client) {
+            $reports = BillingReport::where('client_id', $client->id);
+            
+            // Apply date filters
+            if ($this->startDate) {
+                $reports = $reports->where('date', '>=', $this->startDate);
+            }
+            if ($this->endDate) {
+                $reports = $reports->where('date', '<=', $this->endDate);
+            }
+            $reports = $reports->get();
+            
+            return $this->calculateActivityStats($reports, $client->name);
+        });
+
+        // ✅ Fetch Staff (including the logged-in user)
+        $staffIds = StaffProfile::where('company_id', $companyId)
+            ->where('is_archive', 'Unarchive')
+            ->pluck('user_id')
+            ->toArray();
+
+        // ➕ Add current user if missing
+        if (!in_array($authUser->id, $staffIds)) {
+            $staffIds[] = $authUser->id;
+        }
+
+        // ✅ Fetch all staff user records (unique)
+        $staffMembers = User::whereIn('id', array_unique($staffIds))
+            ->select('id', 'name')
+            ->get();
+
+        $this->staff = $staffMembers->map(function ($user) {
+            $reports = BillingReport::whereRaw("FIND_IN_SET(?, staff)", [$user->id]);
+            
+            // Apply date filters
+            if ($this->startDate) {
+                $reports = $reports->where('date', '>=', $this->startDate);
+            }
+            if ($this->endDate) {
+                $reports = $reports->where('date', '<=', $this->endDate);
+            }
+            $reports = $reports->get();
+            
+            return $this->calculateActivityStats($reports, $user->name);
+        });
     }
-
-    // ✅ Fetch all staff user records (unique)
-    $staffMembers = User::whereIn('id', array_unique($staffIds))
-        ->select('id', 'name')
-        ->get();
-
-    $this->staff = $staffMembers->map(function ($user) {
-        $reports = BillingReport::whereRaw("FIND_IN_SET(?, staff)", [$user->id])->get();
-        return $this->calculateActivityStats($reports, $user->name);
-    });
-}
 
 
     /**
@@ -105,18 +146,23 @@ class Activity extends Page
 
         $status = Shift::where('id', $report->shift_id)->value('status');
 
-        if ($status === 'Booked') {
-            $stats['booked'] += $hours;
-            $stats['booked_mileage'] += $mileage;
-            $stats['booked_expense'] += $expense;
-        } elseif ($status === 'Pending') {
-            $stats['pending'] += $hours;
-            $stats['pending_mileage'] += $mileage;
-            $stats['pending_expense'] += $expense;
-        } elseif ($status === 'Cancelled') {
-            $stats['cancelled'] += $hours;
-            $stats['cancelled_mileage'] += $mileage;
-            $stats['cancelled_expense'] += $expense;
+        // Apply status filter
+        $statusPass = $this->statusFilter === 'all' || $status === $this->statusFilter;
+
+        if ($statusPass) {
+            if ($status === 'Booked') {
+                $stats['booked'] += $hours;
+                $stats['booked_mileage'] += $mileage;
+                $stats['booked_expense'] += $expense;
+            } elseif ($status === 'Pending') {
+                $stats['pending'] += $hours;
+                $stats['pending_mileage'] += $mileage;
+                $stats['pending_expense'] += $expense;
+            } elseif ($status === 'Cancelled') {
+                $stats['cancelled'] += $hours;
+                $stats['cancelled_mileage'] += $mileage;
+                $stats['cancelled_expense'] += $expense;
+            }
         }
     }
 

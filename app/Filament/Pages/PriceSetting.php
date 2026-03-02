@@ -107,6 +107,7 @@ class PriceSetting extends Page
 
 
     public ?int $selectedPriceBookId = null;
+    public ?int $editingPriceBookId = null;
     public ?array $priceData = [];
 
     public function openNewPriceModal(int $priceBookId): void
@@ -172,7 +173,8 @@ public array $editingPriceData = [];
 public function openEditPriceModal(int $priceBookDetailId): void
 {
     $detail = PriceBookDetail::findOrFail($priceBookDetailId);
-
+    
+    $this->editingPriceBookId = $detail->price_book_id;
     $this->editingPriceDetailId = $priceBookDetailId;
     $this->editingPriceData = [
         'day_of_week'    => $detail->day_of_week,
@@ -194,8 +196,29 @@ public function closeEditPriceModal(): void
 {
     $this->dispatch('close-modal', id: 'edit-price-modal');
 
+    $this->editingPriceBookId = null;
     $this->editingPriceDetailId = null;
     $this->editingPriceData = [];
+}
+
+// Check if current price book is fixed price
+public function isFixedPriceBook(): bool
+{
+    if ($this->selectedPriceBookId) {
+        $book = PriceBook::find($this->selectedPriceBookId);
+        return $book && $book->fixed_price;
+    }
+    return false;
+}
+
+// Check if editing price book is fixed price
+public function isEditingFixedPriceBook(): bool
+{
+    if ($this->editingPriceBookId) {
+        $book = PriceBook::find($this->editingPriceBookId);
+        return $book && $book->fixed_price;
+    }
+    return false;
 }
 
 // UPDATE the record
@@ -217,8 +240,8 @@ public function updatePriceRow(): void
 
     $detail->update([
         'day_of_week'    => $this->editingPriceData['day_of_week'] ?? '',
-        'start_time'     => $this->editingPriceData['start_time'] ?? '',
-        'end_time'       => $this->editingPriceData['end_time'] ?? '',
+        'start_time'     => !empty($this->editingPriceData['start_time']) ? $this->editingPriceData['start_time'] : null,
+        'end_time'       => !empty($this->editingPriceData['end_time']) ? $this->editingPriceData['end_time'] : null,
         'per_hour'       => $this->editingPriceData['per_hour'] ?? 0,
         'ref_hour'       => $this->editingPriceData['ref_hour'] ?? '',
         'per_km'         => $this->editingPriceData['per_km'] ?? 0,

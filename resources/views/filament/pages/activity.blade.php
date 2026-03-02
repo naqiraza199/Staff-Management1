@@ -145,6 +145,25 @@
     .date-input {
         min-width: 200px;
     }
+    
+    /* Date input specific styles to ensure native picker works */
+    input[type="date"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+    }
+    
+    /* Remove default date picker styling for Chrome/Safari/Edge */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.6;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
+    
     @media (min-width: 640px) {
         .filter-input {
             width: auto;
@@ -386,11 +405,11 @@
 </select>
 
 <!-- Date Range Picker: Separate Start and End -->
-<input type="date" id="start-date" class="filter-input" placeholder="Start Date">
-<input type="date" id="end-date" class="filter-input" placeholder="End Date">
+<input type="date" id="start-date" class="filter-input" placeholder="Start Date" style="cursor: pointer;">
+<input type="date" id="end-date" class="filter-input" placeholder="End Date" style="cursor: pointer;">
 
 
-    <button id="apply-metric" class="filter-input action-buttons">Apply</button>
+    <button id="apply-filters" class="filter-input action-buttons">Apply Filters</button>
 
 </div>
 
@@ -539,6 +558,22 @@
 let activityChartInstance;
 let donutChartInstance;
 
+// Function to get current week dates (Monday to Sunday)
+function getCurrentWeekDates() {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    return {
+        start: monday.toISOString().split('T')[0],
+        end: sunday.toISOString().split('T')[0]
+    };
+}
+
 function generateChartLabelsFromRange(startDate, endDate) {
     const labels = [];
     const current = new Date(startDate);
@@ -555,25 +590,96 @@ function generateChartLabelsFromRange(startDate, endDate) {
     return labels;
 }
 
-// Example usage:
-const chartLabels = generateChartLabelsFromRange('2025-10-13', '2025-10-19')
+// Get chart labels based on URL params or current week
+function getChartLabelsFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const startDateParam = urlParams.get('start_date');
+    const endDateParam = urlParams.get('end_date');
+    
+    if (startDateParam && endDateParam) {
+        return generateChartLabelsFromRange(startDateParam, endDateParam);
+    }
+    
+    // Default: show current week
+    const week = getCurrentWeekDates();
+    return generateChartLabelsFromRange(week.start, week.end);
+}
+
+// Initial chart labels
+let chartLabels = getChartLabelsFromUrl();
 
 // 🔹 Parse data from HTML table
 let selectedMetric = 'hours'; // default metric
 
-// 🔹 Apply Metric Button
-document.getElementById('apply-metric').addEventListener('click', () => {
-    selectedMetric = document.getElementById('metric-select').value;
+// 🔹 Parse URL parameters on page load and populate filters
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Get current week dates as defaults
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    const defaultStartDate = monday.toISOString().split('T')[0];
+    const defaultEndDate = sunday.toISOString().split('T')[0];
+    
+    // Populate status filter
+    const statusParam = urlParams.get('status');
+    if (statusParam) {
+        document.getElementById('status-filter').value = statusParam;
+    }
+    
+    // Populate date filters - use URL params or defaults
+    const startDateParam = urlParams.get('start_date');
+    const endDateParam = urlParams.get('end_date');
+    
+    document.getElementById('start-date').value = startDateParam || defaultStartDate;
+    document.getElementById('end-date').value = endDateParam || defaultEndDate;
+    
+    // Update chart labels based on filters
+    chartLabels = getChartLabelsFromUrl();
+    
+    // Initialize charts
+    initializeCharts('staff');
+});
 
+// 🔹 Apply Filters Button - Submit filters and reload page
+document.getElementById('apply-filters').addEventListener('click', () => {
+    const statusFilter = document.getElementById('status-filter').value;
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    
+    // Build query string
+    const params = new URLSearchParams();
+    if (statusFilter && statusFilter !== 'all') {
+        params.append('status', statusFilter);
+    }
+    if (startDate) {
+        params.append('start_date', startDate);
+    }
+    if (endDate) {
+        params.append('end_date', endDate);
+    }
+    
+    // Redirect to page with filters
+    const baseUrl = window.location.pathname;
+    const queryString = params.toString();
+    window.location.href = baseUrl + (queryString ? '?' + queryString : '');
+});
+
+// 🔹 Metric Select - Update display without page reload
+document.getElementById('metric-select').addEventListener('change', function() {
+    selectedMetric = this.value;
+    
     const activeTableId = document.getElementById('staff-table').classList.contains('hidden') ? 'client-table' : 'staff-table';
-
-    // 1️⃣ Update table values
+    
+    // Update table values
     updateTableValues(activeTableId);
-
-    // 2️⃣ Apply status + date filters (hide rows)
-    filterTableRows(activeTableId);
-
-    // 3️⃣ Update charts based on visible rows
+    
+    // Update charts
     updateChartsFromTable(activeTableId);
 });
 
@@ -699,32 +805,29 @@ function updateChartsFromTable(tableId) {
 
 
 // 🔹 Update table cells with data-metric for JS access
-window.onload = () => {
+function setupTableDataAttributes() {
     // Inject data attributes for each metric
     ['staff-table', 'client-table'].forEach(tableId => {
         const table = document.getElementById(tableId);
+        if (!table) return;
         table.querySelectorAll('tbody tr').forEach(row => {
             const cells = row.querySelectorAll('td');
             if (cells.length >= 6) {
-                const name = cells[0].textContent.trim();
                 const booked = Number(cells[1].textContent.trim()) || 0;
                 const pending = Number(cells[2].textContent.trim()) || 0;
                 const cancelled = Number(cells[3].textContent.trim()) || 0;
 
-                // Example: fetch mileage/expense from some JS object or preloaded data
-                // For simplicity, using same values; you can replace with actual column values
-                cells[1].dataset.mileage = booked;    // replace with actual billing_reports.mileage
+                // Use the displayed values for mileage and expense data attributes
+                cells[1].dataset.mileage = booked;
                 cells[2].dataset.mileage = pending;
                 cells[3].dataset.mileage = cancelled;
 
-                cells[1].dataset.expense = booked;    // replace with actual billing_reports.expense
+                cells[1].dataset.expense = booked;
                 cells[2].dataset.expense = pending;
                 cells[3].dataset.expense = cancelled;
             }
         });
     });
-
-    initializeCharts('staff');
 }
 
 // 🔹 Totals calculator
@@ -895,12 +998,18 @@ function updateView(type) {
     updateDonutSummary(totals);
 }
 
-window.onload = () => initializeCharts('staff');
-    document.addEventListener('DOMContentLoaded', function () {
-        if (!window.initCustomDatePicker) return;
-
-        ['start-date','end-date'].forEach(function (id) {
-            window.initCustomDatePicker(id);
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function () {
+    setupTableDataAttributes();
+    initializeCharts('staff');
+    
+    // Force showPicker on date inputs to ensure calendar opens
+    document.querySelectorAll('input[type="date"]').forEach(function(input) {
+        input.addEventListener('click', function(e) {
+            if (this.showPicker) {
+                this.showPicker();
+            }
         });
     });
+});
 </script>

@@ -767,7 +767,7 @@
                     <a href="{{ route('invoices.print', ['invoice' => $invoice->id]) }}" target="_blank" rel="noopener" id="printBtnLink" style="text-decoration:none;">
                         <button type="button">🖨 Print</button>
                     </a>
-              @if($invoice->status !== 'Paid')
+              {{-- @if($invoice->status !== 'Paid')
                   <form id="void-form" action="{{ route('invoices.void', $invoice->id) }}" method="POST" style="display:none;">
                         @csrf
                     </form>
@@ -781,7 +781,7 @@
                             }
                         }
                     </script>
-              @endif
+              @endif --}}
                 </div>
 
                 <!-- Payments Section -->

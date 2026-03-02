@@ -329,28 +329,58 @@ class EditAdvancedShiftForm extends Page implements HasForms
                                             $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
                                             $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
                                             $timeAndLocation = $this->safeDecode($this->shift->time_and_location);
-                                            if (data_get($timeAndLocation, 'shift_finishes_next_day', false)) {
+                                            $isNextDayShift = data_get($timeAndLocation, 'shift_finishes_next_day', false);
+                                            
+                                            if ($isNextDayShift) {
+                                                // For next day shifts, split at midnight only (00:00)
                                                 $totalEnd = $totalEnd->addDay();
-                                            }
-                                            $numSections = $clientItems->count() + 1;
-                                            $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
-                                            $currentStart = $totalStart;
-                                            $newClientItems = [];
-                                            for ($i = 0; $i < $numSections; $i++) {
-                                                $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                                                $midnight = Carbon::parse($totalStart->format('Y-m-d') . ' 00:00')->addDay();
+                                                
+                                                // First part: start to midnight
                                                 $newClientItems[] = [
                                                     'client_id' => $clientId,
                                                     'client_name' => $record['client_name'],
-                                                    'client_start_time' => $currentStart->format('H:i'),
-                                                    'client_end_time' => $currentEnd->format('H:i'),
+                                                    'client_start_time' => $totalStart->format('H:i'),
+                                                    'client_end_time' => '00:00',
                                                     'price_book_id' => $record['price_book_id'],
                                                     'hours' => $record['hours'] ?? '1:1',
                                                 ];
-                                                $currentStart = $currentEnd;
+                                                
+                                                // Second part: midnight to end
+                                                $newClientItems[] = [
+                                                    'client_id' => $clientId,
+                                                    'client_name' => $record['client_name'],
+                                                    'client_start_time' => '00:00',
+                                                    'client_end_time' => $totalEnd->format('H:i'),
+                                                    'price_book_id' => $record['price_book_id'],
+                                                    'hours' => $record['hours'] ?? '1:1',
+                                                ];
+                                                
+                                                // Replace the client's details
+                                                $otherDetails = collect($details)->where('client_id', '!=', $clientId)->values()->all();
+                                                $set('../../client_details', array_merge($otherDetails, $newClientItems));
+                                            } else {
+                                                // Original split logic for non-next-day shifts
+                                                $numSections = $clientItems->count() + 1;
+                                                $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
+                                                $currentStart = $totalStart;
+                                                $newClientItems = [];
+                                                for ($i = 0; $i < $numSections; $i++) {
+                                                    $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                                                    $newClientItems[] = [
+                                                        'client_id' => $clientId,
+                                                        'client_name' => $record['client_name'],
+                                                        'client_start_time' => $currentStart->format('H:i'),
+                                                        'client_end_time' => $currentEnd->format('H:i'),
+                                                        'price_book_id' => $record['price_book_id'],
+                                                        'hours' => $record['hours'] ?? '1:1',
+                                                    ];
+                                                    $currentStart = $currentEnd;
+                                                }
+                                                // Replace the client's details
+                                                $otherDetails = collect($details)->where('client_id', '!=', $clientId)->values()->all();
+                                                $set('../../client_details', array_merge($otherDetails, $newClientItems));
                                             }
-                                            // Replace the client's details
-                                            $otherDetails = collect($details)->where('client_id', '!=', $clientId)->values()->all();
-                                            $set('../../client_details', array_merge($otherDetails, $newClientItems));
                                         }),
                                     Action::make('delete')
                                         ->icon('heroicon-m-trash')

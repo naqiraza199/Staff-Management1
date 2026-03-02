@@ -283,11 +283,23 @@ class InvoiceList extends Page implements Tables\Contracts\HasTable
             $totalTax    = $invoices->sum('tax');
             $grandTotal  = $totalAmount + $totalTax;
 
-            $invoiceIds  = $invoices->pluck('id');
-            $paidAmount  = InvoicePayment::whereIn('invoice_id', $invoiceIds)->sum('paid_amount') ?? 0;
+            $today = Carbon::now()->startOfDay();
 
-            $unpaidOverdueBalance = $invoices->where('status', 'Unpaid/Overdue')->sum('balance');
-            $overdueBalance       = $invoices->where('status', 'Overdue')->sum('balance');
+            // Calculate Paid Amount: balance == 0
+            $paidAmount = $invoices->where('balance', 0)->sum('amount');
+
+            // Calculate Overdue: balance > 0 AND payment_due < today
+            $overdueBalance = $invoices->filter(function ($invoice) use ($today) {
+                return $invoice->balance > 0 
+                    && $invoice->payment_due 
+                    && Carbon::parse($invoice->payment_due)->startOfDay()->lt($today);
+            })->sum('balance');
+
+            // Calculate Unpaid: balance > 0 AND (payment_due >= today OR payment_due is null)
+            $unpaidOverdueBalance = $invoices->filter(function ($invoice) use ($today) {
+                return $invoice->balance > 0 
+                    && (!$invoice->payment_due || Carbon::parse($invoice->payment_due)->startOfDay()->gte($today));
+            })->sum('balance');
 
             return [
                 'grandTotal' => $grandTotal,

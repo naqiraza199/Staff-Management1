@@ -244,26 +244,78 @@ Repeater::make('client_details')
 
             $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
             $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
-            if ($get('../../../shift_finishes_next_day')) {
-                $totalEnd = $totalEnd->addDay();
+            
+            // Check if shift spans midnight by comparing times
+            $clientStartTime = $record['client_start_time'];
+            $clientEndTime = $record['client_end_time'];
+            
+            // Parse times and compare properly
+            $shiftFinishesNextDay = false;
+            if ($clientStartTime && $clientEndTime) {
+                try {
+                    $startCarbon = Carbon::parse($clientStartTime);
+                    $endCarbon = Carbon::parse($clientEndTime);
+                    $shiftFinishesNextDay = $startCarbon->greaterThan($endCarbon);
+                } catch (\Exception $e) {
+                    // If parsing fails, try string comparison
+                    $shiftFinishesNextDay = $clientStartTime > $clientEndTime;
+                }
             }
+            
             $numSections = $clientItems->count() + 1;
-            $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
-
-            $currentStart = $totalStart;
-            $newClientItems = [];
-
-            for ($i = 0; $i < $numSections; $i++) {
-                $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+            
+            // If shift spans midnight, split at midnight first
+            if ($shiftFinishesNextDay) {
+                // First split: from start time to midnight (00:00)
                 $newClientItems[] = [
                     'client_id' => $clientId,
                     'client_name' => $record['client_name'],
-                    'client_start_time' => $currentStart->format('H:i'),
-                    'client_end_time' => $currentEnd->format('H:i'),
+                    'client_start_time' => $totalStart->format('H:i'),
+                    'client_end_time' => '00:00',
                     'price_book_id'     => \App\Models\PriceBook::where('id', $record['price_book_id'] ?? null)->value('id'),
                     'hours' => $record['hours'] ?? '1:1',
                 ];
-                $currentStart = $currentEnd;
+                
+                // Calculate remaining sections after midnight
+                $remainingSections = $numSections - 1;
+                if ($remainingSections > 0) {
+                    // Add a day to end time for calculation
+                    $totalEndWithDay = $totalEnd->copy()->addDay();
+                    $midnight = $totalStart->copy()->addDay()->startOfDay();
+                    $remainingMinutes = $totalStart->diffInMinutes($totalEndWithDay) - $totalStart->diffInMinutes($midnight);
+                    $sectionMinutes = $remainingMinutes / $remainingSections;
+                    
+                    $currentStart = $midnight;
+                    for ($i = 0; $i < $remainingSections; $i++) {
+                        $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                        $newClientItems[] = [
+                            'client_id' => $clientId,
+                            'client_name' => $record['client_name'],
+                            'client_start_time' => $currentStart->format('H:i'),
+                            'client_end_time' => $currentEnd->format('H:i'),
+                            'price_book_id'     => \App\Models\PriceBook::where('id', $record['price_book_id'] ?? null)->value('id'),
+                            'hours' => $record['hours'] ?? '1:1',
+                        ];
+                        $currentStart = $currentEnd;
+                    }
+                }
+            } else {
+                // Normal split without midnight crossing
+                $sectionMinutes = $totalStart->diffInMinutes($totalEnd) / $numSections;
+                $currentStart = $totalStart;
+
+                for ($i = 0; $i < $numSections; $i++) {
+                    $currentEnd = $currentStart->copy()->addMinutes($sectionMinutes);
+                    $newClientItems[] = [
+                        'client_id' => $clientId,
+                        'client_name' => $record['client_name'],
+                        'client_start_time' => $currentStart->format('H:i'),
+                        'client_end_time' => $currentEnd->format('H:i'),
+                        'price_book_id'     => \App\Models\PriceBook::where('id', $record['price_book_id'] ?? null)->value('id'),
+                        'hours' => $record['hours'] ?? '1:1',
+                    ];
+                    $currentStart = $currentEnd;
+                }
             }
 
             $otherDetails = collect($details)
@@ -305,9 +357,51 @@ Repeater::make('client_details')
                 // Redistribute time
                 $totalStart = Carbon::parse($clientItems->first()['client_start_time']);
                 $totalEnd = Carbon::parse($clientItems->last()['client_end_time']);
-                if ($get('../../../shift_finishes_next_day')) {
-                    $totalEnd = $totalEnd->addDay();
+                
+                // Check if any item spans midnight
+                $anySpansMidnight = false;
+                foreach ($clientItems as $item) {
+                    if ($item['client_start_time'] && $item['client_end_time']) {
+                        try {
+                            $startCarbon = Carbon::parse($item['client_start_time']);
+                            $endCarbon = Carbon::parse($item['client_end_time']);
+                            if ($startCarbon->greaterThan($endCarbon)) {
+                                $anySpansMidnight = true;
+                                break;
+                            }
+                        } catch (\Exception $e) {
+                            if ($item['client_start_time'] > $item['client_end_time']) {
+                                $anySpansMidnight = true;
+                                break;
+                            }
+                        }
+                    }
                 }
+                
+                // If any item spans midnight, merge back to original times
+                if ($anySpansMidnight) {
+                    // Get original start and end times from record
+                    $originalStart = $record['client_start_time'];
+                    $originalEnd = $record['client_end_time'];
+                    
+                    if ($originalStart && $originalEnd) {
+                        try {
+                            $startCarbon = Carbon::parse($originalStart);
+                            $endCarbon = Carbon::parse($originalEnd);
+                            if ($startCarbon->greaterThan($endCarbon)) {
+                                $totalStart = Carbon::parse($originalStart);
+                                $totalEnd = Carbon::parse($originalEnd)->addDay();
+                            }
+                        } catch (\Exception $e) {
+                            // If parsing fails, try string comparison
+                            if ($originalStart > $originalEnd) {
+                                $totalStart = Carbon::parse($originalStart);
+                                $totalEnd = Carbon::parse($originalEnd)->addDay();
+                            }
+                        }
+                    }
+                }
+                
                 $totalMinutes = $totalStart->diffInMinutes($totalEnd);
                 $numSections = $clientItems->count() - 1;
                 $sectionMinutes = $totalMinutes / $numSections;
